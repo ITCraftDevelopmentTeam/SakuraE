@@ -150,6 +150,10 @@ namespace sakoraE {
     public:
         ConnectionNode(std::tuple<std::shared_ptr<Nodes>...>&& _children): children(std::move(_children)) {}
         
+        const std::tuple<std::shared_ptr<Nodes>...>& getChildren() const { 
+            return children; 
+        }
+
         static bool check(TokenIter begin, TokenIter end) {
             return checkImpl<0>(begin, end);
         }
