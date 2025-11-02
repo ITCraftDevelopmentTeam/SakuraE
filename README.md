@@ -1,5 +1,7 @@
-# Tlang
+# SakoraE
 
-这个项目仅供作者学习用，没有太大的实用价值
+### 基于LLVM的语言
 
-等作者学习完之后才会更新  Sakora （QAQ）
+## Contributor
+
+- [The Flysong](https://github.com/theflysong) : Parser 设计的灵感贡献者
