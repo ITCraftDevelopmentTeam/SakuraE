@@ -7,7 +7,10 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
-#include "includes/magic_enum.hpp" // Assumed path
+
+#include "includes/magic_enum.hpp"
+#include "Compiler/Error/error.hpp"
+#include "Compiler/Utils/Logger.hpp"
 
 namespace sakoraE {
     enum class TokenType {
@@ -15,6 +18,7 @@ namespace sakoraE {
 
         INT_N, FLOAT_N,
         STRING, CHAR,
+        BOOL_CONST,
 
         ADD, SUB, MUL, DIV, MOD,
         OR, AND, 
@@ -42,15 +46,9 @@ namespace sakoraE {
         UNKNOWN
     };
 
-    struct DebugInfo {
-        int line;
-        int column;
-        std::string details;
-    };
-
     class Token {
     public:
-        DebugInfo info;      // DebugInfo
+        PositionInfo info;      // PositionInfo
         std::string content; // Raw content of the token
         TokenType type;      // Type of the token
 
@@ -78,7 +76,9 @@ namespace sakoraE {
         int current_column;
 
         const std::vector<std::string> keywords = {
-            "if", "else", "while", "for", "func", "int", "return", "let", "const", "range"};
+            "if", "else", "while", "for", "func", 
+            "char", "float", "int", "return", "let", 
+            "const", "range", "true", "false", "raw_str"};
 
         char peek(int offset = 0) const;
         char next();
@@ -87,6 +87,7 @@ namespace sakoraE {
         TokenType str2KeywordType(std::string content) const;
         Token makeIdentifierOrKeyword();
         Token makeNumberLiteral();
+        Token makeCharLiteral();
         Token makeStringLiteral();
         Token makeSymbol();
     };

@@ -1,13 +1,4 @@
 #include "lexer.h"
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <algorithm>
-#include <cctype>
-#include <stdexcept>
-#include "includes/magic_enum.hpp"
-
 
 sakoraE::Token::Token(TokenType t, const std::string& c, int l, int col, const std::string& det)
     : content(c), type(t) {
@@ -99,8 +90,14 @@ sakoraE::Token sakoraE::Lexer::makeIdentifierOrKeyword() {
     std::string details;
 
     if (isKeyword(content)) {
-        type = str2KeywordType(content);
-        details = content;
+        if (content == "true" || content == "false") {
+            type = TokenType::BOOL_CONST;
+            details = content;
+        }
+        else {
+            type = str2KeywordType(content);
+            details = content;
+        }
     } else {
         type = TokenType::IDENTIFIER;
         details = "identifier";
@@ -129,26 +126,42 @@ sakoraE::Token sakoraE::Lexer::makeNumberLiteral() {
     return Token(type, content, start_line, start_column, details);
 }
 
+sakoraE::Token sakoraE::Lexer::makeCharLiteral() {
+    int start_line = current_line;
+    int start_column = current_column;
+    std::string content;
+    TokenType type = TokenType::CHAR;
+    next();
+
+    if (peek(1) != '\'') {
+        sutils::reportError(OccurredTerm::LEXER, "Char Literal must have only one character", PositionInfo{start_line, start_column, "Error"});
+    }
+
+    content = next();
+
+    next();
+
+    return Token(type, content, start_line, start_column);
+}
+
 sakoraE::Token sakoraE::Lexer::makeStringLiteral() {
     int start_line = current_line;
     int start_column = current_column;
     TokenType type = TokenType::STRING;
     std::string details = "string";
     std::string content;
-    content.pop_back(); // 移除开头的双引号
+    content.pop_back();
 
     while (peek() != '\"' && peek() != '\0' && peek() != '\n') {
         content += next();
     }
 
     if (peek() == '\"') {
-        next();                          // 消耗结尾的双引号
-        content = "\"" + content + "\""; // 重新包裹
+        next(); 
+        content = "\"" + content + "\"";
     }
     else {
-        // 报告未闭合的字符串错误
-        type = TokenType::UNKNOWN;
-        details = "Unclosed string literal";
+        sutils::reportError(OccurredTerm::LEXER, "Unclosed string literal", PositionInfo{start_line, start_column, "Error"});
     }
 
     return Token(type, content, start_line, start_column, details);
@@ -362,6 +375,9 @@ std::vector<sakoraE::Token> sakoraE::Lexer::tokenize() {
         } 
         else if (c == '\"') {
             token = makeStringLiteral();
+        }
+        else if (c == '\'') {
+            token = makeCharLiteral();
         }
         else {
             token = makeSymbol();
