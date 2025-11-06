@@ -2,20 +2,15 @@
 #define SAKORAE_PARSER_HPP
 #include <memory>
 
-#include "astbase.hpp"
+#include "AST.h"
 
 namespace sakoraE {
-    class NodeFormatter {
-    public:
-        virtual const std::string& toString() {}
-    };
-
     // Forward declare
-    class AddExprNode: NodeFormatter;
+    class AddExprNode: IExpr;
     //
 
     // <Literal>
-    class LiteralNode: NodeFormatter, 
+    class LiteralNode: IToken, 
     OptionsNode<
         BasicNode<TokenType::INT_N>,
         BasicNode<TokenType::FLOAT_N>,
@@ -36,8 +31,12 @@ namespace sakoraE {
                                         result.end);
         }
 
-        const std::string& toString() override {
-            return "LiteralNode: {" + std::get<this->index()>(this->child()).token->toString() + "}";
+        std::shared_ptr<Token> getToken() {
+            return std::get<this->index()>(this->child());
+        }
+
+        const std::string& toString() {
+            return "Literal: {" + getToken()->toString() + "}";
         }
     };
 
