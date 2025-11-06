@@ -36,7 +36,7 @@ namespace sakoraE {
         BasicNode(std::shared_ptr<Token> tok): token(std::move(tok)) {}
 
         static bool check(TokenIter begin, TokenIter end) {
-            return begin != end && begin->type  == T;
+            return begin != end && begin->type == T;
         }
 
         static Result<BasicNode> parse(TokenIter begin, TokenIter end) {
@@ -204,7 +204,9 @@ namespace sakoraE {
         OptionsNode(std::variant<std::shared_ptr<Nodes>...>&& child, size_t index)
             : _child(std::move(child)), _index(index) {}
 
+        // Get the variant: 'child' (if you want to use it, try 'std::get<Index>()')
         const std::variant<std::shared_ptr<Nodes>...>& child() const { return _child; }
+        // Get the index of variant
         size_t index() const { return _index; }
 
         static bool check(TokenIter begin, TokenIter end) {
