@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 #include "Compiler/Frontend/lexer.h"
-#include "Compiler/Frontend/astbase.hpp"
+#include "Compiler/Frontend/parser_base.hpp"
 
 // 示例程序源代码
 const std::string SOURCE_CODE = R"(
