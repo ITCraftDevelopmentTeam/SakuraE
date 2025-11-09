@@ -350,6 +350,11 @@ sakoraE::Token sakoraE::Lexer::makeSymbol() {
             content = ".";
             next();
             break;
+        case '%':
+            type = TokenType::MOD;
+            content = "%";
+            next();
+            break;
         default:
             break;
     }
