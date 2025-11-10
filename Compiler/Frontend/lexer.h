@@ -28,7 +28,7 @@ namespace sakoraE {
         LEFT_BRACKET, RIGHT_BRACKET, // {}
         ASSIGN_OP, ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, DIV_ASSIGN, // =, +=, -=, *=, /=
         AUTO_INC, AUTO_DEC, // ++, --
-        TYPE_CONSTRAINT, // :
+        CONSTRAINT_OP, // :
         ARROW,           // ->
         BIG_ARROW,       // =>
         SPACE_SHIP,      // <=>
@@ -39,8 +39,8 @@ namespace sakoraE {
         KEYWORD_LET, KEYWORD_IF, KEYWORD_ELSE,
         KEYWORD_WHILE, KEYWORD_FOR, KEYWORD_FUNC,
         KEYWORD_RETURN, KEYWORD_CONST, KEYWORD_RANGE,
-        KEYWORD_INT, KEYWORD_RAW_STRING, KEYWORD_CHAR,
-        KEYWORD_FLOAT,
+        
+        TYPE_INT, TYPE_CHAR, TYPE_BOOL, TYPE_FLOAT,
 
         _EOF_,
         UNKNOWN
@@ -77,14 +77,21 @@ namespace sakoraE {
 
         const std::vector<std::string> keywords = {
             "if", "else", "while", "for", "func", 
-            "char", "float", "int", "return", "let", 
-            "const", "range", "true", "false", "raw_str"};
+            "return", "let", "const", "range", "true", 
+            "false"
+        };
+
+        const std::vector<std::string> typeFields = {
+            "int", "float", "bool", "char"
+        };
 
         char peek(int offset = 0) const;
         char next();
         void skip();
         bool isKeyword(const std::string &content) const;
+        bool isTypeField(const std::string &content) const;
         TokenType str2KeywordType(std::string content) const;
+        TokenType str2TypeField(std::string content) const;
         Token makeIdentifierOrKeyword();
         Token makeNumberLiteral();
         Token makeCharLiteral();
