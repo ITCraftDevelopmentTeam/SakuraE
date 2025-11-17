@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "AST.hpp"
+#include "parser_base.hpp"
 
 namespace sakoraE {
     // Forward declare
@@ -10,7 +11,7 @@ namespace sakoraE {
     class WholeExprParser;
     //
 
-    class LiteralParser:
+    class LiteralParser: public ResourceFetcher, 
     public OptionsParser<
         TokenParser<TokenType::INT_N>,
         TokenParser<TokenType::FLOAT_N>,
@@ -20,19 +21,30 @@ namespace sakoraE {
     > 
     {
     public:
+        using BaseType = OptionsParser<TokenParser<TokenType::INT_N>, TokenParser<TokenType::FLOAT_N>, TokenParser<TokenType::STRING>, TokenParser<TokenType::BOOL_CONST>, TokenParser<TokenType::CHAR>>;
+        
+        // 从基类移动构造
+        LiteralParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return OptionsParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<LiteralParser> parse(TokenIter begin, TokenIter end) {
-            auto result = OptionsParser::parse(begin, end);
-            return Result<LiteralParser>(result.status, 
-                                        std::static_pointer_cast<LiteralParser>(result.val), 
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status, 
+                    std::make_shared<LiteralParser>(std::move(*result.val)), 
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class IndexOpParser:
+    class IndexOpParser: public ResourceFetcher, 
     public ConnectionParser<
         DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
         AddExprParser,
@@ -40,19 +52,29 @@ namespace sakoraE {
     > 
     {
     public:
+        using BaseType = ConnectionParser<DiscardParser<TokenType::LEFT_SQUARE_BRACKET>, AddExprParser, DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>>;
+        
+        IndexOpParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<IndexOpParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<IndexOpParser>(result.status, 
-                                        std::static_pointer_cast<IndexOpParser>(result.val), 
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status, 
+                    std::make_shared<IndexOpParser>(std::move(*result.val)), 
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class CallingOpParser:
+    class CallingOpParser: public ResourceFetcher,
     public ConnectionParser<
         DiscardParser<TokenType::LEFT_PAREN>,
         ClosureParser<WholeExprParser>,
@@ -66,19 +88,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<DiscardParser<TokenType::LEFT_PAREN>, ClosureParser<WholeExprParser>, ClosureParser<ConnectionParser<TokenParser<TokenType::COMMA>, WholeExprParser>>, DiscardParser<TokenType::RIGHT_PAREN>>;
+        
+        CallingOpParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<CallingOpParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<CallingOpParser>(result.status,
-                                        std::static_pointer_cast<CallingOpParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<CallingOpParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class AtomIdentifierExprParser:
+    class AtomIdentifierExprParser: public ResourceFetcher,
     public ConnectionParser<
         TokenParser<TokenType::IDENTIFIER>,
         ClosureParser<
@@ -90,19 +122,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<TokenParser<TokenType::IDENTIFIER>, ClosureParser<OptionsParser<CallingOpParser, IndexOpParser>>>;
+        
+        AtomIdentifierExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
-        static Result<AtomIdentifierExprParser> parse(TokenIter begin,  TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<AtomIdentifierExprParser>(result.status,
-                                                    std::static_pointer_cast<AtomIdentifierExprParser>(result.val),
-                                                    result.end);
+        static Result<AtomIdentifierExprParser> parse(TokenIter begin, TokenIter end) {
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<AtomIdentifierExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class IdentifierExprParser: 
+    class IdentifierExprParser: public ResourceFetcher,
     public ConnectionParser<
         ClosureParser<TokenParser<TokenType::LGC_NOT>>,
         AtomIdentifierExprParser,
@@ -115,19 +157,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<ClosureParser<TokenParser<TokenType::LGC_NOT>>, AtomIdentifierExprParser, ClosureParser<ConnectionParser<TokenParser<TokenType::DOT>, AtomIdentifierExprParser>>>;
+        
+        IdentifierExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<IdentifierExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<IdentifierExprParser>(result.status,
-                                                std::static_pointer_cast<IdentifierExprParser>(result.val),
-                                                result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<IdentifierExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class PrimExprParser: 
+    class PrimExprParser: public ResourceFetcher,
     public OptionsParser<
         LiteralParser,
         IdentifierExprParser,
@@ -139,19 +191,29 @@ namespace sakoraE {
     > 
     {
     public:
+        using BaseType = OptionsParser<LiteralParser, IdentifierExprParser, ConnectionParser<DiscardParser<TokenType::LEFT_PAREN>, WholeExprParser, DiscardParser<TokenType::RIGHT_PAREN>>>;
+        
+        PrimExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return OptionsParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<PrimExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = OptionsParser::parse(begin, end);
-            return Result<PrimExprParser>(result.status,
-                                            std::static_pointer_cast<PrimExprParser>(result.val),
-                                            result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<PrimExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class MulExprParser: 
+    class MulExprParser: public ResourceFetcher,
     public ConnectionParser<
         PrimExprParser,
         ClosureParser<
@@ -167,19 +229,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<PrimExprParser, ClosureParser<ConnectionParser<OptionsParser<TokenParser<TokenType::MUL>, TokenParser<TokenType::DIV>, TokenParser<TokenType::MOD>>, PrimExprParser>>>;
+        
+        MulExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<MulExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<MulExprParser>(result.status,
-                                        std::static_pointer_cast<MulExprParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<MulExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class AddExprParser: 
+    class AddExprParser: public ResourceFetcher,
     public ConnectionParser<
         MulExprParser,
         ClosureParser<
@@ -194,19 +266,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<MulExprParser, ClosureParser<ConnectionParser<OptionsParser<TokenParser<TokenType::ADD>, TokenParser<TokenType::SUB>>, MulExprParser>>>;
+        
+        AddExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<AddExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<AddExprParser>(result.status,
-                                        std::static_pointer_cast<AddExprParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<AddExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
     
-    class LogicExprParser:
+    class LogicExprParser: public ResourceFetcher,
     public ConnectionParser<
         AddExprParser,
         ClosureParser<
@@ -225,19 +307,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<AddExprParser, ClosureParser<ConnectionParser<OptionsParser<TokenParser<TokenType::LGC_LS_THAN>, TokenParser<TokenType::LGC_LSEQU_THAN>, TokenParser<TokenType::LGC_MR_THAN>, TokenParser<TokenType::LGC_MREQU_THAN>, TokenParser<TokenType::LGC_NOT_EQU>, TokenParser<TokenType::LGC_EQU>>, AddExprParser>>>;
+        
+        LogicExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<LogicExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<LogicExprParser>(result.status,
-                                            std::static_pointer_cast<LogicExprParser>(result.val),
-                                            result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<LogicExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class BoolExprParser:
+    class BoolExprParser: public ResourceFetcher,
     public ConnectionParser<
         LogicExprParser,
         ClosureParser<
@@ -252,19 +344,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<LogicExprParser, ClosureParser<ConnectionParser<OptionsParser<TokenParser<TokenType::LGC_AND>, TokenParser<TokenType::LGC_OR>>, LogicExprParser>>>;
+        
+        BoolExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<BoolExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<BoolExprParser>(result.status,
-                                            std::static_pointer_cast<BoolExprParser>(result.val),
-                                            result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<BoolExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class ArrayExprParser:
+    class ArrayExprParser: public ResourceFetcher,
     public ConnectionParser<
         DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
         ClosureParser<WholeExprParser>,
@@ -277,38 +379,60 @@ namespace sakoraE {
         DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
     >
     {
+    public:
+        using BaseType = ConnectionParser<DiscardParser<TokenType::LEFT_SQUARE_BRACKET>, ClosureParser<WholeExprParser>, ClosureParser<ConnectionParser<DiscardParser<TokenType::COMMA>, WholeExprParser>>, DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>>;
+        
+        ArrayExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<ArrayExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<ArrayExprParser>(result.status,
-                                            std::static_pointer_cast<ArrayExprParser>(result.val),
-                                            result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<ArrayExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class AssignExprParser:
+    class AssignExprParser: public ResourceFetcher,
     public ConnectionParser<
         IdentifierExprParser,
         TokenParser<TokenType::ASSIGN_OP>,
         WholeExprParser
     >
     {
+    public:
+        using BaseType = ConnectionParser<IdentifierExprParser, TokenParser<TokenType::ASSIGN_OP>, WholeExprParser>;
+        
+        AssignExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<AssignExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<AssignExprParser>(result.status,
-                                            std::static_pointer_cast<AssignExprParser>(result.val),
-                                            result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<AssignExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class WholeExprParser:
+    class WholeExprParser: public ResourceFetcher,
     public OptionsParser<
         AddExprParser,
         BoolExprParser,
@@ -317,19 +441,29 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = OptionsParser<AddExprParser, BoolExprParser, ArrayExprParser, AssignExprParser>;
+        
+        WholeExprParser(BaseType&& base) : BaseType(std::move(base)) {}
+        
         static bool check(TokenIter begin, TokenIter end) {
-            return OptionsParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<WholeExprParser> parse(TokenIter begin, TokenIter end) {
-            auto result = OptionsParser::parse(begin, end);
-            return Result<WholeExprParser>(result.status,
-                                        std::static_pointer_cast<WholeExprParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<WholeExprParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class BasicTypeModifierParser:
+    class BasicTypeModifierParser: public ResourceFetcher,
     public OptionsParser<
         TokenParser<TokenType::TYPE_INT>,
         TokenParser<TokenType::TYPE_CHAR>,
@@ -338,19 +472,30 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = OptionsParser<TokenParser<TokenType::TYPE_INT>, TokenParser<TokenType::TYPE_CHAR>, TokenParser<TokenType::TYPE_FLOAT>, TokenParser<TokenType::TYPE_BOOL>>;
+        
+        BasicTypeModifierParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return OptionsParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<BasicTypeModifierParser> parse(TokenIter begin, TokenIter end) {
-            auto result = OptionsParser::parse(begin, end);
-            return Result<BasicTypeModifierParser>(result.status,
-                                        std::static_pointer_cast<BasicTypeModifierParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<BasicTypeModifierParser>(std::move(*result.val)),
+                    result.end};
         }
+
+        NodePtr genResource() override;
     };
 
-    class ArrayTypeModifierParser:
+    // TODO: 这里的parser有问题
+    class ArrayTypeModifierParser: public ResourceFetcher,
     public ConnectionParser<
         DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
         ClosureParser<AddExprParser>,
@@ -365,38 +510,58 @@ namespace sakoraE {
     >
     {
     public:
+        using BaseType = ConnectionParser<DiscardParser<TokenType::LEFT_SQUARE_BRACKET>, ClosureParser<AddExprParser>, DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>, ClosureParser<WholeExprParser>, ClosureParser<ConnectionParser<TokenParser<TokenType::COMMA>, WholeExprParser>>>;
+        
+        ArrayTypeModifierParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return ConnectionParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<ArrayTypeModifierParser> parse(TokenIter begin, TokenIter end) {
-            auto result = ConnectionParser::parse(begin, end);
-            return Result<ArrayTypeModifierParser>(result.status,
-                                        std::static_pointer_cast<ArrayTypeModifierParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<ArrayTypeModifierParser>(std::move(*result.val)),
+                    result.end};
         } 
+        
+        NodePtr genResource() override;
     };
 
-    class TypeModifierParser:
+    class TypeModifierParser: public ResourceFetcher,
     public OptionsParser<
         BasicTypeModifierParser,
         ArrayTypeModifierParser
     >
     {
     public:
+        using BaseType = OptionsParser<BasicTypeModifierParser, ArrayTypeModifierParser>;
+        
+        TypeModifierParser(BaseType&& base) : BaseType(std::move(base)) {}
+
         static bool check(TokenIter begin, TokenIter end) {
-            return OptionsParser::check(begin, end);
+            return BaseType::check(begin, end);
         }
 
         static Result<TypeModifierParser> parse(TokenIter begin, TokenIter end) {
-            auto result = OptionsParser::parse(begin, end);
-            return Result<TypeModifierParser>(result.status,
-                                        std::static_pointer_cast<TypeModifierParser>(result.val),
-                                        result.end);
+            auto result = BaseType::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<TypeModifierParser>(std::move(*result.val)),
+                    result.end};
         }   
+        
+        NodePtr genResource() override;
     };
     
-    // Statement
+    // Statement parsers would go here...
 
 }
 
