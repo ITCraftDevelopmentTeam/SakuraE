@@ -15,7 +15,7 @@ namespace sakoraE {
 
     // Point the term where occurred the error
     enum OccurredTerm {
-        LEXER, PARSER, IR_GENERATING, COMPILING
+        LEXER, PARSER, IR_GENERATING, COMPILING, SYSTEM
     };
 
     class SakoraError {
