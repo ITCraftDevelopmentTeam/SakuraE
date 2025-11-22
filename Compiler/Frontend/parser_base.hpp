@@ -33,7 +33,7 @@ namespace sakoraE {
 
     // Concept: Check if the parser type T has a static epsilonable() method.
     template<typename T>
-    concept HasHasEpsilonable = requires {
+    concept HasEpsilonable = requires {
         { T::epsilonable() } -> std::convertible_to<bool>;
     };
 
