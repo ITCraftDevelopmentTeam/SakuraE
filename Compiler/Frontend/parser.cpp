@@ -156,8 +156,8 @@ sakoraE::NodePtr sakoraE::LogicExprParser::genResource() {
     return root;
 }
 
-sakoraE::NodePtr sakoraE::BoolExprParser::genResource() {
-    NodePtr root = std::make_shared<Node>(ASTTag::BoolExprNode);
+sakoraE::NodePtr sakoraE::BinaryExprParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::BinaryExprNode);
 
     (*root)[ASTTag::Exprs]->addChild(std::get<0>(getTuple())->genResource());
 
@@ -212,14 +212,54 @@ sakoraE::NodePtr sakoraE::WholeExprParser::genResource() {
         if constexpr (std::is_same_v<VarType, std::shared_ptr<AddExprParser>>) {
             (*root)[ASTTag::AddExprNode] = var->genResource();
         }
-        else if constexpr (std::is_same_v<VarType, std::shared_ptr<BoolExprParser>>) {
-            (*root)[ASTTag::BoolExprNode] = var->genResource();
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<BinaryExprParser>>) {
+            (*root)[ASTTag::BinaryExprNode] = var->genResource();
         }
         else if constexpr (std::is_same_v<VarType, std::shared_ptr<ArrayExprParser>>) {
             (*root)[ASTTag::ArrayExprNode] = var->genResource();
         }
         else if constexpr (std::is_same_v<VarType, std::shared_ptr<AssignExprParser>>) {
             (*root)[ASTTag::AssignExprNode] = var->genResource();
+        }
+
+    }, option());
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::BasicTypeModifierParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::BasicTypeModifierNode);
+
+    (*root)[ASTTag::Keyword] = std::visit([=](auto& ptr) -> NodePtr {
+        std::shared_ptr<Token> tok = ptr->token;
+        return std::make_shared<Node>(tok);
+    }, option());
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::ArrayTypeModifierParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::ArrayTypeModifierNode);
+
+    if (!std::get<1>(getTuple())->isEmpty())
+        (*root)[ASTTag::HeadExpr] = std::get<1>(getTuple())->getClosure()[0]->genResource();
+    
+    (*root)[ASTTag::Identifier] = std::get<3>(getTuple())->genResource();
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::TypeModifierParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::TypeModifierNode);
+
+    std::visit([&](auto& var) {
+        using VarType = std::decay_t<decltype(var)>;
+
+        if constexpr (std::is_same_v<VarType, BasicTypeModifierParser>) {
+            (*root)[ASTTag::BasicTypeModifierNode] = var->genResource();
+        }
+        else if constexpr (std::is_same_v<VarType, ArrayTypeModifierParser>) {
+            (*root)[ASTTag::ArrayTypeModifierNode] = var->genResource();
         }
 
     }, option());
