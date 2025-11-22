@@ -29,7 +29,6 @@ namespace sakoraE {
     };
 
     using NodePtr = std::shared_ptr<Node>;
-
     class Node {
         ASTTag tag;
         std::variant<std::monostate, TokenPtr> content;
@@ -84,7 +83,7 @@ namespace sakoraE {
 
         std::string toString() {
             std::ostringstream oss;
-            oss << "{" << magic_enum::enum_name(tag) << ":";
+            oss << "" << magic_enum::enum_name(tag) << ":";
             if (std::holds_alternative<TokenPtr>(content)) {
                 oss << "(" << std::get<TokenPtr>(content)->content << ")";
             }
@@ -101,8 +100,35 @@ namespace sakoraE {
             if (!children.empty()) {
                 oss << "]";
             }
-            oss << "}";
+            return oss.str();
+        }
 
+        std::string toFormatString(int depth = 0) {
+            std::ostringstream oss;
+            
+            std::string indent(depth * 2, ' '); 
+            std::string child_indent((depth + 1) * 2, ' ');
+
+            oss << magic_enum::enum_name(tag);
+            if (std::holds_alternative<TokenPtr>(content)) {
+                oss << "(" << std::get<TokenPtr>(content)->content << ")";
+            }
+
+            if (!children.empty()) {
+                oss << ": [\n";
+                for (std::size_t i = 0; i < children.size(); i++) {
+                    oss << child_indent;
+                    
+                    oss << children.at(i).second->toFormatString(depth + 1);
+
+                    if (i < children.size() - 1) {
+                        oss << ",";
+                    }
+                    oss << "\n";
+                }
+                oss << indent << "]";
+            }
+            
             return oss.str();
         }
     };
