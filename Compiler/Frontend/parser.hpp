@@ -9,6 +9,7 @@ namespace sakoraE {
     // Forward declare
     class AddExprParser;
     class WholeExprParser;
+    class BlockStmtParser;
     //
 
     using LiteralParserRule = OptionsParser<
@@ -18,8 +19,7 @@ namespace sakoraE {
         TokenParser<TokenType::BOOL_CONST>,
         TokenParser<TokenType::CHAR>
     >;
-    class LiteralParser: public ResourceFetcher, public LiteralParserRule
-    {
+    class LiteralParser: public ResourceFetcher, public LiteralParserRule {
     public:
         // 从基类移动构造
         LiteralParser(LiteralParserRule&& base) : LiteralParserRule(std::move(base)) {}
@@ -47,8 +47,7 @@ namespace sakoraE {
         AddExprParser,
         DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
     >;
-    class IndexOpParser: public ResourceFetcher, public IndexOpParserRule
-    {
+    class IndexOpParser: public ResourceFetcher, public IndexOpParserRule {
     public:
         IndexOpParser(IndexOpParserRule&& base) : IndexOpParserRule(std::move(base)) {}
 
@@ -81,8 +80,7 @@ namespace sakoraE {
         >,
         DiscardParser<TokenType::RIGHT_PAREN>
     >;
-    class CallingOpParser: public ResourceFetcher, public CallingOpParserRule
-    {
+    class CallingOpParser: public ResourceFetcher, public CallingOpParserRule {
     public:
         CallingOpParser(CallingOpParserRule&& base) : CallingOpParserRule(std::move(base)) {}
 
@@ -113,8 +111,7 @@ namespace sakoraE {
             >
         >
     >;
-    class AtomIdentifierExprParser: public ResourceFetcher, public AtomIdentifierExprParserRule
-    {
+    class AtomIdentifierExprParser: public ResourceFetcher, public AtomIdentifierExprParserRule {
     public:
         AtomIdentifierExprParser(AtomIdentifierExprParserRule&& base) : AtomIdentifierExprParserRule(std::move(base)) {}
 
@@ -146,8 +143,7 @@ namespace sakoraE {
             >
         >
     >;
-    class IdentifierExprParser: public ResourceFetcher, public IdentifierExprParserRule
-    {
+    class IdentifierExprParser: public ResourceFetcher, public IdentifierExprParserRule {
     public:
         IdentifierExprParser(IdentifierExprParserRule&& base) : IdentifierExprParserRule(std::move(base)) {}
 
@@ -179,8 +175,7 @@ namespace sakoraE {
             DiscardParser<TokenType::RIGHT_PAREN>
         >
     >;
-    class PrimExprParser: public ResourceFetcher, public PrimExprParserRule
-    {
+    class PrimExprParser: public ResourceFetcher, public PrimExprParserRule {
     public:
         PrimExprParser(PrimExprParserRule&& base) : PrimExprParserRule(std::move(base)) {}
 
@@ -215,8 +210,7 @@ namespace sakoraE {
             >
         >
     >;
-    class MulExprParser: public ResourceFetcher, public MulExprParserRule
-    {
+    class MulExprParser: public ResourceFetcher, public MulExprParserRule {
     public:
         MulExprParser(MulExprParserRule&& base) : MulExprParserRule(std::move(base)) {}
 
@@ -250,8 +244,7 @@ namespace sakoraE {
             >
         >
     >;
-    class AddExprParser: public ResourceFetcher, public AddExprParserRule
-    {
+    class AddExprParser: public ResourceFetcher, public AddExprParserRule {
     public:
         AddExprParser(AddExprParserRule&& base) : AddExprParserRule(std::move(base)) {}
 
@@ -289,8 +282,7 @@ namespace sakoraE {
             >
         >
     >;
-    class LogicExprParser: public ResourceFetcher, public LogicExprParserRule
-    {
+    class LogicExprParser: public ResourceFetcher, public LogicExprParserRule {
     public:
         LogicExprParser(LogicExprParserRule&& base) : LogicExprParserRule(std::move(base)) {}
 
@@ -324,8 +316,7 @@ namespace sakoraE {
             >
         >
     >;
-    class BinaryExprParser: public ResourceFetcher, public BinaryExprParserRule
-    {
+    class BinaryExprParser: public ResourceFetcher, public BinaryExprParserRule {
     public:
         BinaryExprParser(BinaryExprParserRule&& base) : BinaryExprParserRule(std::move(base)) {}
 
@@ -358,8 +349,7 @@ namespace sakoraE {
         >,
         DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
     >;
-    class ArrayExprParser: public ResourceFetcher, public ArrayExprParserRule
-    {
+    class ArrayExprParser: public ResourceFetcher, public ArrayExprParserRule {
     public:
         ArrayExprParser(ArrayExprParserRule&& base) : ArrayExprParserRule(std::move(base)) {}
 
@@ -386,8 +376,7 @@ namespace sakoraE {
         TokenParser<TokenType::ASSIGN_OP>,
         WholeExprParser
     >;
-    class AssignExprParser: public ResourceFetcher, public AssignExprParserRule
-    {
+    class AssignExprParser: public ResourceFetcher, public AssignExprParserRule {
     public:
         AssignExprParser(AssignExprParserRule&& base) : AssignExprParserRule(std::move(base)) {}
 
@@ -410,12 +399,11 @@ namespace sakoraE {
     };
 
     using WholeExprParserRule = OptionsParser<
+        AssignExprParser,
         BinaryExprParser,
-        ArrayExprParser,
-        AssignExprParser
+        ArrayExprParser
     >;
-    class WholeExprParser: public ResourceFetcher, public WholeExprParserRule
-    {
+    class WholeExprParser: public ResourceFetcher, public WholeExprParserRule {
     public:
         WholeExprParser(WholeExprParserRule&& base) : WholeExprParserRule(std::move(base)) {}
         
@@ -444,14 +432,7 @@ namespace sakoraE {
         TokenParser<TokenType::TYPE_FLOAT>, 
         TokenParser<TokenType::TYPE_BOOL>
     >;
-    class BasicTypeModifierParser: public ResourceFetcher,
-    public OptionsParser<
-        TokenParser<TokenType::TYPE_INT>,
-        TokenParser<TokenType::TYPE_CHAR>,
-        TokenParser<TokenType::TYPE_FLOAT>,
-        TokenParser<TokenType::TYPE_BOOL>
-    >
-    {
+    class BasicTypeModifierParser: public ResourceFetcher, public BasicTypeModifierParserRule {
     public:
         BasicTypeModifierParser(BasicTypeModifierParserRule&& base) : BasicTypeModifierParserRule(std::move(base)) {}
 
@@ -480,8 +461,7 @@ namespace sakoraE {
         DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>,
         BasicTypeModifierParser
     >;
-    class ArrayTypeModifierParser: public ResourceFetcher, public ArrayTypeModifierParserRule
-    {
+    class ArrayTypeModifierParser: public ResourceFetcher, public ArrayTypeModifierParserRule {
     public:
         ArrayTypeModifierParser(ArrayTypeModifierParserRule&& base) : ArrayTypeModifierParserRule(std::move(base)) {}
 
@@ -502,10 +482,40 @@ namespace sakoraE {
         
         NodePtr genResource() override;
     };
+
+    using RangeExprParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_RANGE>,
+        OptionsParser<
+            ArrayExprParser,
+            IdentifierExprParser
+        >
+    >;
+    class RangeExprParser: public ResourceFetcher, public RangeExprParserRule {
+    public:
+        RangeExprParser(RangeExprParserRule&& base) : RangeExprParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return RangeExprParserRule::check(begin, end);
+        }
+
+        static Result<RangeExprParser> parse(TokenIter begin, TokenIter end) {
+            auto result = RangeExprParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<RangeExprParser>(std::move(*result.val)),
+                    result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
     
     using TypeModifierParserRule = OptionsParser<BasicTypeModifierParser, ArrayTypeModifierParser>;
-    class TypeModifierParser: public ResourceFetcher, public TypeModifierParserRule
-    {
+    class TypeModifierParser: public ResourceFetcher, public TypeModifierParserRule {
     public:
         TypeModifierParser(TypeModifierParserRule&& base) : TypeModifierParserRule(std::move(base)) {}
 
@@ -528,7 +538,296 @@ namespace sakoraE {
     };
     
     // Statement parsers 
+    using DeclareStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_LET>,
+        TokenParser<TokenType::IDENTIFIER>,
+        ClosureParser<
+            ConnectionParser<
+                TokenParser<TokenType::CONSTRAINT_OP>,
+                TypeModifierParser
+            >
+        >,
+        ClosureParser<
+            ConnectionParser<
+                TokenParser<TokenType::ASSIGN_OP>,
+                WholeExprParser
+            >
+        >,
+        TokenParser<TokenType::STMT_END>
+    >;
+    class DeclareStmtParser: public ResourceFetcher, public DeclareStmtParserRule {
+    public:
+        DeclareStmtParser(DeclareStmtParserRule&& base) : DeclareStmtParserRule(std::move(base)) {}
 
+        static bool check(TokenIter begin, TokenIter end) {
+            return DeclareStmtParser::check(begin, end);
+        }
+
+        static Result<DeclareStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = DeclareStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<DeclareStmtParser>(std::move(*result.val)),
+                    result.end};
+        }   
+        
+        NodePtr genResource() override;
+    };
+
+    using ExprStmtParserRule = 
+    ConnectionParser<
+        OptionsParser<
+            IdentifierExprParser,
+            AssignExprParser
+        >,
+        TokenParser<TokenType::STMT_END>
+    >;
+    class ExprStmtParser: public ResourceFetcher, public ExprStmtParserRule {
+        public:
+        ExprStmtParser(ExprStmtParserRule&& base) : ExprStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return ExprStmtParser::check(begin, end);
+        }
+
+        static Result<ExprStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = ExprStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            
+            return {result.status,
+                    std::make_shared<ExprStmtParser>(std::move(*result.val)),
+                    result.end};
+        }   
+        
+        NodePtr genResource() override;
+    };
+
+    using IfStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_IF>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        BinaryExprParser,
+        TokenParser<TokenType::LEFT_PAREN>,
+        BlockStmtParser
+    >;
+    class IfStmtParser: public ResourceFetcher, public IfStmtParserRule {
+    public:
+        IfStmtParser(IfStmtParserRule&& base) : IfStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return IfStmtParserRule::check(begin, end);
+        }
+
+        static Result<IfStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = IfStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<IfStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+    
+
+    using ElseStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_ELSE>,
+        BlockStmtParser
+    >;
+    class ElseStmtParser: public ResourceFetcher, public ElseStmtParserRule {
+    public:
+        ElseStmtParser(ElseStmtParserRule&& base) : ElseStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return ElseStmtParserRule::check(begin, end);
+        }
+
+        static Result<ElseStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = ElseStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<ElseStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+    
+
+    using WhileStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_WHILE>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        BinaryExprParser,
+        TokenParser<TokenType::LEFT_PAREN>,
+        BlockStmtParser
+    >;
+    class WhileStmtParser: public ResourceFetcher, public WhileStmtParserRule {
+    public:
+        WhileStmtParser(WhileStmtParserRule&& base) : WhileStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return WhileStmtParserRule::check(begin, end);
+        }
+
+        static Result<WhileStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = WhileStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<WhileStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
+
+    using ForStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_FOR>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        OptionsParser<
+            ConnectionParser<
+                DeclareStmtParser,
+                WholeExprParser,
+                TokenParser<TokenType::STMT_END>,
+                WholeExprParser
+            >,
+            ConnectionParser<
+                TokenParser<TokenType::KEYWORD_LET>,
+                TokenParser<TokenType::IDENTIFIER>,
+                ClosureParser<
+                    ConnectionParser<
+                        TokenParser<TokenType::CONSTRAINT_OP>,
+                        TypeModifierParser
+                    >
+                >,
+                TokenParser<TokenType::ASSIGN_OP>,
+                RangeExprParser
+            >
+        >,
+        TokenParser<TokenType::LEFT_PAREN>,
+        BlockStmtParser
+    >;
+    class ForStmtParser: public ResourceFetcher, public ForStmtParserRule {
+    public:
+        ForStmtParser(ForStmtParserRule&& base) : ForStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return ForStmtParserRule::check(begin, end);
+        }
+
+        static Result<ForStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = ForStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<ForStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+    
+    using ContainableStmts = 
+    OptionsParser<
+        DeclareStmtParser,
+        ExprStmtParser,
+        IfStmtParser,
+        WhileStmtParser,
+        ForStmtParser
+    >;
+    using BlockStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::LEFT_BRACKET>,
+        ContainableStmts,
+        TokenParser<TokenType::RIGHT_BRACKET>
+    >;
+    class BlockStmtParser: public ResourceFetcher, public BlockStmtParserRule {
+    public:
+        BlockStmtParser(BlockStmtParserRule&& base) : BlockStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return BlockStmtParserRule::check(begin, end);
+        }
+
+        static Result<BlockStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = BlockStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<BlockStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
+    using MemberUnit = 
+    ConnectionParser<
+        TokenParser<TokenType::IDENTIFIER>,
+        TokenParser<TokenType::CONSTRAINT_OP>,
+        TypeModifierParser
+    >;
+    using FuncDefineStmtParserRule =
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_FUNC>,
+        TokenParser<TokenType::IDENTIFIER>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        ClosureParser<MemberUnit>,
+        TokenParser<TokenType::RIGHT_PAREN>,
+        TokenParser<TokenType::ARROW>,
+        TypeModifierParser,
+        BlockStmtParser
+    >;
+    class FuncDefineStmtParser: public ResourceFetcher, public FuncDefineStmtParserRule {
+    public:
+        FuncDefineStmtParser(FuncDefineStmtParserRule&& base) : FuncDefineStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return FuncDefineStmtParserRule::check(begin, end);
+        }
+
+        static Result<FuncDefineStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = FuncDefineStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<FuncDefineStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
+    using ReturnStmtParserRule = 
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_RETURN>,
+        WholeExprParser,
+        TokenParser<TokenType::STMT_END>
+    >;
+    class ReturnStmtParser: public ResourceFetcher, public ReturnStmtParserRule {
+    public:
+        ReturnStmtParser(ReturnStmtParserRule&& base) : ReturnStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return ReturnStmtParserRule::check(begin, end);
+        }
+
+        static Result<ReturnStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = ReturnStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end};
+            }
+            return {result.status, std::make_shared<ReturnStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
 }
 
 #endif
