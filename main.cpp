@@ -10,7 +10,7 @@
 
 // 示例程序源代码
 const std::string SOURCE_CODE = R"(
-1*2+3
+i[1*3] - 9 != 99
 )";
 
 int main() {
@@ -24,7 +24,10 @@ int main() {
             std::cout << t.toString() << std::endl;
         }
 
-        auto result = sakoraE::AddExprParser::parse(r.begin(), r.end());
+        auto result = sakoraE::WholeExprParser::parse(r.begin(), r.end());
+
+        if (result.status == sakoraE::ParseStatus::FAILED)
+            sutils::reportError(sakoraE::OccurredTerm::PARSER, "Parsering Failed...", {result.end->info.line, result.end->info.column, "system parser error"});
 
         auto res = result.val->genResource();
 
