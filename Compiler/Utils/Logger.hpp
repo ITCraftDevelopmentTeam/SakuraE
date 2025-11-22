@@ -5,11 +5,11 @@
 
 namespace sutils {
     inline void print(std::string content) {
-        std::cout << "[SakoraUtils - Debug]: " <<  content;
+        std::cout << "[SakoraUtils|Debug]: " <<  content;
     }
 
     inline void println(std::string content) {
-        std::cout << "[SakoraUtils - Debug]: " <<  content << std::endl;
+        std::cout << "[SakoraUtils|Debug]: " <<  content << std::endl;
     }
 
     inline void reportError(sakoraE::OccurredTerm term, std::string content, sakoraE::PositionInfo pinfo) {
