@@ -16,16 +16,20 @@ namespace sakoraE {
     enum class ASTTag {
         // Empty
         Empty, Token,
-        // Head
+        // Expr Header
         LiteralNode, IndexOpNode, CallingOpNode, AtomIdentifierNode,
         IdentifierExprNode, PrimExprNode, MulExprNode, AddExprNode,
         LogicExprNode, BinaryExprNode, ArrayExprNode, WholeExprNode, 
         BasicTypeModifierNode, ArrayTypeModifierNode, TypeModifierNode,
         AssignExprNode,
+        // Stmt Header
+        DeclareStmtNode, ExprStmtNode, IfStmtNode, ElseStmtNode,
+        WhileStmtNode, ForStmtNode, BlockStmtNode, FuncDefineStmtNode,
+        ReturnStmtNode,
         // Token
         Literal, Identifier, Symbol, Keyword,
         // Branches
-        HeadExpr, Exprs, Op, Ops
+        HeadExpr, Exprs, Op, Ops, Types, Args, Type, AssignTerm
     };
 
     using NodePtr = std::shared_ptr<Node>;
