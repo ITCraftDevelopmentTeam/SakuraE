@@ -272,7 +272,6 @@ sakoraE::NodePtr sakoraE::TypeModifierParser::genResource() {
 sakoraE::NodePtr sakoraE::DeclareStmtParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::DeclareStmtNode);
     bool hasTypeStriction = false;
-    bool hasInitialization = false;
 
     (*root)[ASTTag::Identifier] = std::make_shared<Node>(std::get<1>(getTuple())->token);
     // If type striction existed, generate it
@@ -293,3 +292,80 @@ sakoraE::NodePtr sakoraE::DeclareStmtParser::genResource() {
 
     return root;
 }
+
+sakoraE::NodePtr sakoraE::ExprStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::ExprStmtNode);
+
+    std::visit([&](auto& var) {
+        (*root)[ASTTag::HeadExpr] = var->genResource();
+    }, std::get<0>(getTuple())->option());
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::IfStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::IfStmtNode);
+
+    (*root)[ASTTag::Condition] = std::get<2>(getTuple())->genResource();
+
+    std::visit([&](auto& var) {
+        (*root)[ASTTag::Block] = var->genResource();
+    }, std::get<4>(getTuple())->option());
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::ElseStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::ElseStmtNode);
+
+    (*root)[ASTTag::Block] = std::get<1>(getTuple())->genResource();
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::WhileStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::WhileStmtNode);
+
+    (*root)[ASTTag::Condition] = std::get<2>(getTuple())->genResource();
+    (*root)[ASTTag::Block] = std::get<4>(getTuple())->genResource();
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::ForStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::ForStmtNode);
+
+    std::visit([&](auto& var) {
+        using VarType = std::decay_t<decltype(var)>;
+
+        if constexpr (std::is_same_v<VarType, TraditionalConditionChain>) {
+            (*root)[ASTTag::DeclareStmtNode] = std::get<0>(var->getTuple())->genResource();
+            (*root)[ASTTag::Condition] = std::get<1>(var->getTuple())->genResource();
+            (*root)[ASTTag::HeadExpr] = std::get<3>(var->getTuple())->genResource();
+        }
+        else if constexpr (std::is_same_v<VarType, RangeConditionChain>) {
+            (*root)[ASTTag::Identifier] = std::make_shared<Node>(std::get<1>(var->getTuple())->token);
+            if (!std::get<2>(var->getTuple())->isEmpty()) {
+                (*root)[ASTTag::Type] = std::get<1>(std::get<2>(var->getTuple())->getClosure().at(0)->getTuple())->genResource();
+            }
+            (*root)[ASTTag::AssignTerm] = std::get<4>(var->getTuple())->genResource();
+        }
+
+    }, std::get<2>(getTuple())->option());
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::BlockStmtParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::BlockStmtNode);
+
+    for (auto stmt: std::get<1>(getTuple())->getClosure()) {
+        auto stmt_node = std::visit([](auto& ptr) -> NodePtr {
+            return ptr->genResource();
+        }, stmt->option());
+        (*root)[ASTTag::Stmts]->addChild(stmt_node);
+    }
+
+    return root;
+}
+
