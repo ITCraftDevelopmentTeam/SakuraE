@@ -29,7 +29,9 @@ namespace sakoraE {
         // Token
         Literal, Identifier, Symbol, Keyword,
         // Branches
-        HeadExpr, Exprs, Op, Ops, Types, Args, Type, AssignTerm
+        HeadExpr, Exprs, Op, Ops, 
+        Types, Args, Type, AssignTerm, 
+        Condition, Block, Stmts
     };
 
     using NodePtr = std::shared_ptr<Node>;
