@@ -267,6 +267,24 @@ sakoraE::NodePtr sakoraE::TypeModifierParser::genResource() {
     return root;
 }
 
+sakoraE::NodePtr sakoraE::RangeExprParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::RangeExprNode);
+
+    std::visit([&](auto& var) {
+        using VarType = std::decay_t<decltype(var)>;
+
+        if constexpr (std::is_same_v<VarType, ArrayExprParser>) {
+            (*root)[ASTTag::ArrayExprNode] = var->genResource();
+        }
+        else if constexpr (std::is_same_v<VarType, IdentifierExprParser>) {
+            (*root)[ASTTag::Identifier] = var->genResource();
+        }
+
+    }, std::get<1>(getTuple())->option());
+
+    return root;
+}
+
 // Stmt
 
 sakoraE::NodePtr sakoraE::DeclareStmtParser::genResource() {
@@ -376,7 +394,7 @@ sakoraE::NodePtr sakoraE::FuncDefineStmtParser::genResource() {
     if (!std::get<3>(getTuple())->isEmpty()) {
         for (auto arg: std::get<3>(getTuple())->getClosure()) {
             auto type = std::get<2>(arg->getTuple())->genResource();
-            auto name = std::make_shared<Node>(std::get<0>(arg->getTuple()));
+            auto name = std::make_shared<Node>(std::get<0>(arg->getTuple())->token);
 
             (*(*root)[ASTTag::Args])[ASTTag::Type]->addChild(type);
             (*(*root)[ASTTag::Args])[ASTTag::Identifier]->addChild(name);
@@ -393,6 +411,16 @@ sakoraE::NodePtr sakoraE::ReturnStmtParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::ReturnStmtNode);
 
     (*root)[ASTTag::HeadExpr] = std::get<1>(getTuple())->genResource();
+
+    return root;
+}
+
+sakoraE::NodePtr sakoraE::StatementParser::genResource() {
+    NodePtr root = std::make_shared<Node>(ASTTag::Stmt);
+
+    std::visit([&](auto& var) {
+        (*root)[ASTTag::Stmt] = var->genResource();
+    }, option());
 
     return root;
 }
