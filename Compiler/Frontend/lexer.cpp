@@ -164,7 +164,8 @@ sakoraE::Token sakoraE::Lexer::makeStringLiteral() {
     TokenType type = TokenType::STRING;
     std::string details = "string";
     std::string content;
-    content.pop_back();
+    
+    next();
 
     while (peek() != '\"' && peek() != '\0' && peek() != '\n') {
         content += next();
