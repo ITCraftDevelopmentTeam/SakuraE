@@ -4,6 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <variant>
+#include <sstream>
+
+#include "includes/magic_enum.hpp"
 
 namespace sakoraE::IR {
     enum class TypeToken {
@@ -50,7 +53,38 @@ namespace sakoraE::IR {
         }
         
         const std::string& toString() {
-            
+            std::ostringstream oss;
+            oss << "[Modifier: " << magic_enum::enum_name(tm_token) << ", Struct: ";
+
+            if (!hasStructMod())
+                oss << "<No Struct>";
+            else if (std::holds_alternative<ArrayModifier>(mod_content)) {
+                auto m = std::get<ArrayModifier>(mod_content);
+                oss << "[Array: D = " << m.dimension << ", Each len = [";
+                for (std::size_t i = 0; i < m.each_len.size(); i ++) {
+                    auto j = m.each_len[i];
+                    if (i == m.each_len.size() - 1) 
+                        oss << j;
+                    else
+                        oss << j << ", ";
+                }
+                oss << "]";
+            }
+
+            oss << "]";
+
+            return oss.str();
+        }
+
+        bool operator== (const TypeModifier& tm) {
+            if (tm_token != tm.tm_token) return false;
+            else if (mod_content != tm.mod_content)
+                return false;
+            else return true;
+        }
+
+        bool operator!= (const TypeModifier& tm) {
+            return !operator==(tm);
         }
     };
     
