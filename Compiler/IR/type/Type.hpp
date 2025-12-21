@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "includes/magic_enum.hpp"
+#include "Compiler/Utils/Logger.hpp"
 
 namespace sakoraE::IR {
     enum class TypeToken {
@@ -16,7 +17,7 @@ namespace sakoraE::IR {
         Null
     };
 
-    enum class TypeModifierToken {
+    enum class ValueType {
         // Value Type
         Value, Pointer, Ref, 
         // Struct Type
@@ -33,28 +34,35 @@ namespace sakoraE::IR {
     };
 
     class TypeModifier {
-        TypeModifierToken tm_token = TypeModifierToken::Undefined;
+        ValueType tm_token = ValueType::Undefined;
         std::variant<std::monostate, ArrayModifier> mod_content;
     public:
         TypeModifier()=default;
-        TypeModifier(TypeModifierToken t): tm_token(t) {}
-        TypeModifier(TypeModifierToken t, int d, std::vector<int> el):  
+        TypeModifier(ValueType t): tm_token(t) {}
+        TypeModifier(ValueType t, int d, std::vector<int> el):  
             tm_token(t), mod_content(ArrayModifier(d, el)) {}
 
         TypeModifier(const TypeModifier& type_mod): 
             tm_token(type_mod.tm_token), mod_content(type_mod.mod_content) {} 
 
-        const TypeModifierToken& getModifier() {
+        const ValueType& getValueType() {
             return tm_token;
         }
 
         bool hasStructMod()  {
             return !std::holds_alternative<std::monostate>(mod_content);
         }
+
+        const ArrayModifier& getModAsArray() {
+            if (!std::holds_alternative<ArrayModifier>(mod_content))
+                sutils::reportError(OccurredTerm::SYSTEM, "This Modifier's containing is not Array!", {0, 0, ""});
+            
+            return std::get<ArrayModifier>(mod_content);
+        }
         
         const std::string& toString() {
             std::ostringstream oss;
-            oss << "[Modifier: " << magic_enum::enum_name(tm_token) << ", Struct: ";
+            oss << "[ValueType: " << magic_enum::enum_name(tm_token) << ", Struct: ";
 
             if (!hasStructMod())
                 oss << "<No Struct>";
@@ -95,8 +103,13 @@ namespace sakoraE::IR {
         Type(TypeToken t): token(t) {}
         Type(TypeToken t, TypeModifier m): token(t), mod(m) {}
 
-        std::string toString() {
-            
+        const TypeToken& getType() { return token; }
+        const TypeModifier& getModifier() { return mod; }
+
+        const std::string& toString() {
+            std::ostringstream oss;
+            oss << "{Type: " << magic_enum::enum_name(token) << ", Modifier: " <<  mod.toString() << "}";
+            return oss.str();
         }
     };
 }
