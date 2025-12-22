@@ -40,7 +40,7 @@ namespace sakoraE {
         KEYWORD_WHILE, KEYWORD_FOR, KEYWORD_FUNC,
         KEYWORD_RETURN, KEYWORD_CONST, KEYWORD_RANGE,
         
-        TYPE_INT, TYPE_CHAR, TYPE_BOOL, TYPE_FLOAT,
+        TYPE_INT, TYPE_CHAR, TYPE_BOOL, TYPE_FLOAT, TYPE_STRING,
 
         _EOF_,
         UNKNOWN
@@ -82,7 +82,7 @@ namespace sakoraE {
         };
 
         const std::vector<std::string> typeFields = {
-            "int", "float", "bool", "char"
+            "int", "float", "bool", "char", "string"
         };
 
         char peek(int offset = 0) const;
