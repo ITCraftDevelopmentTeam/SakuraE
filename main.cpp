@@ -18,6 +18,8 @@ func foo(a: int, b: int, s: string) -> int {
         return 0;
     }
     
+    VAR1 = s;
+
     return a + b;
 }
 )";
