@@ -8,9 +8,9 @@
 
 namespace sakoraE {
     struct PositionInfo {
-        int line;
-        int column;
-        std::string details;
+        int line = 0;
+        int column = 0;
+        std::string details = "no details";
     };
 
     // Point the term where occurred the error
