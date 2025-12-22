@@ -208,6 +208,11 @@ sakoraE::Token sakoraE::Lexer::makeSymbol() {
                 content = "-=";
                 next(); next();
             }
+            else if (peek(1) == '>') {
+                type = TokenType::ARROW;
+                content = "->";
+                next(); next();
+            }
             else {
                 type = TokenType::SUB;
                 content = "-";
