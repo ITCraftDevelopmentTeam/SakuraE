@@ -37,6 +37,7 @@ namespace sakoraE {
         DOT,             // .
         COMMA,           // ,
         STMT_END,        // ;
+        FN_OP,           // |>
 
         KEYWORD_LET, KEYWORD_IF, KEYWORD_ELSE,
         KEYWORD_WHILE, KEYWORD_FOR, KEYWORD_FUNC,
@@ -74,8 +75,8 @@ namespace sakoraE {
     private:
         fzlib::String source_code;
         size_t current_pos;
-        int current_line;
-        int current_column;
+        int current_line = 1;
+        int current_column = 1;
 
         const std::vector<fzlib::String> keywords = {
             "if", "else", "while", "for", "func", 

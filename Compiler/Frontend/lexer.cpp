@@ -303,6 +303,11 @@ sakoraE::Token sakoraE::Lexer::makeSymbol() {
                 content = "||";
                 next(); next();
             }
+            else if (peek(1) == '>') {
+                type = TokenType::FN_OP;
+                content = "|>";
+                next(); next();
+            }
             else {
                 type = TokenType::OR;
                 content = "|";
