@@ -6,6 +6,12 @@
 #include <variant>
 #include <sstream>
 
+#include <llvm/IR/Value.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include "includes/magic_enum.hpp"
 #include "includes/String.hpp"
 
