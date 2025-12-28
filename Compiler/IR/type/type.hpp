@@ -124,6 +124,48 @@ namespace sakoraE::IR {
             oss << "{Type: " << magic_enum::enum_name(token) << ", Modifier: " <<  mod.toString() << "}";
             return oss.str();
         }
+
+        llvm::Type* toLLVMType(llvm::LLVMContext& ctx) {
+            llvm::Type* llvmType = nullptr;
+            switch (token)
+            {
+            case TypeToken::Integer:
+                llvmType = llvm::Type::getInt32Ty(ctx);
+                break;
+            case TypeToken::Float:
+                llvmType = llvm::Type::getFloatTy(ctx);
+                break;
+            case TypeToken::Char:
+                llvmType = llvm::Type::getInt8Ty(ctx);
+                break;
+            case TypeToken::Bool:
+                llvmType = llvm::Type::getInt1Ty(ctx);
+                break;
+            case TypeToken::Null:
+                llvmType = llvm::Type::getVoidTy(ctx);
+                break;
+            case TypeToken::String:
+                llvmType = llvm::Type::getInt8Ty(ctx)->getPointerTo();
+                break;
+            
+            default:
+                break;
+            }
+
+            // TODO: 没有设计类型不符的检查
+            if (mod.getValueType() == ValueType::Pointer)
+                llvmType = llvmType->getPointerTo();
+            else if (mod.getValueType() == ValueType::Ref)
+                llvmType = llvmType->getPointerTo();
+            else if (mod.getValueType() == ValueType::Array) {
+                auto arr = mod.getModAsArray();
+                for (auto it = arr.each_len.rbegin(); it != arr.each_len.rend(); it ++) {
+                    llvmType = llvm::ArrayType::get(llvmType, *it);
+                }
+            }
+
+            return llvmType;
+        }
     };
 }
 
