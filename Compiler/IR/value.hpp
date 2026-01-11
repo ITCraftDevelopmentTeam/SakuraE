@@ -8,6 +8,7 @@
 #include <llvm/IR/Constants.h>
 
 #include "type/type.hpp"
+#include "Compiler/Frontend/lexer.h"
 
 namespace sakoraE {
     class Value {
@@ -71,6 +72,27 @@ namespace sakoraE {
 
         bool operator!= (Value value) {
             return !operator==(value);
+        }
+
+        static Value make(Token tok) {
+            switch (tok.type)
+            {
+            case TokenType::BOOL_CONST:
+                return Value(tok.content == "true"?true:false, tok.info);
+            case TokenType::INT_N:
+                return Value(atoi(tok.content.c_str()), tok.info);
+            case TokenType::FLOAT_N:
+                return Value(atof(tok.content.c_str()), tok.info);
+            case TokenType::STRING:
+                return Value(tok.content, tok.info);
+            case TokenType::CHAR:
+                return Value(tok.content.at(0), tok.info);
+            
+            default:
+                throw SakoraError(OccurredTerm::IR_GENERATING,
+                                "Unknown type of token to convert",
+                                tok.info);
+            }
         }
     };
 }
