@@ -37,16 +37,10 @@ namespace sakoraE::CodeGen {
         llvm::LLVMContext* getContext() { return context; }
         llvm::IRBuilder<>* getBuilder() { return builder; }
 
-        llvm::Value* generate(NodePtr node);
-
-    private:
-        // Tools
-        
-
         // Expressions
         llvm::Value* genLiteralNode(NodePtr node);
         llvm::Value* genIndexOpNode(NodePtr node);
-        llvm::Value* genCallingOpNode(NodePtr node);
+        std::vector<llvm::Value*> genCallingOpNode(NodePtr node);
         llvm::Value* genAtomIdentifierNode(NodePtr node);
         llvm::Value* genIdentifierExprNode(NodePtr node);
         llvm::Value* genPrimExprNode(NodePtr node);
@@ -69,11 +63,6 @@ namespace sakoraE::CodeGen {
         llvm::Value* genBlockStmtNode(NodePtr node);
         llvm::Value* genFuncDefineStmtNode(NodePtr node);
         llvm::Value* genReturnStmtNode(NodePtr node);
-
-        llvm::Value* logError(const char* str) {
-            std::cerr << "CodeGen Error: " << str << std::endl;
-            return nullptr;
-        }
     };
 }
 
