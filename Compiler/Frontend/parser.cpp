@@ -41,7 +41,7 @@ sakoraE::NodePtr sakoraE::CallingOpParser::genResource() {
 }
 
 sakoraE::NodePtr sakoraE::AtomIdentifierExprParser::genResource() {
-    NodePtr root = std::make_shared<Node>(ASTTag::CallingOpNode);
+    NodePtr root = std::make_shared<Node>(ASTTag::AtomIdentifierNode);
 
     (*root)[ASTTag::Identifier] = std::make_shared<Node>(std::get<0>(getTuple())->token);
     
