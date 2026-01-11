@@ -18,8 +18,6 @@
 #include "Compiler/Utils/Logger.hpp"
 
 namespace sakoraE::IR {
-    using LLVMTypePtr = std::unique_ptr<llvm::Type>;
-
     enum class TypeToken {
         Integer, Char,
         Float, String,
@@ -127,27 +125,27 @@ namespace sakoraE::IR {
             return oss.str();
         }
 
-        std::unique_ptr<llvm::Type> toLLVMType(llvm::LLVMContext& ctx) {
-            std::unique_ptr<llvm::Type> llvmType = nullptr;
+        llvm::Type* toLLVMType(llvm::LLVMContext& ctx) {
+            llvm::Type* llvmType = nullptr;
             switch (token)
             {
             case TypeToken::Integer:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getInt32Ty(ctx));
+                llvmType = llvm::Type::getInt32Ty(ctx);
                 break;
             case TypeToken::Float:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getFloatTy(ctx));
+                llvmType = llvm::Type::getFloatTy(ctx);
                 break;
             case TypeToken::Char:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getInt8Ty(ctx));
+                llvmType = llvm::Type::getInt8Ty(ctx);
                 break;
             case TypeToken::Bool:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getInt1Ty(ctx));
+                llvmType = llvm::Type::getInt1Ty(ctx);
                 break;
             case TypeToken::Null:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getVoidTy(ctx));
+                llvmType = llvm::Type::getVoidTy(ctx);
                 break;
             case TypeToken::String:
-                llvmType = std::make_unique<llvm::Type>(llvm::Type::getInt8Ty(ctx)->getPointerTo());
+                llvmType = llvm::Type::getInt8Ty(ctx)->getPointerTo();
                 break;
             
             default:
@@ -156,13 +154,13 @@ namespace sakoraE::IR {
 
             // TODO: 没有设计类型不符的检查
             if (mod.getValueType() == ValueType::Pointer)
-                llvmType = std::make_unique<llvm::Type>(llvmType->getPointerTo());
+                llvmType = llvmType->getPointerTo();
             else if (mod.getValueType() == ValueType::Ref)
-                llvmType = std::make_unique<llvm::Type>(llvmType->getPointerTo());
+                llvmType = llvmType->getPointerTo();
             else if (mod.getValueType() == ValueType::Array) {
                 auto arr = mod.getModAsArray();
                 for (auto it = arr.each_len.rbegin(); it != arr.each_len.rend(); it ++) {
-                    llvmType = std::make_unique<llvm::Type>(llvm::ArrayType::get(llvmType.get(), *it));
+                    llvmType = llvm::ArrayType::get(llvmType, *it);
                 }
             }
 
