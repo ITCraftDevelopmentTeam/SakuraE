@@ -33,6 +33,10 @@ namespace sakoraE {
             return type;
         }
 
+        llvm::Type* getLLVMType(llvm::LLVMContext& context) {
+            return type.toLLVMType(context);
+        }
+
         const PositionInfo& getInfo() {
             return create_info;
         }
