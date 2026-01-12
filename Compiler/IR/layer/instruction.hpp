@@ -1,0 +1,37 @@
+#ifndef SAKORAE_INSTRUCTION_HPP
+#define SAKORAE_INSTRUCTION_HPP
+
+#include "Compiler/IR/value/value.hpp"
+
+namespace sakoraE::IR {
+    enum class OpKind {
+        empty,
+        constant,
+        add, sub, mul, div,
+        lgc_equal, lgc_mr_than, lgc_ls_than, 
+        lgc_eq_mr_than, lgc_eq_ls_than,
+        decl, assign, decl_block
+    };
+
+    class Instruction {
+        OpKind kind = OpKind::empty;
+        std::vector<Value> args;
+    public:
+        Instruction(OpKind k): kind(kind) {}
+        Instruction(OpKind k, std::vector<Value> params): kind(k), args(params) {}
+
+        const Value& arg(std::size_t pos) {
+            return args.at(pos);
+        }
+
+        const OpKind& kind() {
+            return kind;
+        }
+
+        const Value& operator[] (std::size_t pos) {
+            return args.at(pos);
+        }
+    };
+}
+
+#endif // !SAKORAE_INSTRUCTION_HPP
