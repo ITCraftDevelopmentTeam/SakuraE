@@ -21,22 +21,22 @@ namespace sakoraE::IR {
     };
 
     using SymbolPair = std::pair<fzlib::String, Symbol>;
-    using SymbolMap = std::map<fzlib::String, Symbol>;
+    using SymbolTable = std::map<fzlib::String, Symbol>;
 
     class SymbolManager {
-        std::stack<SymbolMap> SymMapStack;
+        std::stack<SymbolTable> SymMapStack;
     public:
         SymbolManager()=default;
 
         void NewMap() {
-            SymMapStack.push(SymbolMap());
+            SymMapStack.push(SymbolTable());
         }
 
         void PopMap() {
             SymMapStack.pop();
         }
 
-        SymbolMap& getCurrentMap() {
+        SymbolTable& getCurrentMap() {
             return SymMapStack.top();
         }
     };
