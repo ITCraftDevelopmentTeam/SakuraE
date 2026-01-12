@@ -12,8 +12,8 @@
 #include <vector>
 #include <iostream>
 
-#include "../Frontend/AST.hpp"
-#include "../IR/symbol.hpp"
+#include "Compiler/Frontend/AST.hpp"
+#include "Compiler/IR/IR.hpp"
 
 namespace sakoraE::CodeGen {
     using namespace sakoraE::IR;
