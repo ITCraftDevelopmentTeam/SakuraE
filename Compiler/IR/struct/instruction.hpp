@@ -1,16 +1,26 @@
-#ifndef SAKORAE_INSTRUCTION_HPP
-#define SAKORAE_INSTRUCTION_HPP
+#ifndef SAKURAE_INSTRUCTION_HPP
+#define SAKURAE_INSTRUCTION_HPP
 
 #include "Compiler/IR/value/value.hpp"
 
-namespace sakoraE::IR {
+namespace sakuraE::IR {
     enum class OpKind {
         empty,
         constant,
-        add, sub, mul, div,
-        lgc_equal, lgc_mr_than, lgc_ls_than, 
-        lgc_eq_mr_than, lgc_eq_ls_than,
-        decl, assign, decl_block
+        add, 
+        sub, 
+        mul, 
+        div,
+        lgc_equal, 
+        lgc_mr_than, 
+        lgc_ls_than, 
+        lgc_eq_mr_than, 
+        lgc_eq_ls_than,
+        decl, 
+        assign, 
+        decl_block, 
+        decl_func, 
+        decl_module
     };
 
     class Instruction {
@@ -34,4 +44,4 @@ namespace sakoraE::IR {
     };
 }
 
-#endif // !SAKORAE_INSTRUCTION_HPP
+#endif // !SAKURAE_INSTRUCTION_HPP
