@@ -5,49 +5,9 @@
 #include <utility>
 
 #include "block.hpp"
+#include "scope.hpp"
 
 namespace sakuraE::IR {
-    struct Symbol: public Value {
-        fzlib::String name;
-        Value* address;
-
-        Symbol(fzlib::String n, Value* addr, Type* t): name(n), address(addr), Value(t) {}
-    };
-
-    class Scope {
-        std::vector<std::map<fzlib::String, Symbol>> symbolTable;
-        std::size_t cursor = 0;
-
-        PositionInfo createInfo;
-
-        Scope* parent = nullptr;
-
-        std::map<fzlib::String, Symbol>& top() {
-            return symbolTable[cursor];
-        }
-    public:
-        Scope(PositionInfo info): createInfo(info) {
-            symbolTable.emplace_back();
-        }
-
-        void declare(fzlib::String n, Value* addr, Type* t) {
-            top().emplace(n, Symbol(n, addr, t));
-        }
-
-        Symbol* lookup(const fzlib::String& name) {
-            for (auto it = symbolTable.rbegin(); it != symbolTable.rend(); it --) {
-                if (it->find(name) != it->end()) {
-                    return &(*it)[name];
-                }
-            }
-
-            if (parent)
-                return parent->lookup(name);
-            
-            return nullptr;
-        }
-    };
-
     using FormalParamsDefine = std::vector<std::pair<fzlib::String, Type*>>;
     class Module;
 
@@ -124,7 +84,7 @@ namespace sakuraE::IR {
             return funcName;
         }
 
-        Scope& scope() {
+        Scope& fnScope() {
             return funcScope;
         }
 
