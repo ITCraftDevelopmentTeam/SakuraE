@@ -13,9 +13,9 @@ namespace sakuraE::IR {
         // Storage global identifiers
         Scope globalScope;
 
-        std::vector<Function> fnList;
+        std::vector<Function*> fnList;
         // Indicates the current maximum index of fnList
-        std::size_t cursor = 0;
+        int cursor = -1;
 
         // Determine whether a module has an entry
         bool hasEntry;
@@ -26,42 +26,36 @@ namespace sakuraE::IR {
         Module(fzlib::String id, PositionInfo info):
             ID("$" + id), createInfo(info), globalScope(info) {}
 
-        Module& buildFunction(const Function& fn) {
-            fnList.push_back(fn);
+        Value* buildFunction(fzlib::String name, Type* retType, FormalParamsDefine params, PositionInfo info) {
+            Function* func = new Function(name, retType, params, info);
+            fnList.push_back(func);
             cursor ++;
 
-            return *this;
-        }
-
-        Module& buildFunction(fzlib::String name, PositionInfo info) {
-            fnList.emplace_back(name, info);
-            cursor ++;
-
-            return *this;
+            return Constant::get(Type::getFunctionTy(func->getReturnType(), func->getParamsOnlyType()), createInfo);
         }
 
         Scope& scope() {
             return globalScope;
         }
 
-        Function& curFunc() {
+        Function* curFunc() {
             return fnList[cursor];
         }
 
-        Function& func(fzlib::String name, FormalParamsDefine params) {
-            std::vector<Function> basic_results;
+        Function* func(fzlib::String name, FormalParamsDefine params) {
+            std::vector<Function*> basic_results;
             for (auto fn: fnList) {
-                if (fn.getName() == name) 
+                if (fn->getName() == name) 
                     basic_results.push_back(fn);
             }
 
             for (auto& fn: basic_results) {
                 bool equal = true;
 
-                if (fn.getFormalParams().size() != params.size()) continue;
+                if (fn->getFormalParams().size() != params.size()) continue;
 
-                for (std::size_t i = 0; i < fn.getFormalParams().size(); i ++) {
-                    auto arg = fn.getFormalParams()[i];
+                for (std::size_t i = 0; i < fn->getFormalParams().size(); i ++) {
+                    auto arg = fn->getFormalParams()[i];
                     if (arg.first == params[i].first &&
                         arg.second == params[i].second) continue;
                     else equal = false;
@@ -74,7 +68,7 @@ namespace sakuraE::IR {
                             createInfo);
         }
 
-        const std::size_t& cur() {
+        const int& cur() {
             return cursor;
         }
 
