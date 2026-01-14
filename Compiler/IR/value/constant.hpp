@@ -15,25 +15,32 @@ namespace sakuraE::IR {
 
         Constant(Type* type, int val, PositionInfo info)
             : Value(type), content(val), createInfo(info) {}
-    
         Constant(Type* type, double val, PositionInfo info)
             : Value(type), content(val), createInfo(info) {}
-    
         Constant(Type* type, const std::string& val, PositionInfo info)
             : Value(type), content(val), createInfo(info) {}
-    
         Constant(Type* type, char val, PositionInfo info)
             : Value(type), content(val), createInfo(info) {}
-
         Constant(Type* type, bool val, PositionInfo info)
             : Value(type), content(val), createInfo(info) {}
 
+        Constant(Type* type, int val)
+            : Value(type), content(val) {}
+        Constant(Type* type, double val)
+            : Value(type), content(val) {}
+        Constant(Type* type, const std::string& val)
+            : Value(type), content(val) {}
+        Constant(Type* type, char val)
+            : Value(type), content(val) {}
+        Constant(Type* type, bool val)
+            : Value(type), content(val) {}
+
     public:
-        static Constant* get(int val, PositionInfo info);
-        static Constant* get(double val, PositionInfo info);
-        static Constant* get(const std::string& val, PositionInfo info);
-        static Constant* get(char val, PositionInfo info);
-        static Constant* get(bool val, PositionInfo info);
+        static Constant* get(int val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(double val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(const std::string& val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(char val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(bool val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* getFromToken(const Token& tok);
 
         template<typename T>

@@ -17,7 +17,7 @@ namespace sakuraE::IR {
         }
 
         Type* int32Ty = Type::getInt32Ty();
-        auto newEntry = intConstants.emplace(val, Constant(int32Ty, val, info));
+        auto newEntry = intConstants.emplace(val, Constant(int32Ty, val));
         return &newEntry.first->second;
     }
 
@@ -28,7 +28,7 @@ namespace sakuraE::IR {
         }
 
         Type* floatTy = Type::getFloatTy();
-        auto newEntry = doubleConstants.emplace(val, Constant(floatTy, val, info));
+        auto newEntry = doubleConstants.emplace(val, Constant(floatTy, val));
         return &newEntry.first->second;
     }
 
@@ -41,7 +41,7 @@ namespace sakuraE::IR {
         Type* charTy = Type::getIntNTy(8);
         Type* arrayTy = Type::getArrayTy(charTy, val.length() + 1);
         Type* stringTy = Type::getPointerTo(arrayTy);
-        auto newEntry = stringConstants.emplace(val, Constant(stringTy, val, info));
+        auto newEntry = stringConstants.emplace(val, Constant(stringTy, val));
         return &newEntry.first->second;
     }
 
@@ -52,7 +52,7 @@ namespace sakuraE::IR {
         }
 
         Type* charTy = Type::getIntNTy(8);
-        auto newEntry = charConstants.emplace(val, Constant(charTy, val, info));
+        auto newEntry = charConstants.emplace(val, Constant(charTy, val));
         return &newEntry.first->second;
     }
 
@@ -63,7 +63,7 @@ namespace sakuraE::IR {
         }
 
         Type* boolTy = Type::getIntNTy(1);
-        auto newEntry = boolConstants.emplace(val, Constant(boolTy, val, info));
+        auto newEntry = boolConstants.emplace(val, Constant(boolTy, val));
         return &newEntry.first->second;
     }
 
