@@ -46,7 +46,7 @@ namespace sakuraE {
         { T::epsilonable() } -> std::convertible_to<bool>;
     };
 
-    // Only to parse a single token
+    // Only to parse a Single token
     template<sakuraE::TokenType T>
     struct TokenParser {
         const std::shared_ptr<Token> token;
