@@ -42,6 +42,7 @@ namespace sakuraE::IR {
     // SakuraE Function
     class Function {
         fzlib::String funcName;
+        Type* returnType;
         FormalParamsDefine formalParams;
         Scope funcScope;
 
@@ -53,11 +54,11 @@ namespace sakuraE::IR {
 
         Module* parent;
     public:
-        Function(fzlib::String name, PositionInfo info): 
-            funcName(name), funcScope(info), createInfo(info) {}
+        Function(fzlib::String name, Type* retType, PositionInfo info): 
+            funcName(name), returnType(retType), funcScope(info), createInfo(info) {}
         
-        Function(fzlib::String name, FormalParamsDefine params, PositionInfo info): 
-            funcName(name), formalParams(params), funcScope(info), createInfo(info) {}
+        Function(fzlib::String name, Type* retType, FormalParamsDefine params, PositionInfo info): 
+            funcName(name), returnType(retType), formalParams(params), funcScope(info), createInfo(info) {}
 
         void setParent(Module* mod) {
             parent = mod;
@@ -67,13 +68,26 @@ namespace sakuraE::IR {
             return parent;
         }
 
+        Type* getReturnType() {
+            return returnType;
+        }
+
+        std::vector<Type*> getParamsOnlyType() {
+            std::vector<Type*> result;
+            for (auto param: formalParams) {
+                result.push_back(param.second);
+            }
+
+            return result;
+        }
+
         Value* buildBlock(fzlib::String id, std::vector<Instruction*> ops) {
             Block* block = new Block(id, ops);
             block->setParent(this);
             blocks.push_back(block);
             cursor ++;
 
-            return Constant::get(cursor, Type::getBlockIndexTy(), createInfo);
+            return Constant::get(Type::getBlockTy(), createInfo);
         }
 
         Value* buildBlock(fzlib::String id) {
@@ -82,7 +96,7 @@ namespace sakuraE::IR {
             blocks.push_back(block);
             cursor ++;
 
-            return Constant::get(cursor, Type::getBlockIndexTy(), createInfo);
+            return Constant::get(Type::getBlockTy(), createInfo);
         }
 
         // Return current cursor
