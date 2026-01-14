@@ -70,6 +70,10 @@ namespace sakuraE {
             return tag;
         }
 
+        void setToken(Token tok) {
+            content = std::make_shared<Token>(tok);
+        }
+
         Token getToken() {
             return *std::get<TokenPtr>(content);
         }
