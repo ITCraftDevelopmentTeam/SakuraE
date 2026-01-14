@@ -3,7 +3,7 @@
 
 #include "struct/program.hpp"
 #include "Compiler/Frontend/AST.hpp"
-#include "Compiler/IR/value/value.hpp"
+#include "Compiler/IR/value/constant.hpp"
 
 namespace sakuraE::IR {
     class Generator {
@@ -24,12 +24,12 @@ namespace sakuraE::IR {
         }
 
     private:
-        Function& curFunc() {
+        Function* curFunc() {
             return program.curMod().curFunc();
         }
 
         // Visit a node and dispatch based on tag
-        void visit(NodePtr node) {
+        Value* visit(NodePtr node) {
             if (!node) return;
 
             switch (node->getTag()) {
@@ -66,35 +66,35 @@ namespace sakuraE::IR {
         }
 
         // --- Visit Expressions ---
-        void visitLiteralNode(NodePtr node);
-        void visitIndexOpNode(NodePtr node);
-        void visitCallingOpNode(NodePtr node);
-        void visitAtomIdentifierNode(NodePtr node);
-        void visitIdentifierExprNode(NodePtr node);
-        void visitPrimExprNode(NodePtr node);
-        void visitMulExprNode(NodePtr node);
-        void visitAddExprNode(NodePtr node);
-        void visitLogicExprNode(NodePtr node);
-        void visitBinaryExprNode(NodePtr node);
-        void visitArrayExprNode(NodePtr node);
-        void visitWholeExprNode(NodePtr node);
-        void visitBasicTypeModifierNode(NodePtr node);
-        void visitArrayTypeModifierNode(NodePtr node);
-        void visitTypeModifierNode(NodePtr node);
-        void visitAssignExprNode(NodePtr node);
-        void visitRangeExprNode(NodePtr node);
+        Value* visitLiteralNode(NodePtr node);
+        Value* visitIndexOpNode(NodePtr node);
+        Value* visitCallingOpNode(NodePtr node);
+        Value* visitAtomIdentifierNode(NodePtr node);
+        Value* visitIdentifierExprNode(NodePtr node);
+        Value* visitPrimExprNode(NodePtr node);
+        Value* visitMulExprNode(NodePtr node);
+        Value* visitAddExprNode(NodePtr node);
+        Value* visitLogicExprNode(NodePtr node);
+        Value* visitBinaryExprNode(NodePtr node);
+        Value* visitArrayExprNode(NodePtr node);
+        Value* visitWholeExprNode(NodePtr node);
+        Value* visitBasicTypeModifierNode(NodePtr node);
+        Value* visitArrayTypeModifierNode(NodePtr node);
+        Value* visitTypeModifierNode(NodePtr node);
+        Value* visitAssignExprNode(NodePtr node);
+        Value* visitRangeExprNode(NodePtr node);
 
         // --- Visit Statements ---
-        void visitDeclareStmtNode(NodePtr node);
-        void visitExprStmtNode(NodePtr node);
-        void visitIfStmtNode(NodePtr node);
-        void visitElseStmtNode(NodePtr node);
-        void visitWhileStmtNode(NodePtr node);
-        void visitForStmtNode(NodePtr node);
-        void visitBlockStmtNode(NodePtr node);
-        void visitFuncDefineStmtNode(NodePtr node);
-        void visitReturnStmtNode(NodePtr node);
-        void visitStmt(NodePtr node);
+        Value* visitDeclareStmtNode(NodePtr node);
+        Value* visitExprStmtNode(NodePtr node);
+        Value* visitIfStmtNode(NodePtr node);
+        Value* visitElseStmtNode(NodePtr node);
+        Value* visitWhileStmtNode(NodePtr node);
+        Value* visitForStmtNode(NodePtr node);
+        Value* visitBlockStmtNode(NodePtr node);
+        Value* visitFuncDefineStmtNode(NodePtr node);
+        Value* visitReturnStmtNode(NodePtr node);
+        Value* visitStmt(NodePtr node);
     };
 }
 
