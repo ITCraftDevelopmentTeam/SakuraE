@@ -7,24 +7,25 @@ namespace sakuraE::IR {
     class Program {
         fzlib::String ID;
 
-        std::vector<Module> moduleList;
+        std::vector<Module*> moduleList;
         // Indicates the current maximum index of moduleList
-        std::size_t cur = 0;
+        int cur = -1;
     public:
         Program(fzlib::String id): ID(id) {}
 
         Program& buildModule(fzlib::String id, PositionInfo info) {
-            moduleList.emplace_back(id, info);
+            Module* module = new Module(id, info);
+            moduleList.emplace_back(module);
             cur ++;
 
             return *this;
         }
 
-        Module& curMod () {
+        Module* curMod () {
             return moduleList[cur];
         }
 
-        const Module& mod(std::size_t index) {
+        Module* mod(std::size_t index) {
             return moduleList[index];
         }
     };
