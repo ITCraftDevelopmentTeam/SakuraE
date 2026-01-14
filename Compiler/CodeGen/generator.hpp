@@ -27,7 +27,7 @@ namespace sakuraE::CodeGen {
     public:
         CodeGenerator(fzlib::String name) {
             context = new llvm::LLVMContext();
-            module = new llvm::Module(name, *context);
+            module = new llvm::Module(name.c_str(), *context);
             builder = new llvm::IRBuilder<>(*context);
         }
 
