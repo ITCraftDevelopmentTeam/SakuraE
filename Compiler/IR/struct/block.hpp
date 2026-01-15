@@ -7,16 +7,16 @@ namespace sakuraE::IR {
     class Function;
     // SakuraE IR Block
     // Rule: Every block id starts as '@'
-    class Block {
+    class Block: public Value {
         std::vector<Instruction*> instructions;
         fzlib::String ID = "@default-block";
 
         Function* parent = nullptr;
     public:
         Block(fzlib::String id, std::vector<Instruction*> ops): 
-            instructions(ops), ID("@" + id) {}
+            Value(IRType::getBlockTy()), instructions(ops), ID("@" + id) {}
         Block(fzlib::String id):
-            instructions({}), ID("@" + id) {}
+            Value(IRType::getBlockTy()), instructions({}), ID("@" + id) {}
 
         ~Block() {
             for (auto ins: instructions) {
