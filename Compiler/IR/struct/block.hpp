@@ -41,6 +41,11 @@ namespace sakuraE::IR {
         }
 
         Value* createInstruction(OpKind k, IRType* t, const fzlib::String& n) {
+            if (instructions[instructions.size() - 1]->isTerminal())
+                throw SakuraError(OccurredTerm::IR_GENERATING,  
+                                    "Cannot create any instruction after terminal code!",
+                                    {0, 0, "InsideError"});
+
             Instruction* ins = new Instruction(k, t, {});
             ins->setParent(this);
             ins->setName(n);
@@ -50,6 +55,11 @@ namespace sakuraE::IR {
         }
 
         Value* createInstruction(OpKind k, IRType* t, std::vector<Value*> params, const fzlib::String& n) {
+            if (instructions[instructions.size() - 1]->isTerminal())
+                throw SakuraError(OccurredTerm::IR_GENERATING,  
+                                    "Cannot create any instruction after terminal code!",
+                                    {0, 0, "InsideError"});
+
             Instruction* ins = new Instruction(k, t, params);
             ins->setParent(this);
             ins->setName(n);
