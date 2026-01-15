@@ -21,8 +21,9 @@ SakuraE/
 ├── CMakeLists.txt              # CMake build configuration file
 ├── main.cpp                    # Main entry point of the compiler
 ├── demo.sak                    # Sample source file for testing
+├── banner.png                  # Project logo/banner image
 ├── Compiler/                   # Core compiler components
-│   ├── CodeGen/                # Code generation module
+│   ├── CodeGen/                # Code generation module (LLVM backend)
 │   │   ├── generator.cpp       # Implementation of code generation
 │   │   └── generator.hpp       # Header for code generation
 │   ├── Error/                  # Error handling utilities
@@ -32,23 +33,25 @@ SakuraE/
 │   │   ├── grammar.txt         # Grammar rules for parsing
 │   │   ├── lexer.cpp           # Lexical analyzer implementation
 │   │   ├── lexer.h             # Lexer header
-│   │   ├── parser_base.hpp     # Base parser utilities
+│   │   ├── parser_base.hpp     # Base parser utilities and parser combinators
 │   │   ├── parser.cpp          # Parser implementation
 │   │   └── parser.hpp          # Parser header
 │   ├── IR/                     # Intermediate Representation (IR) module
-│   │   ├── generator.cpp       # IR generator implementation
+│   │   ├── generator.cpp       # IR generator implementation (AST visitor)
 │   │   ├── generator.hpp       # IR generation utilities
 │   │   ├── IR.hpp              # Core IR definitions
 │   │   ├── struct/             # IR structural components
 │   │   │   ├── block.hpp       # Basic block representation
-│   │   │   ├── function.hpp    # Function representation
-│   │   │   ├── instruction.hpp # Instruction definitions
+│   │   │   ├── function.hpp    # Function representation with scope management
+│   │   │   ├── instruction.hpp # Instruction definitions and OpKind enum
 │   │   │   ├── module.hpp      # Module representation
 │   │   │   ├── program.hpp     # Program-level IR
 │   │   │   └── scope.hpp       # Scope management for symbols
 │   │   ├── type/               # Type system
-│   │   │   ├── type.cpp        # Type system implementation
-│   │   │   └── type.hpp        # Type definitions
+│   │   │   ├── type.cpp        # IRType implementation
+│   │   │   ├── type.hpp        # IRType definitions (int, float, array, pointer, etc.)
+│   │   │   ├── type_info.cpp   # TypeInfo implementation
+│   │   │   └── type_info.hpp   # TypeInfo for frontend type representation
 │   │   └── value/              # Value and constant systems
 │   │       ├── constant.cpp    # Constant value implementation
 │   │       ├── constant.hpp    # Constant value definitions
@@ -65,17 +68,34 @@ SakuraE/
 - **CMakeLists.txt**: Defines the build system using CMake, including dependencies on LLVM and compiler flags.
 - **main.cpp**: The entry point that initializes and runs the compiler pipeline.
 - **demo.sak**: A sample SakuraE source file used for testing the compiler.
+- **banner.png**: Project logo/banner image displayed in the README.
 - **Compiler/CodeGen/**: Handles the generation of target machine code from IR, interfacing with LLVM backends.
 - **Compiler/Error/**: Provides error reporting and handling mechanisms throughout the compilation process.
-- **Compiler/Frontend/**: Manages lexical analysis, parsing, and AST construction from source code.
+- **Compiler/Frontend/**: Manages lexical analysis, parsing, and AST construction from source code:
+  - **lexer.cpp/h**: Tokenizes source code into a stream of tokens.
+  - **parser_base.hpp**: Provides parser combinator utilities including `TokenParser`, `ClosureParser`, `ConnectionParser`, `OptionsParser`, and `NullParser`.
+  - **parser.cpp/hpp**: Implements recursive descent parsers for expressions, statements, and declarations.
+  - **AST.hpp**: Defines the Abstract Syntax Tree node structure and tags.
 - **Compiler/IR/**: Defines and manipulates the intermediate representation:
-  - **generator.cpp/hpp**: Visitor-based IR generation from AST nodes.
+  - **generator.cpp/hpp**: Visitor-based IR generation from AST nodes with expression and statement visitors.
   - **IR.hpp**: Core IR type definitions and enumerations.
-  - **struct/**: Contains IR structural components including blocks, functions, instructions, modules, programs, and scopes.
-  - **type/**: Type system implementation for IR values.
-  - **value/**: Value representations including constants and runtime values.
+  - **struct/**: Contains IR structural components:
+    - **block.hpp**: Basic blocks containing sequences of instructions.
+    - **function.hpp**: Function representation with formal parameters and scope management.
+    - **instruction.hpp**: Instruction definitions with OpKind enum (arithmetic, logic, control flow, etc.).
+    - **module.hpp**: Module-level organization of functions.
+    - **program.hpp**: Top-level program container managing multiple modules.
+    - **scope.hpp**: Symbol table for variable and function lookups.
+  - **type/**: Type system implementation:
+    - **type.hpp**: IRType class hierarchy (IntegerType, FloatType, ArrayType, PointerType, FunctionType).
+    - **type_info.hpp**: TypeInfo for representing frontend types before conversion to IRType.
+  - **value/**: Value representations:
+    - **value.hpp**: Base Value class for all IR values.
+    - **constant.hpp**: Constant value definitions including literals and type constants.
 - **Compiler/Utils/**: Contains shared utilities like logging for debugging and diagnostics.
-- **includes/**: Third-party libraries and custom headers used across the project.
+- **includes/**: Third-party libraries and custom headers:
+  - **magic_enum.hpp**: Compile-time enum reflection library.
+  - **String.hpp**: Custom string utilities.
 
 ## Build
 
