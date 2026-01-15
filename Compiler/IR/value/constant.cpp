@@ -6,18 +6,8 @@ namespace sakuraE::IR {
     static std::map<fzlib::String, Constant> stringConstants;
     static std::map<char, Constant> charConstants;
     static std::map<bool, Constant> boolConstants;
+    static std::map<TypeInfo*, Constant> typeInfoConstants;
 
-    static std::map<IRType*, Constant> typeLabelConstants;
-
-    Constant* Constant::get(IRType* t, PositionInfo info) {
-        auto it = typeLabelConstants.find(t);
-        if (it != typeLabelConstants.end()) {
-            return &it->second;
-        }
-        
-        auto newEntry = typeLabelConstants.emplace(t, Constant(t, info));
-        return &newEntry.first->second;
-    }
 
     Constant* Constant::get(int val, PositionInfo info) {
         auto it = intConstants.find(val);
@@ -73,6 +63,17 @@ namespace sakuraE::IR {
 
         IRType* boolTy = IRType::getIntNTy(1);
         auto newEntry = boolConstants.emplace(val, Constant(boolTy, val, info));
+        return &newEntry.first->second;
+    }
+
+    Constant* Constant::get(TypeInfo* val, PositionInfo info)  {
+        auto it = typeInfoConstants.find(val);
+        if (it != typeInfoConstants.end()) {
+            return &it->second;
+        }
+
+        IRType* tinfoTy = IRType::getTypeInfoTy();
+        auto newEntry = typeInfoConstants.emplace(val, Constant(tinfoTy, val, info));
         return &newEntry.first->second;
     }
 

@@ -8,48 +8,36 @@
 
 #include "value.hpp"
 #include "Compiler/Frontend/lexer.h"
+#include "Compiler/IR/type/type_info.hpp"
 
 namespace sakuraE::IR {
     class Type;
 
     class Constant : public Value {
     private:
-        std::variant<std::monostate, int, double, fzlib::String, char, bool> content;
+        std::variant<std::monostate, int, double, fzlib::String, char, bool, TypeInfo*> content;
         PositionInfo createInfo;
 
-        Constant(IRType* ty, int val, PositionInfo info)
+        Constant(IRType* ty, int val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : Value(ty), content(val), createInfo(info) {}
-        Constant(IRType* ty, double val, PositionInfo info)
+        Constant(IRType* ty, double val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : Value(ty), content(val), createInfo(info) {}
         Constant(IRType* ty, const fzlib::String& val, PositionInfo info)
             : Value(ty), content(val), createInfo(info) {}
-        Constant(IRType* ty, char val, PositionInfo info)
+        Constant(IRType* ty, char val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : Value(ty), content(val), createInfo(info) {}
-        Constant(IRType* ty, bool val, PositionInfo info)
+        Constant(IRType* ty, bool val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : Value(ty), content(val), createInfo(info) {}
-        Constant(IRType* ty, PositionInfo info)
-            : Value(ty), content(), createInfo(info) {}
-
-        Constant(IRType* ty, int val)
-            : Value(ty), content(val) {}
-        Constant(IRType* ty, double val)
-            : Value(ty), content(val) {}
-        Constant(IRType* ty, const fzlib::String& val)
-            : Value(ty), content(val) {}
-        Constant(IRType* ty, char val)
-            : Value(ty), content(val) {}
-        Constant(IRType* ty, bool val)
-            : Value(ty), content(val) {}
-        Constant(IRType* ty)
-            : Value(ty), content() {}
+        Constant(IRType* ty, TypeInfo* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
+            : Value(ty), content(val), createInfo(info) {}
 
     public:
-        static Constant* get(IRType* t,  PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(int val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(double val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(const fzlib::String& val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(char val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(bool val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(TypeInfo* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* getFromToken(const Token& tok);
 
         template<typename T>
