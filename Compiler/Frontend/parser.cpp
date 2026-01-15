@@ -256,10 +256,10 @@ sakuraE::NodePtr sakuraE::TypeModifierParser::genResource() {
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
 
-        if constexpr (std::is_same_v<VarType, BasicTypeModifierParser>) {
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<BasicTypeModifierParser>>) {
             (*root)[ASTTag::BasicTypeModifierNode] = var->genResource();
         }
-        else if constexpr (std::is_same_v<VarType, ArrayTypeModifierParser>) {
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<ArrayTypeModifierParser>>) {
             (*root)[ASTTag::ArrayTypeModifierNode] = var->genResource();
         }
 
@@ -274,10 +274,10 @@ sakuraE::NodePtr sakuraE::RangeExprParser::genResource() {
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
 
-        if constexpr (std::is_same_v<VarType, ArrayExprParser>) {
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<ArrayExprParser>>) {
             (*root)[ASTTag::ArrayExprNode] = var->genResource();
         }
-        else if constexpr (std::is_same_v<VarType, IdentifierExprParser>) {
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<IdentifierExprParser>>) {
             (*root)[ASTTag::Identifier] = var->genResource();
         }
 
@@ -318,10 +318,10 @@ sakuraE::NodePtr sakuraE::ExprStmtParser::genResource() {
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
         
-        if constexpr (std::is_same_v<VarType, IdentifierExprParser>) {
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<IdentifierExprParser>>) {
             (*root)[ASTTag::IdentifierExprNode] = var->genResource();
         }
-        else if constexpr (std::is_same_v<VarType, AssignExprParser>) {
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<AssignExprParser>>) {
             (*root)[ASTTag::AssignExprNode] = var->genResource();
         }
     }, std::get<0>(getTuple())->option());
@@ -338,7 +338,7 @@ sakuraE::NodePtr sakuraE::IfStmtParser::genResource() {
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
         
-        if constexpr (std::is_same_v<VarType, ElseStmtParser>) {
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<ElseStmtParser>>) {
             (*root)[ASTTag::ElseStmtNode] = var->genResource();
         }
     }, std::get<5>(getTuple())->option());
@@ -369,12 +369,12 @@ sakuraE::NodePtr sakuraE::ForStmtParser::genResource() {
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
 
-        if constexpr (std::is_same_v<VarType, TraditionalConditionChain>) {
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<TraditionalConditionChain>>) {
             (*root)[ASTTag::DeclareStmtNode] = std::get<0>(var->getTuple())->genResource();
             (*root)[ASTTag::Condition] = std::get<1>(var->getTuple())->genResource();
             (*root)[ASTTag::HeadExpr] = std::get<3>(var->getTuple())->genResource();
         }
-        else if constexpr (std::is_same_v<VarType, RangeConditionChain>) {
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<RangeConditionChain>>) {
             (*root)[ASTTag::Identifier] = std::make_shared<Node>(std::get<1>(var->getTuple())->token);
             if (!std::get<2>(var->getTuple())->isEmpty()) {
                 (*root)[ASTTag::Type] = std::get<1>(std::get<2>(var->getTuple())->getClosure().at(0)->getTuple())->genResource();
