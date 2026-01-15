@@ -40,9 +40,9 @@ namespace sakuraE::IR {
 
         Block* parent = nullptr;
     public:
-        Instruction(OpKind k, Type* t): kind(kind), Value(t) {}
+        Instruction(OpKind k, Type* t): Value(t), kind(k) {}
         Instruction(OpKind k, Type* t, std::vector<Value*> params): 
-            kind(k), args(params), Value(t) {}
+            Value(t), kind(k), args(params) {}
 
         ~Instruction() {
             for (auto arg: args) {
@@ -66,7 +66,7 @@ namespace sakuraE::IR {
             return args.at(pos);
         }
 
-        const OpKind& kind() {
+        const OpKind& getKind() {
             return kind;
         }
 

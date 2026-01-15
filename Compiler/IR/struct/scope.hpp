@@ -11,7 +11,7 @@ namespace sakuraE::IR {
         fzlib::String name;
         Value* address;
 
-        Symbol(fzlib::String n, Value* addr, Type* t): name(n), address(addr), Value(t) {}
+        Symbol(fzlib::String n, Value* addr, Type* t): Value(t), name(n), address(addr) {}
     };
 
     class Scope {
