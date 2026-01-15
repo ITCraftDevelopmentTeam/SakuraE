@@ -345,20 +345,21 @@ namespace sakuraE::IR {
     }
 
     Value* IRGenerator::visitArrayTypeModifierNode(NodePtr node) {
+        std::vector<Value*> result;
         auto headType = visitBasicTypeModifierNode((*node)[ASTTag::HeadExpr]);
+        result.push_back(headType);
 
         auto dimensions = (*node)[ASTTag::Exprs]->getChildren();
-        std::vector<Value*> dimensionList;
 
         for (auto addexpr: dimensions) {
-            dimensionList.push_back(visitAddExprNode(addexpr));
+            result.push_back(visitAddExprNode(addexpr));
         }
 
         return curFunc()
                     ->curBlock()
                     ->createInstruction(OpKind::constant,
                                         IRType::getTypeInfoTy(),
-                                        dimensionList,
+                                        result,
                                         "constant");
     }
 
@@ -368,6 +369,83 @@ namespace sakuraE::IR {
         }
         else 
             return visitArrayTypeModifierNode((*node)[ASTTag::ArrayTypeModifierNode]);
+    }
+
+    // Statements
+
+    Value* IRGenerator::visitDeclareStmtNode(NodePtr node) {
+        auto identifier = (*node)[ASTTag::Identifier]->getToken();
+        IRType* type = nullptr;
+
+        if (node->hasNode(ASTTag::Type)) {
+            Value* typeInfoValue = visitTypeModifierNode((*node)[ASTTag::Type]);
+
+            // Unboxing
+            auto constInst = dynamic_cast<Instruction*>(typeInfoValue);
+            auto typeInfoConstant = dynamic_cast<Constant*>(constInst->getOperands()[0]);
+            TypeInfo* typeInfo = typeInfoConstant->getValue<TypeInfo*>();
+
+            type = typeInfo->toIRType();
+        }
+
+        Value* initVal = visitWholeExprNode((*node)[ASTTag::AssignTerm]);
+
+        if (!type) {
+            type = initVal->getType();
+        }
+
+        return declareSymbol(identifier.content, type, initVal);
+    }
+
+    Value* IRGenerator::visitExprStmtNode(NodePtr node) {
+        if (node->hasNode(ASTTag::IdentifierExprNode)) {
+            return visitIdentifierExprNode((*node)[ASTTag::IdentifierExprNode]);
+        }
+        else
+            return visitAssignExprNode((*node)[ASTTag::AssignExprNode]);
+    }
+
+    Value* IRGenerator::visitIfStmtNode(NodePtr node) {
+        Value* cond = visitBinaryExprNode((*node)[ASTTag::Condition]);
+        int beforeBlockIndex = curFunc()->cur();
+
+        Value* thenBlock = visitBlockStmtNode((*node)[ASTTag::Block], "thenBlock");
+        int thenBlockIndex = curFunc()->cur();
+
+        Value* elseBlock = nullptr;
+        int elseBlockIndex = -1;
+
+        if (node->hasNode(ASTTag::ElseStmtNode)) {
+            elseBlock = visitBlockStmtNode((*(*(*node)[ASTTag::ElseStmtNode])[ASTTag::ElseStmtNode])[ASTTag::Block], "elseBlock");
+            elseBlockIndex = curFunc()->cur();
+        }
+
+        Value* mergeBlock = curFunc()->buildBlock("ifMergeBlock");
+        
+        curFunc()
+            ->block(beforeBlockIndex)
+            ->createInstruction(OpKind::terminal_cond_br,
+                                IRType::getVoidTy(),
+                                {cond, thenBlock, (elseBlock?elseBlock:mergeBlock)},
+                                "cond-br-before-then");
+
+        curFunc()
+            ->block(thenBlockIndex)
+            ->createInstruction(OpKind::terminal_br,
+                                IRType::getVoidTy(),
+                                {mergeBlock},
+                                "br-if-merge");
+        
+        if (elseBlock) {
+            curFunc()
+            ->block(elseBlockIndex)
+            ->createInstruction(OpKind::terminal_br,
+                                IRType::getVoidTy(),
+                                {mergeBlock},
+                                "br-else-merge");
+        }
+
+        return mergeBlock;
     }
 
 }
