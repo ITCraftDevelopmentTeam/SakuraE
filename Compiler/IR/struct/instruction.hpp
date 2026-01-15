@@ -10,6 +10,7 @@ namespace sakuraE::IR {
         add, 
         sub, 
         mul, 
+        mod,
         div,
         lgc_equal, 
         lgc_mr_than, 
@@ -23,7 +24,9 @@ namespace sakuraE::IR {
         decl_module,
         indexing,
         make_call_params,
-        call
+        call,
+        load,
+        gmem,
     };
 
     class Block;
