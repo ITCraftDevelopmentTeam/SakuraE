@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "includes/magic_enum.hpp"
+#include "includes/String.hpp"
 
 namespace sakuraE {
     struct PositionInfo {
