@@ -1,5 +1,159 @@
 #include "generator.hpp"
 
 namespace sakuraE::IR {
-    
+    Value* IRGenerator::visitLiteralNode(NodePtr node) {
+        auto literal = Constant::getFromToken((*node)[ASTTag::Literal]->getToken());
+
+        return curFunc()
+                ->curBlock()
+                ->createInstruction(OpKind::constant, literal->getType(), {literal}, "constant-pushing");
+    }
+
+    Value* IRGenerator::visitIndexOpNode(Value* addr, NodePtr node) {
+        Value* indexResult = visitAddExprNode((*node)[ASTTag::HeadExpr]);
+
+        return curFunc()
+                ->curBlock()
+                ->createInstruction(OpKind::indexing, indexResult->getType(), {addr, indexResult}, "indexing-operator");
+    }
+
+    Value* IRGenerator::visitCallingOpNode(Value* addr, NodePtr node) {
+        std::vector<Value*> args;
+
+        for (auto argExpr: (*node)[ASTTag::Exprs]->getChildren()) {
+            args.push_back(visitWholeExprNode(argExpr));
+        }
+
+        int index = makeCallingList(args);
+
+        return curFunc()
+                ->curBlock()
+                ->createInstruction(OpKind::call, Type::getInt32Ty(), {addr, Constant::get(index)}, "make-calling-list");
+    }
+
+    Value* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
+        Value* result = loadSymbol((*node)[ASTTag::Identifier]->getToken().content);
+
+        if (node->hasNode(ASTTag::Ops)) {
+            for (auto op: (*node)[ASTTag::Ops]->getChildren()) {
+                switch (op->getTag())
+                {
+                case ASTTag::IndexOpNode:
+                    result = visitIndexOpNode(result, op);
+                    break;
+                
+                case ASTTag::CallingOpNode:
+                    result = visitCallingOpNode(result, op);
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    Value* IRGenerator::visitIdentifierExprNode(NodePtr node) {
+        auto chain = (*node)[ASTTag::Exprs]->getChildren();
+
+        Value* result = visitAtomIdentifierNode(chain[0]);
+
+        for (std::size_t i = 1; i < chain.size(); i ++) {
+            fzlib::String memberName = (*chain[i])[ASTTag::Identifier]->getToken().content;
+            result = curFunc()
+                        ->curBlock()
+                        ->createInstruction(OpKind::gmem, result->getType(), {result, Constant::get(memberName)}, "gmem");
+            
+            if (chain[i]->hasNode(ASTTag::Ops)) {
+                for (auto op: (*chain[i])[ASTTag::Ops]->getChildren()) {
+                    switch (op->getTag()) {
+                        case ASTTag::IndexOpNode:
+                            result = visitIndexOpNode(result, op);
+                            break;
+                        case ASTTag::CallingOpNode:
+                            result = visitCallingOpNode(result, op);
+                            break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    Value* IRGenerator::visitPrimExprNode(NodePtr node) {
+        if (node->hasNode(ASTTag::Literal)) {
+            return visitLiteralNode((*node)[ASTTag::Literal]);
+        }
+        else if (node->hasNode(ASTTag::Identifier)) {
+            return visitIdentifierExprNode((*node)[ASTTag::Identifier]);
+        }
+        else {
+            return visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+        }
+    }
+
+    Value* IRGenerator::visitMulExprNode(NodePtr node) {
+        auto chain = (*node)[ASTTag::Exprs]->getChildren();
+
+        Value* lhs = visitPrimExprNode(chain[0]);
+
+        if (node->hasNode(ASTTag::Ops)) {
+            auto opChain = (*node)[ASTTag::Ops]->getChildren();
+
+            for (std::size_t i = 1; i < chain.size(); i ++) {
+                Value* rhs = visitPrimExprNode(chain[i]);
+
+                switch (opChain[i - 1]->getToken().type)
+                {
+                case TokenType::MUL:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "multmp");
+                    break;
+                case TokenType::DIV:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "divtmp");
+                    break;
+                case TokenType::MOD:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::mod, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "modtmp");
+                    break;
+                }
+            }
+        }
+
+        return lhs;
+    }
+
+    Value* IRGenerator::visitAddExprNode(NodePtr node) {
+        auto chain = (*node)[ASTTag::Exprs]->getChildren();
+
+        Value* lhs = visitMulExprNode(chain[0]);
+
+        if (node->hasNode(ASTTag::Ops)) {
+            auto opChain = (*node)[ASTTag::Ops]->getChildren();
+
+            for (std::size_t i = 1; i < chain.size(); i ++) {
+                Value* rhs = visitMulExprNode(chain[i]);
+
+                switch (opChain[i - 1]->getToken().type)
+                {
+                case TokenType::ADD:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "addtmp");
+                    break;
+                case TokenType::SUB:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "subtmp");
+                    break;
+                }
+            }
+        }
+
+        return lhs;
+    }
 }
