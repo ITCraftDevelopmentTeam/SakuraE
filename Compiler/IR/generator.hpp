@@ -6,11 +6,78 @@
 #include "Compiler/IR/value/constant.hpp"
 
 namespace sakuraE::IR {
-    class Generator {
+    class IRGenerator {
         Program program;
 
+        Scope* currentScope = nullptr;
+
+        // Calling List
+        std::vector<std::vector<Value*>> callingList;
+        int callingCur = -1;
+
+        int makeCallingList(std::vector<Value*> list) {
+            callingList.push_back(list);
+            callingCur ++;
+
+            return callingCur;
+        }
+
+        void declareSymbol(fzlib::String name, Type* t, Value* initVal = nullptr) {
+            Value* addr = curFunc()
+                                ->curBlock()
+                                ->createInstruction(OpKind::decl, Type::getVoidTy(), {}, "declare-" + name);
+            
+            curFunc()->fnScope().declare(name, addr, t);
+
+            if (initVal) {
+                curFunc()
+                    ->curBlock()
+                    ->createInstruction(OpKind::assign, Type::getVoidTy(), {addr, initVal}, "assign-" + name);
+            }
+        }
+
+        Value* loadSymbol(fzlib::String name, PositionInfo info = {0, 0, "Normal Load"}) {
+            Symbol* symbol = curFunc()->fnScope().lookup(name);
+
+            if (symbol == nullptr)
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "",
+                                info);
+            
+            return curFunc()
+                        ->curBlock()
+                        ->createInstruction(OpKind::load, symbol->getType(), {symbol->address}, "load-" + name);
+        }
+
+        // Used to obtain the type of the result from a non-logical binary operation
+        Type* handleUnlogicalBinaryCalc(Value* lhs, Value* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
+            switch (lhs->getType()->getTypeID())
+            {
+            case TypeID::IntegerTyID:
+                auto lhsType = dynamic_cast<IntegerType*>(lhs->getType());
+                switch (rhs->getType()->getTypeID())
+                {
+                case TypeID::IntegerTyID:
+                    auto rhsType = dynamic_cast<IntegerType*>(rhs->getType());
+                    return Type::getIntNTy(std::max(lhsType->getBitWidth(), rhsType->getBitWidth()));
+                case TypeID::FloatTyID:
+                    auto rhsType = dynamic_cast<FloatType*>(rhs->getType());
+                    return Type::getFloatTy();
+                }
+                break;
+
+            case TypeID::FloatTyID:
+                return Type::getFloatTy();
+            
+            default:
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "Used a type that does not support '+' '-' '*' '%' and '/' operations",
+                                info);
+            }
+        }
+
     public:
-        Generator(fzlib::String name): program(name) {
+        IRGenerator(fzlib::String name): program(name) {
             program.buildModule(name, {1, 1, "Start of the whole program"});
         }
 
@@ -25,50 +92,18 @@ namespace sakuraE::IR {
 
     private:
         Function* curFunc() {
-            return program.curMod().curFunc();
+            return program.curMod()->curFunc();
         }
 
         // Visit a node and dispatch based on tag
         Value* visit(NodePtr node) {
-            if (!node) return;
-
-            switch (node->getTag()) {
-                case ASTTag::LiteralNode: visitLiteralNode(node); break;
-                case ASTTag::IndexOpNode: visitIndexOpNode(node); break;
-                case ASTTag::CallingOpNode: visitCallingOpNode(node); break;
-                case ASTTag::AtomIdentifierNode: visitAtomIdentifierNode(node); break;
-                case ASTTag::IdentifierExprNode: visitIdentifierExprNode(node); break;
-                case ASTTag::PrimExprNode: visitPrimExprNode(node); break;
-                case ASTTag::MulExprNode: visitMulExprNode(node); break;
-                case ASTTag::AddExprNode: visitAddExprNode(node); break;
-                case ASTTag::LogicExprNode: visitLogicExprNode(node); break;
-                case ASTTag::BinaryExprNode: visitBinaryExprNode(node); break;
-                case ASTTag::ArrayExprNode: visitArrayExprNode(node); break;
-                case ASTTag::WholeExprNode: visitWholeExprNode(node); break;
-                case ASTTag::BasicTypeModifierNode: visitBasicTypeModifierNode(node); break;
-                case ASTTag::ArrayTypeModifierNode: visitArrayTypeModifierNode(node); break;
-                case ASTTag::TypeModifierNode: visitTypeModifierNode(node); break;
-                case ASTTag::AssignExprNode: visitAssignExprNode(node); break;
-                case ASTTag::RangeExprNode: visitRangeExprNode(node); break;
-                case ASTTag::DeclareStmtNode: visitDeclareStmtNode(node); break;
-                case ASTTag::ExprStmtNode: visitExprStmtNode(node); break;
-                case ASTTag::IfStmtNode: visitIfStmtNode(node); break;
-                case ASTTag::ElseStmtNode: visitElseStmtNode(node); break;
-                case ASTTag::WhileStmtNode: visitWhileStmtNode(node); break;
-                case ASTTag::ForStmtNode: visitForStmtNode(node); break;
-                case ASTTag::BlockStmtNode: visitBlockStmtNode(node); break;
-                case ASTTag::FuncDefineStmtNode: visitFuncDefineStmtNode(node); break;
-                case ASTTag::ReturnStmtNode: visitReturnStmtNode(node); break;
-                default:
-                    // Should not reach here
-                    break;
-            }
+           
         }
 
         // --- Visit Expressions ---
         Value* visitLiteralNode(NodePtr node);
-        Value* visitIndexOpNode(NodePtr node);
-        Value* visitCallingOpNode(NodePtr node);
+        Value* visitIndexOpNode(Value* addr, NodePtr node);
+        Value* visitCallingOpNode(Value* addr, NodePtr node);
         Value* visitAtomIdentifierNode(NodePtr node);
         Value* visitIdentifierExprNode(NodePtr node);
         Value* visitPrimExprNode(NodePtr node);
