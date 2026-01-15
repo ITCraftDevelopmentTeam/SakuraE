@@ -22,6 +22,7 @@ namespace sakuraE::IR {
         lgc_or,
         declare, 
         assign, 
+        id_to_type,
         create_block, 
         create_func, 
         create_module,
@@ -30,6 +31,10 @@ namespace sakuraE::IR {
         call,
         load,
         gmem,
+        terminal_br,
+        terminal_cond_br,
+        terminal_switch,
+        terminal_return
     };
 
     class Block;
@@ -48,6 +53,13 @@ namespace sakuraE::IR {
             for (auto arg: args) {
                 delete arg;
             }
+        }
+
+        bool isTerminal() {
+            return kind == OpKind::terminal_br ||
+                    kind == OpKind::terminal_cond_br ||
+                    kind == OpKind::terminal_return ||
+                    kind == OpKind::terminal_switch;
         }
 
         void setParent(Block* blk) {
