@@ -17,6 +17,26 @@ namespace sakuraE::IR {
         Array
     };
 
+    IRType* tid2IRType(TypeID tid) {
+        switch (tid)
+        {
+        case TypeID::Int32:
+            return IRType::getInt32Ty();
+        case TypeID::Float:
+            return IRType::getFloatTy();
+        case TypeID::Char:
+            return IRType::getCharTy();
+        case TypeID::Bool:
+            return IRType::getBoolTy();
+        case TypeID::String:
+            return IRType::getPointerTo(IRType::getCharTy());
+        default:
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "Unknown type id to convert to IRType",
+                                {0, 0, "InsideError"});
+        }
+    }
+
     class TypeInfo {
         TypeID typeID;
         
@@ -45,6 +65,22 @@ namespace sakuraE::IR {
                 throw SakuraError(OccurredTerm::IR_GENERATING,
                                 "Expected to get a non-array-type TypeInfo as a array-type",
                                 {0, 0, "InsideProblem"});
+        }
+
+        IRType* toIRType() {
+            if (isArrayType) {
+                IRType* elemType = nullptr;
+
+                if (elementTypes[0]->isArray()) {
+                    elemType = elementTypes[0]->toIRType();
+                } else {
+                    elemType = tid2IRType(elementTypes[0]->typeID);
+                }
+        
+                return IRType::getArrayTy(elemType, elementTypes.size());
+            }
+
+            return tid2IRType(typeID);
         }
 
         static TypeInfo* makeTypeID(TypeID typeID);
