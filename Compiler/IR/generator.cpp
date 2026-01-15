@@ -108,17 +108,17 @@ namespace sakuraE::IR {
                 case TokenType::MUL:
                     lhs = curFunc()
                             ->curBlock()
-                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "multmp");
+                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "mul-tmp");
                     break;
                 case TokenType::DIV:
                     lhs = curFunc()
                             ->curBlock()
-                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "divtmp");
+                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "div-tmp");
                     break;
                 case TokenType::MOD:
                     lhs = curFunc()
                             ->curBlock()
-                            ->createInstruction(OpKind::mod, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "modtmp");
+                            ->createInstruction(OpKind::mod, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "mod-tmp");
                     break;
                 }
             }
@@ -143,12 +143,92 @@ namespace sakuraE::IR {
                 case TokenType::ADD:
                     lhs = curFunc()
                             ->curBlock()
-                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "addtmp");
+                            ->createInstruction(OpKind::mul, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "add-tmp");
                     break;
                 case TokenType::SUB:
                     lhs = curFunc()
                             ->curBlock()
-                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "subtmp");
+                            ->createInstruction(OpKind::div, handleUnlogicalBinaryCalc(lhs, rhs), {lhs, rhs}, "sub-tmp");
+                    break;
+                }
+            }
+        }
+
+        return lhs;
+    }
+
+    Value* IRGenerator::visitLogicExprNode(NodePtr node) {
+        auto chain = (*node)[ASTTag::Exprs]->getChildren();
+
+        Value* lhs = visitAddExprNode(chain[0]);
+
+        if (node->hasNode(ASTTag::Ops)) {
+            auto opChain = (*node)[ASTTag::Ops]->getChildren();
+
+            for (std::size_t i = 1; i < chain.size(); i ++) {
+                Value* rhs = visitAddExprNode(chain[i]);
+
+                switch (opChain[i - 1]->getToken().type)
+                {
+                case TokenType::LGC_LS_THAN:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_ls_than, Type::getBoolTy(), {lhs, rhs}, "lgc-ls-than-tmp");
+                    break;
+                case TokenType::LGC_LSEQU_THAN:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_eq_ls_than, Type::getBoolTy(), {lhs, rhs}, "lgc-eq-ls-than-tmp");
+                    break;
+                case TokenType::LGC_MR_THAN:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_mr_than, Type::getBoolTy(), {lhs, rhs}, "lgc-mr-than-tmp");
+                    break;
+                case TokenType::LGC_MREQU_THAN:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_eq_mr_than, Type::getBoolTy(), {lhs, rhs}, "lgc-eq-mr-than-tmp");
+                    break;
+                case TokenType::LGC_EQU:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_equal, Type::getBoolTy(), {lhs, rhs}, "lgc-equal-tmp");
+                    break;
+                case TokenType::LGC_NOT_EQU:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_not_equal, Type::getBoolTy(), {lhs, rhs}, "lgc-not-equal-tmp");
+                    break;
+                }
+            }
+        }
+
+        return lhs;
+    }
+
+    Value* IRGenerator::visitBinaryExprNode(NodePtr node) {
+        auto chain = (*node)[ASTTag::Exprs]->getChildren();
+
+        Value* lhs = visitLogicExprNode(chain[0]);
+
+        if (node->hasNode(ASTTag::Ops)) {
+            auto opChain = (*node)[ASTTag::Ops]->getChildren();
+
+            for (std::size_t i = 1; i < chain.size(); i ++) {
+                Value* rhs = visitLogicExprNode(chain[i]);
+
+                switch (opChain[i - 1]->getToken().type)
+                {
+                case TokenType::LGC_AND:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_and, Type::getBoolTy(), {lhs, rhs}, "lgc-and-tmp");
+                    break;
+                case TokenType::LGC_OR:
+                    lhs = curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::lgc_or, Type::getBoolTy(), {lhs, rhs}, "lgc-or-tmp");
                     break;
                 }
             }
