@@ -1,5 +1,16 @@
-![banner](banner.png)
-<center> <h1>SakuraE</h1> </center>
+<div align="center">
+<img src="banner.png"/>
+
+<h1> 
+   SakuraE
+   <br/>
+   <img src="https://img.shields.io/badge/Version-dev0.0-red"/>
+   <img src="https://img.shields.io/badge/Windows%2011-333333?style=flat&logo=quarto&logoColor=white&labelColor=0078D4"/>
+   <img src="https://img.shields.io/badge/Arch%20Linux-333333?style=flat&logo=archlinux&logoColor=white&labelColor=1793D1"/>
+</h1>
+
+
+</div>
 
 ### Based on LLVM, A Compilable Programming Language
 
