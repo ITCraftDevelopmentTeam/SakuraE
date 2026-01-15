@@ -44,7 +44,7 @@ namespace sakuraE::IR {
             fnList.push_back(func);
             cursor ++;
 
-            return Constant::get(IRType::getFunctionTy(func->getReturnType(), func->getParamsOnlyType()), createInfo);
+            return func;
         }
 
         Scope& modScope() {
