@@ -83,7 +83,7 @@ namespace sakuraE::IR {
             return blocks[cursor];
         }
 
-        Block* block(std::size_t index) {
+        Block* block(int index) {
             return blocks[index];
         }
 
@@ -103,7 +103,7 @@ namespace sakuraE::IR {
             return cursor;
         }
 
-        Block* operator[] (std::size_t index) {
+        Block* operator[] (int index) {
             return block(index);
         }
     };
