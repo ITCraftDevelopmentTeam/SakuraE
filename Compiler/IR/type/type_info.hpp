@@ -2,6 +2,7 @@
 #define SAKURAE_TYPE_INFO_HPP
 
 #include "type.hpp"
+#include "Compiler/Error/error.hpp"
 
 namespace sakuraE::IR {
     enum TypeID {
@@ -40,7 +41,9 @@ namespace sakuraE::IR {
             if (isArray())
                 return elementTypes;
             else
-                return {};
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "Expected to get a non-array-type TypeInfo as a array-type",
+                                {0, 0, "InsideProblem"});
         }
 
         static TypeInfo* makeTypeID(TypeID typeID);
