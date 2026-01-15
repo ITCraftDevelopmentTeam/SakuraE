@@ -316,7 +316,14 @@ sakuraE::NodePtr sakuraE::ExprStmtParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::ExprStmtNode);
 
     std::visit([&](auto& var) {
-        (*root)[ASTTag::HeadExpr] = var->genResource();
+        using VarType = std::decay_t<decltype(var)>;
+        
+        if constexpr (std::is_same_v<VarType, IdentifierExprParser>) {
+            (*root)[ASTTag::IdentifierExprNode] = var->genResource();
+        }
+        else if constexpr (std::is_same_v<VarType, AssignExprParser>) {
+            (*root)[ASTTag::AssignExprNode] = var->genResource();
+        }
     }, std::get<0>(getTuple())->option());
 
     return root;
