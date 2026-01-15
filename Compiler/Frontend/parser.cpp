@@ -333,17 +333,15 @@ sakuraE::NodePtr sakuraE::IfStmtParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::IfStmtNode);
 
     (*root)[ASTTag::Condition] = std::get<2>(getTuple())->genResource();
+    (*root)[ASTTag::Block] = std::get<4>(getTuple())->genResource();
 
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
         
-        if constexpr (std::is_same_v<VarType, BlockStmtParser>) {
-            (*root)[ASTTag::BlockStmtNode] = var->genResource();
-        }
-        else if constexpr (std::is_same_v<VarType, ElseStmtParser>) {
+        if constexpr (std::is_same_v<VarType, ElseStmtParser>) {
             (*root)[ASTTag::ElseStmtNode] = var->genResource();
         }
-    }, std::get<4>(getTuple())->option());
+    }, std::get<5>(getTuple())->option());
 
     return root;
 }
