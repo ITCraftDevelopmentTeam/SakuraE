@@ -17,7 +17,7 @@ namespace sakuraE::IR {
         Array
     };
 
-    IRType* tid2IRType(TypeID tid) {
+    inline IRType* tid2IRType(TypeID tid) {
         switch (tid)
         {
         case TypeID::Int32:
