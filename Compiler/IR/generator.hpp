@@ -22,17 +22,17 @@ namespace sakuraE::IR {
             return callingCur;
         }
 
-        void declareSymbol(fzlib::String name, Type* t, Value* initVal = nullptr) {
+        void declareSymbol(fzlib::String name, IRType* t, Value* initVal = nullptr) {
             Value* addr = curFunc()
                                 ->curBlock()
-                                ->createInstruction(OpKind::declare, Type::getVoidTy(), {}, "declare-" + name);
+                                ->createInstruction(OpKind::declare, IRType::getVoidTy(), {}, "declare-" + name);
             
             curFunc()->fnScope().declare(name, addr, t);
 
             if (initVal) {
                 curFunc()
                     ->curBlock()
-                    ->createInstruction(OpKind::assign, Type::getVoidTy(), {addr, initVal}, "assign-" + name);
+                    ->createInstruction(OpKind::assign, IRType::getVoidTy(), {addr, initVal}, "assign-" + name);
             }
         }
 
@@ -50,18 +50,18 @@ namespace sakuraE::IR {
         }
 
         // Used to obtain the type of the result from a non-logical binary operation
-        Type* handleUnlogicalBinaryCalc(Value* lhs, Value* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
-            switch (lhs->getType()->getTypeID()) {
-                case TypeID::IntegerTyID: {
-                    auto lhsType = dynamic_cast<IntegerType*>(lhs->getType());
-                    switch (rhs->getType()->getTypeID())
+        IRType* handleUnlogicalBinaryCalc(Value* lhs, Value* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
+            switch (lhs->getType()->getIRTypeID()) {
+                case IRTypeID::IntegerTyID: {
+                    auto lhsType = dynamic_cast<IRIntegerType*>(lhs->getType());
+                    switch (rhs->getType()->getIRTypeID())
                     {
-                        case TypeID::IntegerTyID: {
-                            auto rhsType = dynamic_cast<IntegerType*>(rhs->getType());
-                            return Type::getIntNTy(std::max(lhsType->getBitWidth(), rhsType->getBitWidth()));
+                        case IRTypeID::IntegerTyID: {
+                            auto rhsType = dynamic_cast<IRIntegerType*>(rhs->getType());
+                            return IRType::getIntNTy(std::max(lhsType->getBitWidth(), rhsType->getBitWidth()));
                         }
-                        case TypeID::FloatTyID: {
-                            return Type::getFloatTy();
+                        case IRTypeID::FloatTyID: {
+                            return IRType::getFloatTy();
                         }
                         default:
                             throw SakuraError(OccurredTerm::IR_GENERATING,
@@ -70,14 +70,14 @@ namespace sakuraE::IR {
                     }
                     break;
                 }
-                case TypeID::FloatTyID: {
-                    switch (rhs->getType()->getTypeID())
+                case IRTypeID::FloatTyID: {
+                    switch (rhs->getType()->getIRTypeID())
                     {
-                        case TypeID::IntegerTyID: {
-                            return Type::getFloatTy();
+                        case IRTypeID::IntegerTyID: {
+                            return IRType::getFloatTy();
                         }
-                        case TypeID::FloatTyID: {
-                            return Type::getFloatTy();
+                        case IRTypeID::FloatTyID: {
+                            return IRType::getFloatTy();
                         }
                         default:
                             throw SakuraError(OccurredTerm::IR_GENERATING,
