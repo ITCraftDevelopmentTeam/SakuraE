@@ -1,10 +1,10 @@
 #include "type.hpp"
 
 namespace sakuraE::IR {
-    static std::map<unsigned, IntegerType> integerTypes;
-    static std::map<IRType*, PointerType> pointerTypes;
-    static std::map<std::pair<IRType*, uint64_t>, ArrayType> arrayTypes;
-    static std::map<std::pair<IRType*, std::vector<IRType*>>, FunctionType> funcTypes;
+    static std::map<unsigned, IRIntegerType> IRIntegerTypes;
+    static std::map<IRType*, IRPointerType> IRPointerTypes;
+    static std::map<std::pair<IRType*, uint64_t>, IRArrayType> arrayTypes;
+    static std::map<std::pair<IRType*, std::vector<IRType*>>, IRFunctionType> funcTypes;
 
     IRType* IRType::getVoidTy() {
         static IRVoidType voidSingle;
@@ -12,45 +12,45 @@ namespace sakuraE::IR {
     }
 
     IRType* IRType::getBoolTy() {
-        static IntegerType boolSingle(1);
+        static IRIntegerType boolSingle(1);
         return &boolSingle;
     }
 
     IRType* IRType::getCharTy() {
-        static IntegerType charSingle(8);
+        static IRIntegerType charSingle(8);
         return &charSingle;
     }
 
     IRType* IRType::getInt32Ty() {
-        static IntegerType i32Single(32);
+        static IRIntegerType i32Single(32);
         return &i32Single;
     }
 
     IRType* IRType::getInt64Ty() {
-        static IntegerType i64Single(64);
+        static IRIntegerType i64Single(64);
         return &i64Single;
     }
     
     IRType* IRType::getIntNTy(unsigned bitWidth) {
-        auto it = integerTypes.find(bitWidth);
-        if (it != integerTypes.end()) {
+        auto it = IRIntegerTypes.find(bitWidth);
+        if (it != IRIntegerTypes.end()) {
             return &it->second;
         }
-        auto newEntry = integerTypes.emplace(bitWidth, IntegerType(bitWidth));
+        auto newEntry = IRIntegerTypes.emplace(bitWidth, IRIntegerType(bitWidth));
         return &newEntry.first->second;
     }
     
     IRType* IRType::getFloatTy() {
-        static FloatType floatSingle;
+        static IRFloatType floatSingle;
         return &floatSingle;
     }
 
     IRType* IRType::getPointerTo(IRType* elementType) {
-        auto it = pointerTypes.find(elementType);
-        if (it != pointerTypes.end()) {
+        auto it = IRPointerTypes.find(elementType);
+        if (it != IRPointerTypes.end()) {
             return &it->second;
         }
-        auto newEntry = pointerTypes.emplace(elementType, PointerType(elementType));
+        auto newEntry = IRPointerTypes.emplace(elementType, IRPointerType(elementType));
         return &newEntry.first->second;
     }
 
@@ -60,13 +60,13 @@ namespace sakuraE::IR {
         if (it != arrayTypes.end()) {
             return &it->second;
         }
-        auto newEntry = arrayTypes.emplace(key, ArrayType(elementType, numElements));
+        auto newEntry = arrayTypes.emplace(key, IRArrayType(elementType, numElements));
 
         return &newEntry.first->second;
     }
 
     IRType* IRType::getBlockTy() {
-        static BlockType blockIndexSingle;
+        static IRBlockType blockIndexSingle;
 
         return &blockIndexSingle;
     }
@@ -78,7 +78,7 @@ namespace sakuraE::IR {
         if (it != funcTypes.end()) {
             return &it->second;
         }
-        auto newEntry = funcTypes.emplace(key, FunctionType(returnType, params));
+        auto newEntry = funcTypes.emplace(key, IRFunctionType(returnType, params));
 
         return &newEntry.first->second;
     }
@@ -88,27 +88,27 @@ namespace sakuraE::IR {
         return llvm::Type::getVoidTy(ctx);
     }
 
-    llvm::Type* FloatType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRFloatType::toLLVMType(llvm::LLVMContext& ctx) {
         return llvm::Type::getFloatTy(ctx);
     }
 
-    llvm::Type* IntegerType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRIntegerType::toLLVMType(llvm::LLVMContext& ctx) {
         return llvm::Type::getIntNTy(ctx, bitWidth);
     }
 
-    llvm::Type* PointerType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRPointerType::toLLVMType(llvm::LLVMContext& ctx) {
         return llvm::PointerType::get(ctx, 0);
     }
 
-    llvm::Type* ArrayType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRArrayType::toLLVMType(llvm::LLVMContext& ctx) {
         return llvm::ArrayType::get(elementType->toLLVMType(ctx), numElements);
     }
 
-    llvm::Type* BlockType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRBlockType::toLLVMType(llvm::LLVMContext& ctx) {
         return llvm::Type::getLabelTy(ctx);
     }
 
-    llvm::Type* FunctionType::toLLVMType(llvm::LLVMContext& ctx) {
+    llvm::Type* IRFunctionType::toLLVMType(llvm::LLVMContext& ctx) {
         std::vector<llvm::Type*> llvmParams;
         for (auto arg: paramsType) {
             llvmParams.push_back(arg->toLLVMType(ctx));

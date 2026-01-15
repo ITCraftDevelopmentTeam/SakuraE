@@ -54,49 +54,49 @@ namespace sakuraE::IR {
         static IRType* getFunctionTy(IRType* returnType, std::vector<IRType*> params);
     };
 
-    class VoidType : public IRType {
+    class IRVoidType : public IRType {
         friend class IRType;
-        VoidType() : IRType(VoidTyID) {}
+        IRVoidType() : IRType(VoidTyID) {}
     public:
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
     };
 
-    class FloatType : public IRType {
+    class IRFloatType : public IRType {
         friend class IRType;
-        FloatType() : IRType(FloatTyID) {}
+        IRFloatType() : IRType(FloatTyID) {}
     public:
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
     };
 
-    class IntegerType : public IRType {
+    class IRIntegerType : public IRType {
         friend class IRType;
         unsigned bitWidth;
 
-        explicit IntegerType(unsigned bw) : IRType(IntegerTyID), bitWidth(bw) {}
+        explicit IRIntegerType(unsigned bw) : IRType(IntegerTyID), bitWidth(bw) {}
 
     public:
         unsigned getBitWidth() const { return bitWidth; }
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
     };
 
-    class PointerType : public IRType {
+    class IRPointerType : public IRType {
         friend class IRType;
         IRType* elementType;
 
-        explicit PointerType(IRType* elementTy) : IRType(PointerTyID), elementType(elementTy) {}
+        explicit IRPointerType(IRType* elementTy) : IRType(PointerTyID), elementType(elementTy) {}
 
     public:
         IRType* getElementType() const { return elementType; }
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
     };
 
-    class ArrayType : public IRType {
+    class IRArrayType : public IRType {
         friend class IRType;
         IRType* elementType;
         uint64_t numElements;
 
         // Private constructor
-        ArrayType(IRType* elementTy, uint64_t num) 
+        IRArrayType(IRType* elementTy, uint64_t num) 
             : IRType(ArrayTyID), elementType(elementTy), numElements(num) {}
 
     public:
@@ -106,21 +106,21 @@ namespace sakuraE::IR {
     };
 
     // IR Inside
-    class BlockType : public IRType {
+    class IRBlockType : public IRType {
         friend class IRType;
 
-        explicit BlockType() : IRType(BlockTyID) {}
+        explicit IRBlockType() : IRType(BlockTyID) {}
     public:
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
     };
 
-    class FunctionType : public IRType {
+    class IRFunctionType : public IRType {
         friend class IRType;
 
         std::vector<IRType*> paramsType;
         IRType* returnType;
 
-        explicit FunctionType(IRType* ret, std::vector<IRType*> params)
+        explicit IRFunctionType(IRType* ret, std::vector<IRType*> params)
             : IRType(FunctionTyID), paramsType(params), returnType(ret) {}
     public:
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
