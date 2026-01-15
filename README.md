@@ -2,7 +2,7 @@
 <img src="banner.png"/>
 
 <h1> 
-   SakuraE
+   🌸SakuraE🌸
    <br/>
    <img src="https://img.shields.io/badge/Version-dev0.0-red"/>
    <img src="https://img.shields.io/badge/Windows%2011-333333?style=flat&logo=quarto&logoColor=white&labelColor=0078D4"/>
