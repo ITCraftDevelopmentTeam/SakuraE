@@ -340,7 +340,7 @@ namespace sakuraE {
 
         std::vector<std::shared_ptr<T>> getClosure() const {
             std::vector<std::shared_ptr<T>> results;
-            if (isEmpty()) return results;
+            if (!isMatch()) return results;
 
             auto conn = std::get<0>(_rule_result->option());
             auto [head, closure] = conn->getTuple();
