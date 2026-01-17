@@ -295,7 +295,12 @@ namespace fzlib {
         }
 
         bool operator<(const String& other) const {
-            return this->_content < other._content; 
+            if (_content == nullptr && other._content != nullptr)
+                return true;
+            else if (_content != nullptr && other._content == nullptr)
+                return false;
+            else
+                return this->_content < other._content; 
         }
 
         String& operator+= (const String &str) {
