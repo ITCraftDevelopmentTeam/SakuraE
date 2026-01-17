@@ -136,4 +136,40 @@ namespace sakuraE::IR {
     
         return llvm::PointerType::getUnqual(ctx);
     }
+
+    // toString
+
+    const fzlib::String& IRVoidType::toString() {
+        return "<VoidType>";
+    }
+
+    const fzlib::String& IRFloatType::toString() {
+        return "<FloatType>";
+    }
+
+    const fzlib::String& IRIntegerType::toString() {
+        return "<Int" + std::to_string(bitWidth) + "Type>";
+    }
+
+    const fzlib::String& IRPointerType::toString() {
+        return "<" + elementType->toString() + "PointerType>";
+    }
+
+    const fzlib::String& IRArrayType::toString() {
+        return "<" + elementType->toString() + "[" + std::to_string(numElements) + "]>";
+    }
+
+    const fzlib::String& IRBlockType::toString() {
+        return "<IRBlockType>";
+    }
+
+    const fzlib::String& IRFunctionType::toString() {
+        fzlib::String result = "<IRFunctionType -> " + returnType->toString() + ", {";
+        for (auto type: paramsType) {
+            result += type->toString() + " ";
+        }
+        result += "}>";
+
+        return result;
+    }
 }
