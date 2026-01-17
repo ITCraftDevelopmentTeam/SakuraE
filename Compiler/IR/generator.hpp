@@ -26,7 +26,7 @@ namespace sakuraE::IR {
 
             if (symbol == nullptr)
                 throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "",
+                                "Cannot find symbol: " + name,
                                 info);
             
             return curFunc()
@@ -94,10 +94,6 @@ namespace sakuraE::IR {
             return program;
         }
 
-        // Main entry point for generating IR from AST
-        void generate(NodePtr node);
-
-    private:
         // --- Visit Expressions ---
         IRValue* visitLiteralNode(NodePtr node);
         IRValue* visitIndexOpNode(IRValue* addr, NodePtr node);
