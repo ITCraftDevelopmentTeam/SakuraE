@@ -384,6 +384,8 @@ sakuraE::NodePtr sakuraE::ForStmtParser::genResource() {
 
     }, std::get<2>(getTuple())->option());
 
+    (*root)[ASTTag::Block] = std::get<4>(getTuple())->genResource();
+
     return root;
 }
 
