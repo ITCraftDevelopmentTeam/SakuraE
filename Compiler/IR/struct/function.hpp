@@ -64,7 +64,7 @@ namespace sakuraE::IR {
             Block* block = new Block(id, ops);
             block->setParent(this);
             blocks.push_back(block);
-            cursor ++;
+            cursor = blocks.size() - 1;
 
             return block;
         }
@@ -73,7 +73,7 @@ namespace sakuraE::IR {
             Block* block = new Block(id);
             block->setParent(this);
             blocks.push_back(block);
-            cursor ++;
+            cursor = blocks.size() - 1;
 
             return block;
         }

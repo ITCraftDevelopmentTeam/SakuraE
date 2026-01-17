@@ -42,7 +42,7 @@ namespace sakuraE::IR {
         IRValue* buildFunction(fzlib::String name, IRType* retType, FormalParamsDefine params, PositionInfo info) {
             Function* func = new Function(name, retType, params, info);
             fnList.push_back(func);
-            cursor ++;
+            cursor = fnList.size() - 1;
 
             return func;
         }
