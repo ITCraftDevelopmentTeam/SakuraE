@@ -342,13 +342,7 @@ namespace sakuraE {
 
     using ArrayExprParserRule = ConnectionParser<
         DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
-        ClosureParser<WholeExprParser>,
-        ClosureParser<
-            ConnectionParser<
-                DiscardParser<TokenType::COMMA>,
-                WholeExprParser
-            >
-        >,
+        NullableSequenceParser<WholeExprParser, TokenType::COMMA>,
         DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
     >;
     class ArrayExprParser: public ResourceFetcher, public ArrayExprParserRule {
@@ -819,13 +813,7 @@ namespace sakuraE {
         TokenParser<TokenType::KEYWORD_FUNC>,
         TokenParser<TokenType::IDENTIFIER>,
         TokenParser<TokenType::LEFT_PAREN>,
-        ClosureParser<MemberUnit>,
-        ClosureParser<
-            ConnectionParser<
-                DiscardParser<TokenType::COMMA>,
-                MemberUnit
-            >
-        >,
+        NullableSequenceParser<MemberUnit, TokenType::COMMA>,
         TokenParser<TokenType::RIGHT_PAREN>,
         TokenParser<TokenType::ARROW>,
         TypeModifierParser,

@@ -191,10 +191,11 @@ sakuraE::NodePtr sakuraE::ArrayExprParser::genResource() {
         (*root)[ASTTag::Exprs]->addChild(checker_expr->getClosure().at(0)->genResource());
     }
 
-    auto subs = std::get<2>(getTuple());
+    auto subs = std::get<1>(getTuple());
+    std::cout << subs->isMatch() << std::endl;
     if (!subs->isEmpty()) {
         for (auto unit: subs->getClosure()) {
-            (*root)[ASTTag::Exprs]->addChild(std::get<1>(unit->getTuple())->genResource());
+            (*root)[ASTTag::Exprs]->addChild(unit->genResource());
         }
     }
 
@@ -414,17 +415,10 @@ sakuraE::NodePtr sakuraE::FuncDefineStmtParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::FuncDefineStmtNode);
 
     (*root)[ASTTag::Identifier] = std::make_shared<Node>(std::get<1>(getTuple())->token);
-    if (!std::get<3>(getTuple())->isEmpty()) {
-        auto head_arg = std::get<3>(getTuple())->getClosure().at(0);
 
-        auto head_type = std::get<2>(head_arg->getTuple())->genResource();
-        auto head_name = std::make_shared<Node>(std::get<0>(head_arg->getTuple())->token);
-
-        (*(*root)[ASTTag::Args])[ASTTag::Type]->addChild(head_type);
-        (*(*root)[ASTTag::Args])[ASTTag::Identifier]->addChild(head_name);
-
-        for (std::size_t i = 0; i < std::get<4>(getTuple())->getClosure().size(); i ++) {
-            auto arg = std::get<1>(std::get<4>(getTuple())->getClosure().at(i)->getTuple());
+    if (!std::get<3>(getTuple())->isMatch()) {
+        for (std::size_t i = 0; i < std::get<3>(getTuple())->getClosure().size(); i ++) {
+            auto arg = std::get<3>(getTuple())->getClosure()[i];
 
             auto type = std::get<2>(arg->getTuple())->genResource();
             auto name = std::make_shared<Node>(std::get<0>(arg->getTuple())->token);
@@ -434,8 +428,8 @@ sakuraE::NodePtr sakuraE::FuncDefineStmtParser::genResource() {
         }
     }
 
-    (*root)[ASTTag::Type] = std::get<7>(getTuple())->genResource();
-    (*root)[ASTTag::Block] = std::get<8>(getTuple())->genResource();
+    (*root)[ASTTag::Type] = std::get<6>(getTuple())->genResource();
+    (*root)[ASTTag::Block] = std::get<7>(getTuple())->genResource();
 
     return root;
 }
