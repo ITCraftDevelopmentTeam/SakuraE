@@ -57,7 +57,7 @@ namespace sakuraE::IR {
             }
             else
                 throw SakuraError(OccurredTerm::IR_GENERATING,
-                                    "Move cursor to a unkonwn place",
+                                    "Move cursor to a unknown place",
                                     createInfo);
             return *this;
         }
