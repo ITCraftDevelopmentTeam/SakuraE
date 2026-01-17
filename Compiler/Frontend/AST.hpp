@@ -70,6 +70,10 @@ namespace sakuraE {
             return tag;
         }
 
+        void setInfo(PositionInfo info) {
+            createInfo = info;
+        }
+
         void setToken(Token tok) {
             content = std::make_shared<Token>(tok);
         }
