@@ -635,4 +635,15 @@ namespace sakuraE::IR {
 
         return fn;
     };
+
+    IRValue* IRGenerator::visitReturnStmtNode(NodePtr node) {
+        IRValue* retValue = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+
+        return curFunc()
+                    ->curBlock()
+                    ->createInstruction(OpKind::ret,
+                                        retValue->getType(),
+                                        {retValue},
+                                        "ret");
+    }
 }
