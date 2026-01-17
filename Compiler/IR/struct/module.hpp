@@ -51,6 +51,16 @@ namespace sakuraE::IR {
             return moduleScope;
         }
 
+        Module& moveCursor(int target) {
+            if (target >= 0 && target < fnList.size()) {
+                cursor = target;
+            }
+            else
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "Move cursor to a unkonwn place",
+                                    createInfo);
+        }
+
         Function* curFunc() {
             return fnList[cursor];
         }

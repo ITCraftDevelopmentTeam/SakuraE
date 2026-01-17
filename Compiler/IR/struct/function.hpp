@@ -87,6 +87,16 @@ namespace sakuraE::IR {
             return blocks[index];
         }
 
+        Function& moveCursor(int target) {
+            if (target >= 0 && target < blocks.size()) {
+                cursor = target;
+            }
+            else
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "Move cursor to a unkonwn place",
+                                    createInfo);
+        }
+
         const fzlib::String& getName() {
             return funcName;
         }
