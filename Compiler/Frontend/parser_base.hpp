@@ -89,31 +89,6 @@ namespace sakuraE {
         }
     };
 
-
-    // Parse single token, but ignore it (not include it in the value)
-    template<sakuraE::TokenType T>
-    struct DiscardParser {
-        static bool check(TokenIter begin, TokenIter end) {
-            return begin != end && begin->type  == T;
-        }
-
-        static Result<DiscardParser> parse(TokenIter begin, TokenIter end) {
-            if (check(begin, end))
-                return Result<DiscardParser>(ParseStatus::SUCCESS, nullptr, begin + 1);
-            else {
-                fzlib::String msg = "Expected " + fzlib::String(magic_enum::enum_name(T)) + ", but got ";
-                if (begin == end) msg += "EOF";
-                else msg += begin->typeToString();
-                
-                PositionInfo info;
-                if (begin != end) info = begin->info;
-
-                auto err = std::make_shared<SakuraError>(OccurredTerm::PARSER, msg, info);
-                return Result<DiscardParser>::failed(begin, err, begin);
-            }
-        }
-    };
-
     template<typename T>
     class ClosureParser {
         std::vector<std::shared_ptr<T>> children;
@@ -321,7 +296,7 @@ namespace sakuraE {
         using SequenceRule = OptionsParser<
             ConnectionParser<
                 T,
-                ClosureParser<ConnectionParser<DiscardParser<Separator>, T>>
+                ClosureParser<ConnectionParser<TokenParser<Separator>, T>>
             >,
             NullParser
         >;

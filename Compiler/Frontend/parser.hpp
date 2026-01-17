@@ -24,7 +24,6 @@ namespace sakuraE {
     >;
     class LiteralParser: public ResourceFetcher, public LiteralParserRule {
     public:
-        // 从基类移动构造
         LiteralParser(LiteralParserRule&& base) : LiteralParserRule(std::move(base)) {}
 
         static bool check(TokenIter begin, TokenIter end) {
@@ -46,9 +45,9 @@ namespace sakuraE {
     };
 
     using IndexOpParserRule = ConnectionParser<
-        DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
+        TokenParser<TokenType::LEFT_SQUARE_BRACKET>,
         AddExprParser,
-        DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
+        TokenParser<TokenType::RIGHT_SQUARE_BRACKET>
     >;
     class IndexOpParser: public ResourceFetcher, public IndexOpParserRule {
     public:
@@ -73,7 +72,7 @@ namespace sakuraE {
     };
 
     using CallingOpParserRule = ConnectionParser<
-        DiscardParser<TokenType::LEFT_PAREN>,
+        TokenParser<TokenType::LEFT_PAREN>,
         ClosureParser<WholeExprParser>,
         ClosureParser<
             ConnectionParser<
@@ -81,7 +80,7 @@ namespace sakuraE {
                 WholeExprParser
             >
         >,
-        DiscardParser<TokenType::RIGHT_PAREN>
+        TokenParser<TokenType::RIGHT_PAREN>
     >;
     class CallingOpParser: public ResourceFetcher, public CallingOpParserRule {
     public:
@@ -172,9 +171,9 @@ namespace sakuraE {
         LiteralParser,
         IdentifierExprParser,
         ConnectionParser<
-            DiscardParser<TokenType::LEFT_PAREN>,
+            TokenParser<TokenType::LEFT_PAREN>,
             WholeExprParser,
-            DiscardParser<TokenType::RIGHT_PAREN>
+            TokenParser<TokenType::RIGHT_PAREN>
         >
     >;
     class PrimExprParser: public ResourceFetcher, public PrimExprParserRule {
@@ -341,9 +340,9 @@ namespace sakuraE {
     };
 
     using ArrayExprParserRule = ConnectionParser<
-        DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
+        TokenParser<TokenType::LEFT_SQUARE_BRACKET>,
         NullableSequenceParser<WholeExprParser, TokenType::COMMA>,
-        DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
+        TokenParser<TokenType::RIGHT_SQUARE_BRACKET>
     >;
     class ArrayExprParser: public ResourceFetcher, public ArrayExprParserRule {
     public:
@@ -456,9 +455,9 @@ namespace sakuraE {
         BasicTypeModifierParser,
         ClosureParser<
             ConnectionParser<
-                DiscardParser<TokenType::LEFT_SQUARE_BRACKET>,
+                TokenParser<TokenType::LEFT_SQUARE_BRACKET>,
                 AddExprParser,
-                DiscardParser<TokenType::RIGHT_SQUARE_BRACKET>
+                TokenParser<TokenType::RIGHT_SQUARE_BRACKET>
             >
         >
     >;
