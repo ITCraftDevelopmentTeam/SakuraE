@@ -18,17 +18,15 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, NodePtr node) {
-        std::vector<IRValue*> args;
+        std::vector<IRValue*> params = {addr};
 
         for (auto argExpr: (*node)[ASTTag::Exprs]->getChildren()) {
-            args.push_back(visitWholeExprNode(argExpr));
+            params.push_back(visitWholeExprNode(argExpr));
         }
-
-        int index = makeCallingList(args);
 
         return curFunc()
                 ->curBlock()
-                ->createInstruction(OpKind::call, IRType::getInt32Ty(), {addr, Constant::get(index)}, "call");
+                ->createInstruction(OpKind::call, IRType::getInt32Ty(), {params}, "call");
     }
 
     IRValue* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
@@ -530,7 +528,6 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitForStmtNode(NodePtr node) {
-        int beforeBlockIndex = curFunc()->cur();
         curFunc()->fnScope().enter();
 
         // for init (in beforeBlock)
@@ -602,4 +599,40 @@ namespace sakuraE::IR {
         return mergeBlock;
     }
 
+    IRValue* IRGenerator::visitFuncDefineStmtNode(NodePtr node) {
+        auto fnName = (*node)[ASTTag::Identifier]->getToken().content;
+        FormalParamsDefine params;
+
+        if (node->hasNode(ASTTag::Args)) {
+            for (auto arg: (*node)[ASTTag::Args]->getChildren()) {
+                IRValue* typeInfoIRValue = visitTypeModifierNode((*arg)[ASTTag::Type]);
+
+                // Unboxing
+                auto constInst = dynamic_cast<Instruction*>(typeInfoIRValue);
+                auto typeInfoConstant = dynamic_cast<Constant*>(constInst->getOperands()[0]);
+                TypeInfo* typeInfo = typeInfoConstant->getIRValue<TypeInfo*>();
+
+                IRType* argType = typeInfo->toIRType();
+
+                fzlib::String argName = (*arg)[ASTTag::Identifier]->getToken().content;
+
+                params.push_back(std::make_pair<fzlib::String, IRType*>(std::move(argName), std::move(argType)));
+            }
+        }
+
+        IRValue* typeInfoIRValue = visitTypeModifierNode((*node)[ASTTag::Type]);
+
+        // Unboxing
+        auto constInst = dynamic_cast<Instruction*>(typeInfoIRValue);
+        auto typeInfoConstant = dynamic_cast<Constant*>(constInst->getOperands()[0]);
+        TypeInfo* typeInfo = typeInfoConstant->getIRValue<TypeInfo*>();
+
+        IRType* retType = typeInfo->toIRType();
+
+        IRValue* fn = curModule()->buildFunction(fnName, retType, params, node->getPosInfo());
+
+        visitBlockStmtNode((*node)[ASTTag::Block], "fn." + fnName);
+
+        return fn;
+    };
 }
