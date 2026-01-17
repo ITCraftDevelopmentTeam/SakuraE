@@ -315,6 +315,18 @@ namespace sakuraE {
             return parseImpl<0>(begin, end, nullptr, begin);
         }
     };
+
+    // Sequence Parser
+    template <typename E, sakuraE::TokenType Separator>
+    using SequenceParser = OptionsParser<
+        ConnectionParser<
+            E, 
+            ClosureParser<
+                ConnectionParser<DiscardParser<Separator>, E>
+            >
+        >,
+        NullParser
+    >;
 }
 
 #endif
