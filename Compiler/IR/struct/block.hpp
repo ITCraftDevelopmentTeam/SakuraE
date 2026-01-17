@@ -6,17 +6,17 @@
 namespace sakuraE::IR {
     class Function;
     // SakuraE IR Block
-    // Rule: Every block id starts as '@'
+    // Rule: Every block id starts as ':'
     class Block: public IRValue {
         std::vector<Instruction*> instructions;
-        fzlib::String ID = "@default-block";
+        fzlib::String ID = ":default-block";
 
         Function* parent = nullptr;
     public:
         Block(fzlib::String id, std::vector<Instruction*> ops): 
-            IRValue(IRType::getBlockTy()), instructions(ops), ID("@" + id) {}
+            IRValue(IRType::getBlockTy()), instructions(ops), ID(":" + id) {}
         Block(fzlib::String id):
-            IRValue(IRType::getBlockTy()), instructions({}), ID("@" + id) {}
+            IRValue(IRType::getBlockTy()), instructions({}), ID(":" + id) {}
 
         ~Block() {
             for (auto ins: instructions) {
@@ -55,10 +55,12 @@ namespace sakuraE::IR {
         }
 
         IRValue* createInstruction(OpKind k, IRType* t, std::vector<IRValue*> params, const fzlib::String& n) {
-            if (instructions[instructions.size() - 1]->isTerminal())
-                throw SakuraError(OccurredTerm::IR_GENERATING,  
-                                    "Cannot create any instruction after terminal code!",
-                                    {0, 0, "InsideError"});
+            if (!instructions.empty()) {
+                if (instructions[instructions.size() - 1]->isTerminal())
+                    throw SakuraError(OccurredTerm::IR_GENERATING,  
+                                        "Cannot create any instruction after terminal code!",
+                                        {0, 0, "InsideError"});
+            }
 
             Instruction* ins = new Instruction(k, t, params);
             ins->setParent(this);
@@ -74,6 +76,26 @@ namespace sakuraE::IR {
 
         Instruction* operator[] (std::size_t pos) {
             return instructions[pos];
+        }
+
+        fzlib::String toString() {
+            fzlib::String result = name + " {";
+            for (auto ins: instructions) {
+                result += ins->toString() + ";";
+            }
+            result += "}";
+
+            return result;
+        }
+
+        fzlib::String toFullString() {
+            fzlib::String result = name + " {";
+            for (auto ins: instructions) {
+                result += ins->toFullString() + ";";
+            }
+            result += "}";
+
+            return result;
         }
     };
 }

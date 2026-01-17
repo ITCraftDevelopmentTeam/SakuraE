@@ -28,6 +28,22 @@ namespace sakuraE::IR {
         Module* mod(std::size_t index) {
             return moduleList[index];
         }
+
+        fzlib::String toString() {
+            fzlib::String result = ID + " {";
+            for (auto mod: moduleList) {
+                result += mod->toString();
+            }
+            return result;
+        }
+
+        fzlib::String toFullString() {
+            fzlib::String result = ID + " {";
+            for (auto mod: moduleList) {
+                result += mod->toFullString();
+            }
+            return result;
+        }
     };
 }
 

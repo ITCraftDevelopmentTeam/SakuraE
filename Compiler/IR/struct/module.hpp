@@ -7,7 +7,7 @@ namespace sakuraE::IR {
     class Program;
 
     // SakuraE Module
-    // Rule: Every block id around '<' and '>'
+    // Rule: Every block id around '@<' and '>'
     class Module {
         fzlib::String ID = "$DefaultModule";
         PositionInfo createInfo;
@@ -41,6 +41,7 @@ namespace sakuraE::IR {
 
         IRValue* buildFunction(fzlib::String name, IRType* retType, FormalParamsDefine params, PositionInfo info) {
             Function* func = new Function(name, retType, params, info);
+            func->buildBlock("begin");
             fnList.push_back(func);
             cursor = fnList.size() - 1;
 
@@ -102,6 +103,22 @@ namespace sakuraE::IR {
 
         const fzlib::String& id() {
             return ID;
+        }
+
+        fzlib::String toString() {
+            fzlib::String result = ID + " {";
+            for (auto fn: fnList) {
+                result += fn->toString();
+            }
+            return result;
+        }
+
+        fzlib::String toFullString() {
+            fzlib::String result = ID + " {";
+            for (auto fn: fnList) {
+                result += fn->toFullString();
+            }
+            return result;
         }
     };
 }

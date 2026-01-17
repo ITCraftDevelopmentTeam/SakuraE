@@ -27,7 +27,7 @@ namespace sakuraE::IR {
         Module* parent;
     public:
         Function(fzlib::String n, IRType* retType, PositionInfo info): 
-            IRValue(IRType::getFunctionTy(retType, {})), funcName(n), returnType(retType), funcScope(info), createInfo(info) {}
+            IRValue(IRType::getFunctionTy(retType, {})), funcName("#" + n), returnType(retType), funcScope(info), createInfo(info) {}
         
         Function(fzlib::String n, IRType* retType, FormalParamsDefine params, PositionInfo info): 
             IRValue(IRType::getFunctionTy(retType, 
@@ -93,7 +93,7 @@ namespace sakuraE::IR {
             }
             else
                 throw SakuraError(OccurredTerm::IR_GENERATING,
-                                    "Move cursor to a unkonwn place",
+                                    "Move cursor to a unknown place",
                                     createInfo);
             return *this;
         }
@@ -116,6 +116,42 @@ namespace sakuraE::IR {
 
         Block* operator[] (int index) {
             return block(index);
+        }
+
+        fzlib::String toString() {
+            fzlib::String result = funcName + "(";
+            for (std::size_t i = 0; i < formalParams.size(); i ++) {
+                auto arg = formalParams[i];
+                if (i == formalParams.size() - 1)
+                    result += arg.first + ":" + arg.second->toString();
+                else
+                    result += arg.first + ":" + arg.second->toString() + ", ";
+            }
+            result += ") -> " + returnType->toString() + " {";
+
+            for (auto block: blocks) {
+                result += block->toString();
+            }
+
+            return result;
+        }
+
+        fzlib::String toFullString() {
+            fzlib::String result = funcName + "(";
+            for (std::size_t i = 0; i < formalParams.size(); i ++) {
+                auto arg = formalParams[i];
+                if (i == formalParams.size() - 1)
+                    result += arg.first + ":" + arg.second->toString();
+                else
+                    result += arg.first + ":" + arg.second->toString() + ", ";
+            }
+            result += ") -> " + returnType->toString() + " {";
+
+            for (auto block: blocks) {
+                result += block->toFullString();
+            }
+
+            return result;
         }
     };
 }
