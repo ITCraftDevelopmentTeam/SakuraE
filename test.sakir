@@ -64,9 +64,6 @@ TestProject  {
         load $declare.arr;
         load $declare.index;
         indexing $load.arr $load.index;
-        load $declare.arr;
-        load $declare.index;
-        indexing $load.arr $load.index;
         constant $;
         add $indexing $constant;
         assign $indexing $add;
@@ -75,10 +72,7 @@ TestProject  {
       }
       :for.step  {
         load $declare.index;
-        load $declare.index;
-        constant $;
-        add $load.index $constant;
-        assign $load.index $add;
+        add $load.index $;
         br $%for.cond;
         
       }
