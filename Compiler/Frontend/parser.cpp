@@ -68,13 +68,14 @@ sakuraE::NodePtr sakuraE::IdentifierExprParser::genResource() {
     NodePtr root = std::make_shared<Node>(ASTTag::IdentifierExprNode);
     auto not_op = std::get<0>(getTuple());
     
+    // pre op
     std::visit([&](auto& var) {
         using VarType = std::decay_t<decltype(var)>;
         
-        if constexpr (std::is_same_v<VarType, std::shared_ptr<TokenParser<TokenType::LGC_NOT>>>) {
+        if constexpr (!std::is_same_v<VarType, std::shared_ptr<NullParser>>) {
             std::shared_ptr<Token> tok = var->token;
 
-            (*root)[ASTTag::Op] = std::make_shared<Node>(tok);
+            (*root)[ASTTag::PreOp] = std::make_shared<Node>(tok);
         }
     }, std::get<0>(getTuple())->option());
 
@@ -87,6 +88,21 @@ sakuraE::NodePtr sakuraE::IdentifierExprParser::genResource() {
             (*root)[ASTTag::Exprs]->addChild(std::get<1>(unit->getTuple())->genResource());
         }
     }
+
+    // after op
+    std::visit([&](auto& var) {
+        using VarType = std::decay_t<decltype(var)>;
+        
+        if constexpr (!std::is_same_v<VarType, std::shared_ptr<NullParser>>) {
+            if (root->hasNode(ASTTag::Op))
+                throw SakuraError(OccurredTerm::PARSER,
+                                "Operator appeared previously.",
+                                root->getPosInfo());
+            std::shared_ptr<Token> tok = var->token;
+
+            (*root)[ASTTag::Op] = std::make_shared<Node>(tok);
+        }
+    }, std::get<3>(getTuple())->option());
 
     return root;
 }
