@@ -87,15 +87,7 @@ namespace sakuraE::IR {
         fzlib::String toString() {
             fzlib::String result = magic_enum::enum_name(kind);
             for (auto arg: args) {
-                result += " " + arg->getName();
-            }
-            return result;
-        }
-
-        fzlib::String toFullString() {
-            fzlib::String result = magic_enum::enum_name(kind);
-            for (auto arg: args) {
-                result += " (" + arg->getName() + ":" + arg->getType()->toString() + ")";
+                result += " $" + (arg ? arg->getName() : "nullptr");
             }
             return result;
         }

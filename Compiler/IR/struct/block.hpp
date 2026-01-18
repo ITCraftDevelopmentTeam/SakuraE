@@ -79,19 +79,9 @@ namespace sakuraE::IR {
         }
 
         fzlib::String toString() {
-            fzlib::String result = name + " {";
+            fzlib::String result = ID + " {";
             for (auto ins: instructions) {
                 result += ins->toString() + ";";
-            }
-            result += "}";
-
-            return result;
-        }
-
-        fzlib::String toFullString() {
-            fzlib::String result = name + " {";
-            for (auto ins: instructions) {
-                result += ins->toFullString() + ";";
             }
             result += "}";
 

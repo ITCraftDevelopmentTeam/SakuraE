@@ -110,14 +110,7 @@ namespace sakuraE::IR {
             for (auto fn: fnList) {
                 result += fn->toString();
             }
-            return result;
-        }
-
-        fzlib::String toFullString() {
-            fzlib::String result = ID + " {";
-            for (auto fn: fnList) {
-                result += fn->toFullString();
-            }
+            result += "}";
             return result;
         }
     };

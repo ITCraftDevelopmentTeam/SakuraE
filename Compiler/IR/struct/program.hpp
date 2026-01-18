@@ -34,14 +34,7 @@ namespace sakuraE::IR {
             for (auto mod: moduleList) {
                 result += mod->toString();
             }
-            return result;
-        }
-
-        fzlib::String toFullString() {
-            fzlib::String result = ID + " {";
-            for (auto mod: moduleList) {
-                result += mod->toFullString();
-            }
+            result += "}";
             return result;
         }
     };
