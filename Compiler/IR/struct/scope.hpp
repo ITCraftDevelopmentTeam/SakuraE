@@ -50,9 +50,10 @@ namespace sakuraE::IR {
         }
 
         Symbol* lookup(const fzlib::String& name) {
-            for (auto it = symbolTables.rbegin(); it != symbolTables.rend(); it --) {
-                if (it->find(name) != it->end()) {
-                    return &(*it)[name];
+            for (auto it = symbolTables.rbegin(); it != symbolTables.rend(); it ++) {
+                auto found = it->find(name);
+                if (found != it->end()) {
+                    return &(found->second);
                 }
             }
 
