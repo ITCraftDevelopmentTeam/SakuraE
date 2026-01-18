@@ -20,6 +20,10 @@ namespace sakuraE::IR {
             name = n;
         }
 
+        void setType(IRType* t) {
+            type = t;
+        }
+
         const fzlib::String& getName() {
             return name;
         }
