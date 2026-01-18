@@ -83,6 +83,7 @@ namespace sakuraE::IR {
 
         IRValue* buildBlock(fzlib::String id, std::vector<Instruction*> ops) {
             Block* block = new Block(id, ops);
+            block->setName("%" + id);
             block->setParent(this);
             blocks.push_back(block);
             cursor = blocks.size() - 1;
@@ -92,6 +93,7 @@ namespace sakuraE::IR {
 
         IRValue* buildBlock(fzlib::String id) {
             Block* block = new Block(id);
+            block->setName("%" + id);
             block->setParent(this);
             blocks.push_back(block);
             cursor = blocks.size() - 1;
@@ -144,16 +146,16 @@ namespace sakuraE::IR {
             for (std::size_t i = 0; i < formalParams.size(); i ++) {
                 auto arg = formalParams[i];
                 if (i == formalParams.size() - 1)
-                    result += arg.first + ":" + arg.second->toString();
+                    result += arg.first + arg.second->toString();
                 else
-                    result += arg.first + ":" + arg.second->toString() + ", ";
+                    result += arg.first + arg.second->toString() + ", ";
             }
             result += ") -> " + returnType->toString() + " {";
 
             for (auto block: blocks) {
                 result += block->toString();
             }
-            
+
             result += "}";
             return result;
         }
