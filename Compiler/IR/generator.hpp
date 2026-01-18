@@ -4,6 +4,7 @@
 #include "struct/program.hpp"
 #include "Compiler/Frontend/AST.hpp"
 #include "Compiler/IR/value/constant.hpp"
+#include "Compiler/Frontend/lexer.h"
 
 namespace sakuraE::IR {
     class IRGenerator {
