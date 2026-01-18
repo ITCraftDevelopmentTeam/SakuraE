@@ -49,9 +49,9 @@ namespace sakuraE::IR {
 
         void setFuncDefineInfo(FormalParamsDefine params, IRType* retType) {
             formalParams = params;
-            returnType = type;
+            returnType = retType;
 
-            type = IRType::getFunctionTy(retType, 
+            setType(IRType::getFunctionTy(retType, 
                 [&]() -> std::vector<IRType*> {
                     std::vector<IRType*> result;
                     for (auto param: params) {
@@ -59,7 +59,7 @@ namespace sakuraE::IR {
                     }
                     return result;
                 }()
-            );
+            ));
 
             setName("#" + funcName);
         }
