@@ -29,6 +29,10 @@ namespace sakuraE::IR {
             return moduleList[index];
         }
 
+        fzlib::String getID() {
+            return ID;
+        }
+
         fzlib::String toString() {
             fzlib::String result = ID + " {";
             for (auto mod: moduleList) {
