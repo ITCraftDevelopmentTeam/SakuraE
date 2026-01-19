@@ -29,11 +29,39 @@ namespace sakuraE {
         std::vector<llvm::Module*> modules;
         long cursor = -1;
 
+        // llvmIR  <-> sakIR
+        std::map<IR::IRValue*, llvm::Value*> irValMap;
+        inline llvm::Value* mapRef(IR::IRValue* sakIRVal) {
+            return irValMap[sakIRVal];
+        }
+        inline void mapStore(IR::IRValue* sakIRVal, llvm::Value* llvmIRVal) {
+            irValMap[sakIRVal] = llvmIRVal;
+        }
+
         // methods
+        long cur() {
+            return cursor;
+        }
+
+        void moveCursor(long c) {
+            cursor = c;
+        }
+
+        llvm::Module* curModule() {
+            return modules[cursor];
+        }
+
         void codegen(IR::Module* mod);
-        void codegen(IR::Block* block);
-        void codegen(IR::Function* fn);
-        void codegen(IR::Instruction* ins);
+        llvm::Value* codegen(IR::Block* block);
+        llvm::Value* codegen(IR::Function* fn);
+        llvm::Value* codegen(IR::Instruction* ins);
+
+        void buildMapping(IR::Instruction* ins) {
+            llvm::Value* result = codegen(ins);
+            if (result) {
+                mapStore(ins, result);
+            }
+        }
     public:
         LLVMCodeGenerator(IR::Program* p) {
             program = p;
