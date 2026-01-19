@@ -5,3 +5,4 @@
 ## Content
 
 - [Instruction Naming Standard](docs/ins-naming.md)
+- [String Type](docs/string.md)
