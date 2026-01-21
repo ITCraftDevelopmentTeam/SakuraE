@@ -22,7 +22,63 @@
 
 namespace sakuraE::Codegen {
     class InstructionCodegen {
+        llvm::LLVMContext* context = nullptr;
+        llvm::IRBuilder<>* builder = nullptr;
+        llvm::Module* mod = nullptr;
+
+        std::map<IR::IRValue*, llvm::Value*> instructionMap;
+
+        // Get IRValue to llvm Value referrence
+        inline llvm::Value* getRef(IR::IRValue* sakIRVal) {
+            return instructionMap[sakIRVal];
+        }
+
+        // Create a new IRValue to llvm Value referrence
+        inline void store(IR::IRValue* sakIRVal, llvm::Value* llvmIRVal) {
+            instructionMap[sakIRVal] = llvmIRVal;
+        }
+    public:
+        InstructionCodegen(llvm::LLVMContext* ctx, llvm::IRBuilder<>* bdr, llvm::Module* parentModule):
+            context(ctx), builder(bdr), mod(parentModule) {}
         
+        llvm::Value* codegen(IR::Instruction* ins);
+
+        llvm::Value* toLLVMConstant(IR::Constant* constant) {
+            switch (constant->getType()->getIRTypeID()){
+                case IR::IRTypeID::IntegerTyID: {
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<int>());
+                }
+                case IR::IRTypeID::FloatTyID:
+                    return llvm::ConstantFP::get(constant->getType()->toLLVMType(*context), constant->getContentValue<double>());
+                case IR::IRTypeID::PointerTyID: {
+                    auto ptrType = dynamic_cast<IR::IRPointerType*>(constant->getType());
+                    if (ptrType->getElementType() == IR::IRType::getCharTy()) {
+                        // Is String
+                        fzlib::String strVal = constant->getContentValue<fzlib::String>();
+                        return builder->CreateGlobalString(strVal.c_str());
+                    }
+                }
+                default:
+                    return nullptr;
+            }
+        }
+
+        void buildMapping(IR::Instruction* ins) {
+            llvm::Value* result = codegen(ins);
+            if (result) {
+                store(ins, result);
+            }
+        }
+
+        llvm::Value* toLLVMValue(IR::IRValue* value) {
+            if (instructionMap.find(value) != instructionMap.end()) {
+                return getRef(value);
+            }
+            else if (auto* constant = dynamic_cast<IR::Constant*>(value)) {
+                return toLLVMConstant(constant);
+            }
+            return nullptr;
+        }
     };
 }
 
