@@ -552,26 +552,18 @@ namespace sakuraE::IR {
 
     IRValue* IRGenerator::visitDeclareStmtNode(NodePtr node) {
         auto identifier = (*node)[ASTTag::Identifier]->getToken();
-        IRType* type = nullptr;
+        IRValue* typeInfoIRValue = nullptr;
 
         if (node->hasNode(ASTTag::Type)) {
-            IRValue* typeInfoIRValue = visitTypeModifierNode((*node)[ASTTag::Type]);
-
-            // Unboxing
-            auto constInst = dynamic_cast<Instruction*>(typeInfoIRValue);
-            auto typeInfoConstant = dynamic_cast<Constant*>(constInst->getOperands()[0]);
-            TypeInfo* typeInfo = typeInfoConstant->getContentValue<TypeInfo*>();
-
-            type = typeInfo->toIRType();
+            typeInfoIRValue = visitTypeModifierNode((*node)[ASTTag::Type]);
         }
 
         IRValue* initVal = visitWholeExprNode((*node)[ASTTag::AssignTerm]);
 
-        if (!type) {
-            type = initVal->getType();
-        }
-
-        return declareSymbol(identifier.content, type, initVal);
+        if (typeInfoIRValue)
+            return declareSymbol(identifier.content, typeInfoIRValue, initVal);
+        else
+            return declareSymbol(identifier.content, initVal->getType(), initVal);
     }
 
     IRValue* IRGenerator::visitExprStmtNode(NodePtr node) {
