@@ -304,12 +304,15 @@ namespace sakuraE::IR {
         if (node->hasNode(ASTTag::Ops)) {
             auto opChain = (*node)[ASTTag::Ops]->getChildren();
             long beforeBlockIndex = curFunc()->cur();
-            IRValue* mergeBlock = curFunc()->buildBlock("merge");
+            IRValue* mergeBlock = curFunc()->buildBlock("short.cur.merge");
+            long shortCurBlockIndex = curFunc()->cur();
             for (std::size_t i = 1; i < chain.size(); i ++) {
                 switch (opChain[i - 1]->getToken().type)
                 {
                     case TokenType::LGC_AND: {
-                        IRValue* rhsBlock = curFunc()->buildBlock("and.rhs");
+                        static int andRhsBlockID = 0;
+                        IRValue* rhsBlock = curFunc()->buildBlock("and.rhs" + std::to_string(andRhsBlockID));
+                        andRhsBlockID ++;
                         long rhsBlockIndex = curFunc()->cur();
 
                         curFunc()->moveCursor(rhsBlockIndex);
@@ -328,6 +331,7 @@ namespace sakuraE::IR {
                                                 IRType::getBoolTy(),
                                                 {resultAddr, rhs},
                                                 "assign." + resultAddrName);
+
                         curFunc()
                             ->block(rhsBlockIndex)
                             ->createInstruction(OpKind::br,
@@ -338,7 +342,9 @@ namespace sakuraE::IR {
                         break;
                     }
                     case TokenType::LGC_OR: {
-                        IRValue* rhsBlock = curFunc()->buildBlock("or.rhs");
+                        static int orRhsBlockID = 0;
+                        IRValue* rhsBlock = curFunc()->buildBlock("or.rhs" + std::to_string(orRhsBlockID));
+                        orRhsBlockID ++;
                         long rhsBlockIndex = curFunc()->cur();
 
                         curFunc()->moveCursor(rhsBlockIndex);
@@ -357,6 +363,7 @@ namespace sakuraE::IR {
                                                 IRType::getBoolTy(),
                                                 {resultAddr, rhs},
                                                 "assign." + resultAddrName);
+                                                
                         curFunc()
                             ->block(rhsBlockIndex)
                             ->createInstruction(OpKind::br,
@@ -370,6 +377,7 @@ namespace sakuraE::IR {
                         break;
                 }
             }
+            curFunc()->moveCursor(shortCurBlockIndex);
         }
         return loadSymbol(resultAddrName);
     }
@@ -573,8 +581,18 @@ namespace sakuraE::IR {
             return visitAssignExprNode((*node)[ASTTag::AssignExprNode]);
     }
 
-    IRValue* IRGenerator::visitBlockStmtNode(NodePtr node, fzlib::String blockName) {
+    IRValue* IRGenerator::visitBlockStmtNode(NodePtr node, fzlib::String blockName, long beforeBlock) {
         IRValue* block = curFunc()->buildBlock(blockName);
+        
+        if (beforeBlock != -1) {
+            curFunc()
+                ->block(beforeBlock)
+                ->createInstruction(OpKind::br,
+                                    IRType::getVoidTy(),
+                                    {block},
+                                    "br." + blockName);
+        }
+
         curFunc()->fnScope().enter();
         
         curFunc()->moveCursor(curFunc()->cur());
@@ -775,6 +793,7 @@ namespace sakuraE::IR {
         FormalParamsDefine params;
 
         IRValue* fn = curModule()->buildFunction(fnName, retType, params, node->getPosInfo());
+        long initBlockIndex = curFunc()->cur();
 
         if (node->hasNode(ASTTag::Args)) {
             auto typeList = (*node)[ASTTag::Args]->getChildren()[0];
@@ -807,7 +826,7 @@ namespace sakuraE::IR {
 
         curFunc()->setFuncDefineInfo(params, retType);
 
-        visitBlockStmtNode((*node)[ASTTag::Block], "fn." + fnName);
+        visitBlockStmtNode((*node)[ASTTag::Block], "fn." + fnName, initBlockIndex);
 
         return fn;
     };
