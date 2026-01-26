@@ -42,7 +42,7 @@ namespace sakuraE::IR {
         IRValue* buildFunction(fzlib::String name, IRType* retType, FormalParamsDefine params, PositionInfo info) {
             Function* func = new Function(name, retType, params, info);
             func->setName("#" + name);
-            func->buildBlock("begin");
+            func->buildBlock(name + ".init");
             fnList.push_back(func);
             cursor = fnList.size() - 1;
 
