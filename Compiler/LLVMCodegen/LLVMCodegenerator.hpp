@@ -21,14 +21,30 @@
 #include "Compiler/IR/generator.hpp"
 
 namespace sakuraE::Codegen {
+    // Used to represent the set of all intra-function scopes within the current module.
+    using FuncSet = std::map<IR::IRValue*, llvm::Value*>;
+
+    // Represent LLVM Function Instantce
+    struct LLVMFunction {
+        fzlib::String name;
+        llvm::Type* returnType = nullptr;
+        std::vector<llvm::Type*> formalParams;
+        IR::Scope<llvm::Value*> scope;
+    };
+
+    // Represent LLVM Module Instantce
+    struct LLVMModule {
+        fzlib::String ID;
+        llvm::Module* content = nullptr;
+        std::vector<LLVMFunction> funcs;
+    };
     class LLVMCodeGenerator {
         IR::Program* program;
         llvm::LLVMContext* context = nullptr;
         llvm::IRBuilder<>* builder = nullptr;
-        llvm::Module* mod = nullptr;
 
+        // Instruction Referring ==============================================
         std::map<IR::IRValue*, llvm::Value*> instructionMap;
-
         // Get IRValue to llvm Value referrence
         inline llvm::Value* getRef(IR::IRValue* sakIRVal) {
             return instructionMap[sakIRVal];
@@ -38,16 +54,45 @@ namespace sakuraE::Codegen {
         inline void store(IR::IRValue* sakIRVal, llvm::Value* llvmIRVal) {
             instructionMap[sakIRVal] = llvmIRVal;
         }
+
+        // Create referring
+        void buildMapping(IR::Instruction* ins) {
+            llvm::Value* result = codegen(ins);
+            if (result) {
+                store(ins, result);
+            }
+        }
+        // =====================================================================
+
+        // Module Manager ======================================================
+        std::map<fzlib::String, LLVMModule> moduleList;
+        fzlib::String curModule;
+
+        void createModule(fzlib::String id) {
+            if (moduleList.find(id) != moduleList.end()) {}
+            else {
+                moduleList[id] = LLVMModule {id, new llvm::Module(id.c_str(), *context)};
+                curModule = id;
+            }
+        }
+
+        LLVMModule& getCurrentUsingModule() {
+            return moduleList[curModule];
+        }
+        // =====================================================================
     public:
         LLVMCodeGenerator(IR::Program* p) {
             program = p;
             context = new llvm::LLVMContext();
             builder = new llvm::IRBuilder<>(*context);
+
+            createModule("MainModule");
         }
 
     private:
         llvm::Value* codegen(IR::Instruction* ins);
 
+        // Tool Methods =========================================================
         llvm::Value* toLLVMConstant(IR::Constant* constant) {
             switch (constant->getType()->getIRTypeID()){
                 case IR::IRTypeID::IntegerTyID: {
@@ -68,13 +113,6 @@ namespace sakuraE::Codegen {
             }
         }
 
-        void buildMapping(IR::Instruction* ins) {
-            llvm::Value* result = codegen(ins);
-            if (result) {
-                store(ins, result);
-            }
-        }
-
         llvm::Value* toLLVMValue(IR::IRValue* value) {
             if (instructionMap.find(value) != instructionMap.end()) {
                 return getRef(value);
@@ -84,6 +122,7 @@ namespace sakuraE::Codegen {
             }
             return nullptr;
         }
+        // =====================================================================
     };
 }
 
