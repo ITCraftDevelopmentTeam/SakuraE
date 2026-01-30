@@ -25,16 +25,46 @@ namespace sakuraE::Codegen {
     struct LLVMFunction {
         fzlib::String name;
         llvm::Type* returnType = nullptr;
-        std::vector<llvm::Type*> formalParams;
+        std::vector<std::pair<fzlib::String, llvm::Type*>> formalParams;
         IR::Scope<llvm::Value*> scope;
+        
+        LLVMFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info):
+            name(n), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)) {}
     };
 
     // Represent LLVM Module Instantce
     struct LLVMModule {
         fzlib::String ID;
         llvm::Module* content = nullptr;
-        std::vector<LLVMFunction> funcs;
+        std::map<fzlib::String, LLVMFunction*> funcs;
+
+        LLVMModule(fzlib::String id, llvm::LLVMContext& ctx):
+            ID(id), content(new llvm::Module(id.c_str(), ctx)) {}
+        
+        void declareFunction(fzlib::String n) {
+            if (funcs.find(n) == funcs.end())
+                funcs[n] = nullptr;
+            else return;
+        }
+
+        void declareFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
+            if (funcs.find(n) != funcs.end()) return;
+            else {
+                LLVMFunction* fn = new LLVMFunction(n, retT, formalP, info);
+            }
+        }
+
+        LLVMFunction* get(fzlib::String n) {
+            if (funcs.find(n) == funcs.end()) {
+                declareFunction(n);
+                return nullptr;
+            }
+            else {
+                return funcs[n];
+            }
+        }
     };
+    
     class LLVMCodeGenerator {
         IR::Program* program;
         llvm::LLVMContext* context = nullptr;
@@ -64,18 +94,18 @@ namespace sakuraE::Codegen {
         // =====================================================================
 
         // Module Manager ======================================================
-        std::map<fzlib::String, LLVMModule> moduleList;
+        std::map<fzlib::String, LLVMModule*> moduleList;
         fzlib::String curModule;
 
         void createModule(fzlib::String id) {
             if (moduleList.find(id) != moduleList.end()) {}
             else {
-                moduleList[id] = LLVMModule {id, new llvm::Module(id.c_str(), *context)};
+                moduleList[id] = new LLVMModule(id, *context);
                 curModule = id;
             }
         }
 
-        LLVMModule& getCurrentUsingModule() {
+        LLVMModule* getCurrentUsingModule() {
             return moduleList[curModule];
         }
         // =====================================================================
