@@ -95,7 +95,7 @@ namespace sakuraE::Codegen {
 
         // Create referring
         void buildMapping(IR::Instruction* ins) {
-            llvm::Value* result = codegen(ins);
+            llvm::Value* result = instgen(ins);
             if (result) {
                 store(ins, result);
             }
@@ -128,7 +128,7 @@ namespace sakuraE::Codegen {
         }
 
     private:
-        llvm::Value* codegen(IR::Instruction* ins);
+        llvm::Value* instgen(IR::Instruction* ins);
 
         // Tool Methods =========================================================
         llvm::Value* toLLVMConstant(IR::Constant* constant) {

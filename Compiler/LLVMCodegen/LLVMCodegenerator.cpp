@@ -1,6 +1,6 @@
 #include "LLVMCodegenerator.hpp"
 
-llvm::Value* sakuraE::Codegen::LLVMCodeGenerator::codegen(IR::Instruction* ins) {
+llvm::Value* sakuraE::Codegen::LLVMCodeGenerator::instgen(IR::Instruction* ins) {
     llvm::Value* instResult = nullptr;
     switch (ins->getKind())
     {
