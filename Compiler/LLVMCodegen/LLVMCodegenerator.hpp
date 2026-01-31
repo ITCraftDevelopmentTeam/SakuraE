@@ -30,6 +30,10 @@ namespace sakuraE::Codegen {
         
         LLVMFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info):
             name(n), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)) {}
+
+        ~LLVMFunction() {
+            name.free();
+        }
     };
 
     // Represent LLVM Module Instantce
@@ -40,6 +44,10 @@ namespace sakuraE::Codegen {
 
         LLVMModule(fzlib::String id, llvm::LLVMContext& ctx):
             ID(id), content(new llvm::Module(id.c_str(), ctx)) {}
+        
+        ~LLVMModule() {
+            ID.free();
+        }
         
         void declareFunction(fzlib::String n) {
             if (funcs.find(n) == funcs.end())
