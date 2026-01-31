@@ -13,13 +13,6 @@ namespace fzlib {
         std::size_t _len = 0;
         std::size_t _cap = 0;
 
-        void free() {
-            delete[] _content;
-            _content = nullptr;
-            _cap = 0;
-            _len = 0;
-        }
-
         void resize(std::size_t new_len) {
             if (new_len <= _cap)
                 return;
@@ -135,6 +128,13 @@ namespace fzlib {
             std::memset(_content, ch, _len);
 
             _content[_len] = '\0';
+        }
+
+        void free() {
+            delete[] _content;
+            _content = nullptr;
+            _cap = 0;
+            _len = 0;
         }
 
         ~String() { free(); }
