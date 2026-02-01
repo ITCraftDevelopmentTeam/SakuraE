@@ -1,34 +1,51 @@
 TestProject  {
   <TestProject>  {
     foo(a<Int32Type>, b<Int32Type>, s<<Int8Type>PointerType>) -> <Int32Type>  {
-      :begin  {
-        constant $;
-        declare $ $<null>;
-        constant $;
-        declare $ $<null>;
-        constant $;
-        declare $ $<null>;
-        constant $;
+      :entry  {
+        constant <TypeInfo>;
+        declare <null>;
+        constant <TypeInfo>;
+        declare <null>;
+        constant <TypeInfo>;
+        declare <null>;
+        constant <TypeInfo>;
+        br $%fn.foo;
         
       }
       :fn.foo  {
-        constant $;
-        declare $ $constant;
-        constant $;
-        declare $ $constant;
+        constant ""hello"";
+        declare $constant;
+        load $declare.$tmp_binary_value0;
+        declare $load.$tmp_binary_value0;
+        constant ""hello11"";
+        declare $constant;
+        load $declare.$tmp_binary_value1;
+        declare $load.$tmp_binary_value1;
         load $declare.VAR;
         load $declare.VAR1;
         lgc_not_equal $load.VAR $load.VAR1;
+        declare $lgc-not-equal;
+        cond_br $lgc-equal $%and.rhs0 $%short.cur.merge;
+        
+      }
+      :short.cur.merge  {
+        load $declare.$tmp_binary_value2;
+        cond_br $load.$tmp_binary_value2 $%if.then $%if.else;
+        
+      }
+      :and.rhs0  {
         load $declare.a;
-        constant $;
+        constant 2;
         lgc_equal $load.a $constant;
-        lgc_and $lgc-not-equal $lgc-equal;
-        cond_br $lgc-and $%if.then $%if.else;
+        assign $declare.$tmp_binary_value2 $lgc-equal;
+        br $%short.cur.merge;
         
       }
       :if.then  {
-        constant $;
-        ret $constant;
+        constant 0;
+        declare $constant;
+        load $declare.$tmp_binary_value3;
+        ret $load.$tmp_binary_value3;
         br $%if.merge;
         
       }
@@ -39,17 +56,31 @@ TestProject  {
       :if.merge  {
         load $declare.VAR1;
         load $declare.s;
-        assign $load.VAR1 $load.s;
-        constant $;
-        constant $;
-        constant $;
-        constant $;
-        create_array $constant $constant $constant $constant;
-        declare $ $create-array;
-        constant $;
-        declare $ $constant;
-        constant $;
-        declare $ $constant;
+        declare $load.s;
+        load $declare.$tmp_binary_value4;
+        assign $load.VAR1 $load.$tmp_binary_value4;
+        constant 1;
+        declare $constant;
+        load $declare.$tmp_binary_value5;
+        constant 2;
+        declare $constant;
+        load $declare.$tmp_binary_value6;
+        constant 3;
+        declare $constant;
+        load $declare.$tmp_binary_value7;
+        constant 4;
+        declare $constant;
+        load $declare.$tmp_binary_value8;
+        create_array $load.$tmp_binary_value5 $load.$tmp_binary_value6 $load.$tmp_binary_value7 $load.$tmp_binary_value8;
+        declare $create-array;
+        constant 4;
+        declare $constant;
+        load $declare.$tmp_binary_value9;
+        declare $load.$tmp_binary_value9;
+        constant 0;
+        declare $constant;
+        load $declare.$tmp_binary_value10;
+        declare $load.$tmp_binary_value10;
         br $%for.cond;
         
       }
@@ -57,22 +88,28 @@ TestProject  {
         load $declare.index;
         load $declare.arr_size;
         lgc_ls_than $load.index $load.arr_size;
-        cond_br $lgc-ls-than $%for.body $%for.merge;
+        declare $lgc-ls-than;
+        load $declare.$tmp_binary_value11;
+        cond_br $load.$tmp_binary_value11 $%for.body $%for.merge;
         
       }
       :for.body  {
         load $declare.arr;
         load $declare.index;
         indexing $load.arr $load.index;
-        constant $;
-        add $indexing $constant;
+        constant 5;
+        declare $constant;
+        load $declare.$tmp_binary_value12;
+        add $indexing $load.$tmp_binary_value12;
         assign $indexing $add;
         br $%for.step;
         
       }
       :for.step  {
         load $declare.index;
-        add $load.index $;
+        add $load.index 1;
+        declare $add;
+        load $declare.$tmp_binary_value13;
         br $%for.cond;
         
       }
@@ -80,7 +117,9 @@ TestProject  {
         load $declare.a;
         load $declare.b;
         add $load.a $load.b;
-        ret $add;
+        declare $add;
+        load $declare.$tmp_binary_value14;
+        ret $load.$tmp_binary_value14;
         
       }
     }
