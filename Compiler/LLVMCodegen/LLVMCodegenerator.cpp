@@ -1,5 +1,6 @@
 #include "LLVMCodegenerator.hpp"
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Instructions.h>
 
 namespace sakuraE::Codegen {
     void LLVMCodeGenerator::LLVMFunction::impl() {
@@ -322,6 +323,27 @@ namespace sakuraE::Codegen {
             case IR::OpKind::declare: {
                 auto insName = ins->getName();
                 auto identifierName = insName.split('.')[1];
+
+                auto identifierType = ins->getType()->toLLVMType(*context);
+
+                llvm::BasicBlock* currentBlock = builder->GetInsertBlock();
+                llvm::BasicBlock::iterator currentPoint = builder->GetInsertPoint();
+
+                builder->SetInsertPoint(getCurrentUsingModule()->getActive()->entryBlock);
+
+                llvm::AllocaInst* alloca = builder->CreateAlloca(identifierType, nullptr, identifierName.c_str());
+
+                builder->SetInsertPoint(currentBlock, currentPoint);
+                auto initVal = ins->arg(0);
+                if (initVal) {
+                    builder->CreateStore(toLLVMValue(initVal), alloca);
+                }
+                else {
+                    builder->CreateStore(llvm::Constant::getNullValue(identifierType), alloca);
+                }
+
+                store(ins, alloca);
+
                 break;
             }
             default:
