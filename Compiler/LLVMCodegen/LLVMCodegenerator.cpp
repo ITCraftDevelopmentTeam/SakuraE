@@ -8,9 +8,6 @@
 #include <llvm/Support/Casting.h>
 
 namespace sakuraE::Codegen {
-    llvm::LLVMContext* LLVMCodeGenerator::context = nullptr;
-    llvm::IRBuilder<>* LLVMCodeGenerator::builder = nullptr;
-
     void LLVMCodeGenerator::LLVMFunction::impl() {
         std::vector<llvm::Type*> params;
         for (auto param: formalParams) {
@@ -21,15 +18,28 @@ namespace sakuraE::Codegen {
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
         auto irFunc = codegenContext.curIRModule()->curFunc();
+        auto irParams = irFunc->getFormalParams();
 
-        for(auto block: irFunc->getBlocks()) {
-            llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*context, block->getName().c_str(), content);
+        std::size_t i = 0;
+        for (auto& arg: content->args()) {
+            llvm::AllocaInst* argAlloca = codegenContext.createAlloca(arg.getType(), nullptr, irParams[i].first);
+
+            codegenContext.builder->CreateStore(&arg, argAlloca);
+
+            scope.declare(irParams[i].first, argAlloca, nullptr);
+            i ++;
+        }
+
+        for (auto block: irFunc->getBlocks()) {
+            llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*codegenContext.context, block->getName().c_str(), content);
             codegenContext.bind(block, llvmBlock);
 
             if (block->getName() == "entry") {
                 entryBlock = llvmBlock;
             }
         }
+
+        codegenContext.builder->SetInsertPoint(entryBlock);
     }
 
     llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins) {
