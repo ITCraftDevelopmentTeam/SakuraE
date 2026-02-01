@@ -1,4 +1,5 @@
 #include "generator.hpp"
+#include "Compiler/Error/error.hpp"
 
 namespace sakuraE::IR {
     IRValue* IRGenerator::visitLiteralNode(NodePtr node) {
@@ -403,6 +404,12 @@ namespace sakuraE::IR {
         IRValue* symbol = visitIdentifierExprNode((*node)[ASTTag::Identifier]);
         auto assignOp = (*node)[ASTTag::Op]->getToken().type;
         IRValue* expr = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+
+        if (symbol->getType() != expr->getType()) {
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "The type of the identifier does not match the type of the assigned value.",
+                                node->getPosInfo());
+        }
 
         switch (assignOp)
         {
