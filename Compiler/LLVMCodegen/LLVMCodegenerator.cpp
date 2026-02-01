@@ -1,7 +1,10 @@
 #include "LLVMCodegenerator.hpp"
 #include "Compiler/IR/struct/instruction.hpp"
+#include <cstddef>
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constant.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/Support/Casting.h>
 
 namespace sakuraE::Codegen {
     void LLVMCodeGenerator::LLVMFunction::impl() {
@@ -327,14 +330,8 @@ namespace sakuraE::Codegen {
 
                 auto identifierType = ins->getType()->toLLVMType(*context);
 
-                llvm::BasicBlock* currentBlock = builder->GetInsertBlock();
-                llvm::BasicBlock::iterator currentPoint = builder->GetInsertPoint();
+                llvm::AllocaInst* alloca = createAlloca(identifierType, nullptr, identifierName);
 
-                builder->SetInsertPoint(getCurrentUsingModule()->getActive()->entryBlock);
-
-                llvm::AllocaInst* alloca = builder->CreateAlloca(identifierType, nullptr, identifierName.c_str());
-
-                builder->SetInsertPoint(currentBlock, currentPoint);
                 auto initVal = ins->arg(0);
                 if (initVal) {
                     builder->CreateStore(toLLVMValue(initVal), alloca);
@@ -360,6 +357,26 @@ namespace sakuraE::Codegen {
                     builder->CreateStore(val, alloca);
                 }
 
+                break;
+            }
+            case IR::OpKind::create_array: {
+                auto irArray = ins->getOperands();
+                std::vector<llvm::Value*> arrayContent;
+                for (auto element: irArray) {
+                    arrayContent.push_back(toLLVMValue(element));
+                }
+                auto arrayType = ins->getType()->toLLVMType(*context);
+
+                llvm::AllocaInst* alloca = createAlloca(arrayType, nullptr, ins->getName());
+
+                for (std::size_t i = 0; i < arrayContent.size(); i ++) {
+                    auto ptr = builder->CreateGEP(arrayType, 
+                                                            alloca, 
+                                                            {builder->getInt32(0), builder->getInt32(i)});
+                    builder->CreateStore(arrayContent[i], ptr);
+                }
+
+                store(ins, alloca);
                 break;
             }
             default:
