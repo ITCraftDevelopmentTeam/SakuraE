@@ -42,9 +42,15 @@ namespace sakuraE::Codegen {
             std::vector<std::pair<fzlib::String, llvm::Type*>> formalParams;
             IR::Scope<llvm::Value*> scope;
             LLVMModule* parent = nullptr;
+            LLVMCodeGenerator& codegenContext;
             
-            LLVMFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, LLVMModule* p, PositionInfo info):
-                name(n), content(nullptr), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)), parent(p) {}
+            LLVMFunction(fzlib::String n, 
+                        llvm::Type* retT, 
+                        std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, 
+                        LLVMModule* p, 
+                        LLVMCodeGenerator& codegen,
+                        PositionInfo info):
+                name(n), content(nullptr), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)), parent(p), codegenContext(codegen) {}
 
             ~LLVMFunction() {
                 name.free();
@@ -61,11 +67,12 @@ namespace sakuraE::Codegen {
             fzlib::String ID;
             llvm::Module* content = nullptr;
             std::map<fzlib::String, LLVMFunction*> funcs;
+            LLVMCodeGenerator& codegenContext;
             // State Manager
             fzlib::String activeFunctionName;
 
-            LLVMModule(fzlib::String id, llvm::LLVMContext& ctx):
-                ID(id), content(nullptr) {}
+            LLVMModule(fzlib::String id, llvm::LLVMContext& ctx, LLVMCodeGenerator& codegen):
+                ID(id), content(nullptr), codegenContext(codegen) {}
             
             ~LLVMModule() {
                 ID.free();
@@ -80,7 +87,7 @@ namespace sakuraE::Codegen {
             void declareFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
                 if (funcs.find(n) != funcs.end()) return;
                 else {
-                    LLVMFunction* fn = new LLVMFunction(n, retT, formalP, this, info);
+                    LLVMFunction* fn = new LLVMFunction(n, retT, formalP, this, codegenContext, info);
                     funcs[n] = fn;
 
                     activeFunctionName = n;
@@ -97,7 +104,7 @@ namespace sakuraE::Codegen {
                         llvmFormalP.emplace_back(param.first, param.second->toLLVMType(*context));
                     }
 
-                    LLVMFunction* fn = new LLVMFunction(n, llvmReturnType, llvmFormalP, this, info);
+                    LLVMFunction* fn = new LLVMFunction(n, llvmReturnType, llvmFormalP, this, codegenContext, info);
                     funcs[n] = fn;
 
                     activeFunctionName = n;
@@ -173,7 +180,7 @@ namespace sakuraE::Codegen {
             for (auto mod: moduleList) {
                 if (mod.first == id) return ;
             }
-            moduleList.emplace_back(id, new LLVMModule(id, *context));
+            moduleList.emplace_back(id, new LLVMModule(id, *context, *this));
             curModuleIndex ++;
         }
 
@@ -195,12 +202,13 @@ namespace sakuraE::Codegen {
             return curIRModule()->curFunc();
         }
 
-        // Look up an identifier matching the conditions in the current active function's scope.
+        // Look up an identifier matching the target name in the current active IR-function's scope.
         template<typename T>
         IR::Symbol<T>* IRScopeLookup(fzlib::String n) {
             return curIRFunc()->fnScope().lookup(n);
         }
 
+        // Look up an identifier matching the target name in the current active function's scope.
         template<typename T>
         IR::Symbol<T>* lookup(fzlib::String n) {
             return getCurrentUsingModule()->getActive()->scope.lookup(n);
@@ -220,6 +228,7 @@ namespace sakuraE::Codegen {
         }
         // =====================================================================
     public:
+        LLVMCodeGenerator()=default;
         LLVMCodeGenerator(IR::Program* p) {
             program = p;
             context = new llvm::LLVMContext();
@@ -265,7 +274,7 @@ namespace sakuraE::Codegen {
             else if (auto* constant = dynamic_cast<IR::Constant*>(value)) {
                 return toLLVMConstant(constant);
             }
-            return nullptr;
+            throw std::runtime_error("Expect to get unknown mapping");
         }
         // =====================================================================
     };
