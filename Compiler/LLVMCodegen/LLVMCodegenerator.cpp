@@ -2,7 +2,7 @@
 #include <llvm/IR/BasicBlock.h>
 
 namespace sakuraE::Codegen {
-    llvm::BasicBlock* LLVMCodeGenerator::LLVMFunction::impl() {
+    void LLVMCodeGenerator::LLVMFunction::impl() {
         std::vector<llvm::Type*> params;
         for (auto param: formalParams) {
             params.push_back(param.second);
@@ -14,7 +14,7 @@ namespace sakuraE::Codegen {
         llvm::BasicBlock* entry = llvm::BasicBlock::Create(*context, "entry", content);
         builder->SetInsertPoint(entry);
 
-        return entry;
+        entryBlock = entry;
     }
 
     llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins) {
