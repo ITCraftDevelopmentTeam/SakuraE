@@ -29,8 +29,8 @@
 namespace sakuraE::Codegen {
     class LLVMCodeGenerator {
         IR::Program* program;
-        static llvm::LLVMContext* context;
-        static llvm::IRBuilder<>* builder;
+        llvm::LLVMContext* context;
+        llvm::IRBuilder<>* builder;
         
         // Struct Definition ==================================================
         struct LLVMModule;
@@ -97,11 +97,11 @@ namespace sakuraE::Codegen {
             void declareFunction(fzlib::String n, IR::IRType* retT, IR::FormalParamsDefine formalP, PositionInfo info) {
                 if (funcs.find(n) != funcs.end()) return;
                 else {
-                    llvm::Type* llvmReturnType = retT->toLLVMType(*context);
+                    llvm::Type* llvmReturnType = retT->toLLVMType(*codegenContext.context);
 
                     std::vector<std::pair<fzlib::String, llvm::Type*>> llvmFormalP;
                     for (auto param: formalP) {
-                        llvmFormalP.emplace_back(param.first, param.second->toLLVMType(*context));
+                        llvmFormalP.emplace_back(param.first, param.second->toLLVMType(*codegenContext.context));
                     }
 
                     LLVMFunction* fn = new LLVMFunction(n, llvmReturnType, llvmFormalP, this, codegenContext, info);
