@@ -20,10 +20,16 @@ namespace sakuraE::Codegen {
         llvm::FunctionType* fnType = llvm::FunctionType::get(returnType, params, false);
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
-        llvm::BasicBlock* entry = llvm::BasicBlock::Create(*context, "entry", content);
-        builder->SetInsertPoint(entry);
+        auto irFunc = codegenContext.curIRModule()->curFunc();
 
-        entryBlock = entry;
+        for(auto block: irFunc->getBlocks()) {
+            llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*context, block->getName().c_str(), content);
+            codegenContext.bind(block, llvmBlock);
+
+            if (block->getName() == "entry") {
+                entryBlock = llvmBlock;
+            }
+        }
     }
 
     llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins) {
@@ -359,6 +365,7 @@ namespace sakuraE::Codegen {
                 auto insName = ins->arg(0)->getName();
                 auto identifierName = insName.split('.')[1];
 
+                // TODO: Type is not only AllocaInst
                 auto alloca = llvm::dyn_cast<llvm::AllocaInst>(lookup<llvm::Value*>(identifierName)->address);
                 auto val = toLLVMValue(ins->arg(1));
 
@@ -405,6 +412,24 @@ namespace sakuraE::Codegen {
                 auto result = builder->CreateLoad(type->getArrayElementType(), ptr, "element_val");
 
                 bind(ins, result);
+                break;
+            }
+            case IR::OpKind::load: {
+                llvm::Value* addr = toLLVMValue(ins->arg(0));
+                llvm::Type* type = ins->getType()->toLLVMType(*context);
+
+                auto result = builder->CreateLoad(type, addr, "load.tmp");
+
+                bind(ins, result);
+                break;
+            }
+            case IR::OpKind::br: {
+                break;
+            }
+            case IR::OpKind::cond_br: {
+                break;
+            }
+            case IR::OpKind::ret: {
                 break;
             }
             default:
