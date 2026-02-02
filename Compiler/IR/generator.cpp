@@ -20,7 +20,7 @@ namespace sakuraE::IR {
                 ->createInstruction(OpKind::indexing, elementType, {addr, indexResult}, "indexing");
     }
 
-    IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, NodePtr node) {
+    IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
         std::vector<IRValue*> params = {addr};
 
         for (auto argExpr: (*node)[ASTTag::Exprs]->getChildren()) {
@@ -29,11 +29,12 @@ namespace sakuraE::IR {
 
         return curFunc()
                 ->curBlock()
-                ->createInstruction(OpKind::call, IRType::getInt32Ty(), params, "call");
+                ->createInstruction(OpKind::call, IRType::getInt32Ty(), params, "call." + target);
     }
 
     IRValue* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
-        IRValue* result = loadSymbol((*node)[ASTTag::Identifier]->getToken().content);
+        auto targetFn = (*node)[ASTTag::Identifier]->getToken().content;
+        IRValue* result = loadSymbol(targetFn);
 
         if (node->hasNode(ASTTag::Ops)) {
             for (auto op: (*node)[ASTTag::Ops]->getChildren()) {
@@ -43,7 +44,7 @@ namespace sakuraE::IR {
                         break;
                     }
                     case ASTTag::CallingOpNode: {
-                        result = visitCallingOpNode(result, op);
+                        result = visitCallingOpNode(result, targetFn, op);
                         break;
                     }
                     default:
@@ -74,7 +75,7 @@ namespace sakuraE::IR {
                             break;
                         }
                         case ASTTag::CallingOpNode: {
-                            result = visitCallingOpNode(result, op);
+                            result = visitCallingOpNode(result, memberName, op);
                             break;
                         }
                         default:
