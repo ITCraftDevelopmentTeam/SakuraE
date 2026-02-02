@@ -302,7 +302,7 @@ namespace sakuraE::IR {
         IRValue* lhs = visitLogicExprNode(chain[0]);
 
         static int binaryID = 0;
-        fzlib::String resultAddrName = "$tmp_binary_value" + std::to_string(binaryID);
+        fzlib::String resultAddrName = "$tbv." + std::to_string(binaryID);
         binaryID ++;
         
         IRValue* resultAddr = declareSymbol(resultAddrName, IRType::getBoolTy(), lhs);
