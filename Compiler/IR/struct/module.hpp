@@ -1,6 +1,7 @@
 #ifndef SAKURAE_MODULE_HPP
 #define SAKURAE_MODULE_HPP
 
+#include "Compiler/IR/type/type.hpp"
 #include "function.hpp"
 
 namespace sakuraE::IR {
@@ -38,9 +39,17 @@ namespace sakuraE::IR {
             Function* func = new Function(name, retType, params, info);
             func->setName("#" + name);
             func->buildBlock("entry");
+            func->setParent(this);
             fnList.push_back(func);
             cursor = fnList.size() - 1;
 
+            std::vector<IRType *> tParams;
+            for (auto param: params) {
+                tParams.push_back(param.second);
+            }
+            moduleScope.declare(name, func, IRType::getFunctionTy(retType, tParams));
+
+            func->fnScope().setParent(&moduleScope);
             return func;
         }
 
