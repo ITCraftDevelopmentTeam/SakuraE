@@ -76,7 +76,7 @@ namespace sakuraE::IR {
                 } else if constexpr (std::is_same_v<T, double>) {
                     return std::to_string(arg);
                 } else if constexpr (std::is_same_v<T, fzlib::String>) {
-                    return fzlib::String("\"") + arg + "\"";
+                    return arg;
                 } else if constexpr (std::is_same_v<T, char>) {
                     char buf[4] = {'\'', arg, '\'', '\0'};
                     return fzlib::String(buf);
