@@ -142,7 +142,7 @@ namespace sakuraE::IR {
             return formalParams;
         }
 
-        const long& cur() {
+        long& cur() {
             return cursor;
         }
 

@@ -106,7 +106,7 @@ namespace sakuraE::IR {
             return fnList;
         }
 
-        const long& cur() {
+        long& cur() {
             return cursor;
         }
 
