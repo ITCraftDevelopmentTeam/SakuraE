@@ -57,13 +57,13 @@ namespace sakuraE::Codegen {
                 name.free();
             }
 
-            llvm::AllocaInst* createAlloca(llvm::Type *ty, llvm::Value *arraySize = nullptr, fzlib::String name = "") {
+            llvm::AllocaInst* createAlloca(llvm::Type *ty, llvm::Value *arraySize = nullptr, fzlib::String n = "") {
                 llvm::BasicBlock* currentBlock = codegenContext.builder->GetInsertBlock();
                 llvm::BasicBlock::iterator currentPoint = codegenContext.builder->GetInsertPoint();
 
                 codegenContext.builder->SetInsertPoint(entryBlock);
 
-                llvm::AllocaInst* alloca = codegenContext.builder->CreateAlloca(ty, arraySize, name.c_str());
+                llvm::AllocaInst* alloca = codegenContext.builder->CreateAlloca(ty, arraySize, n.c_str());
 
                 codegenContext.builder->SetInsertPoint(currentBlock, currentPoint);
 
@@ -187,13 +187,13 @@ namespace sakuraE::Codegen {
             context = new llvm::LLVMContext();
             builder = new llvm::IRBuilder<>(*context);
 
-            
-
             // Reset, for the state managing
             program->reset();
         }
 
         void start();
+
+        void print();
     private:
         llvm::Value* instgen(IR::Instruction* ins, LLVMFunction* curFn);
 
@@ -211,6 +211,14 @@ namespace sakuraE::Codegen {
                         // Is String
                         fzlib::String strVal = constant->getContentValue<fzlib::String>();
                         return builder->CreateGlobalString(strVal.c_str());
+                    }
+                    else if (ptrType->getElementType()->getIRTypeID() == IR::ArrayTyID) {
+                        auto arrType = dynamic_cast<IR::IRArrayType*>(ptrType->getElementType());
+                        if (arrType->getElementType() == IR::IRType::getCharTy()) {
+                            // Is String
+                            fzlib::String strVal = constant->getContentValue<fzlib::String>();
+                            return builder->CreateGlobalString(strVal.c_str());
+                        }
                     }
                     break;
                 }
