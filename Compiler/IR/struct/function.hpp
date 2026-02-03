@@ -4,6 +4,7 @@
 #include <stack>
 #include <utility>
 
+#include "Compiler/Error/error.hpp"
 #include "block.hpp"
 #include "scope.hpp"
 
@@ -147,6 +148,10 @@ namespace sakuraE::IR {
 
         Block* operator[] (int index) {
             return block(index);
+        }
+
+        PositionInfo& getInfo() {
+            return createInfo;
         }
 
         fzlib::String toString() {
