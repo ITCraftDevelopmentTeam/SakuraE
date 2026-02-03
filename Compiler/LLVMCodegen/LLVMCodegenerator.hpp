@@ -43,6 +43,7 @@ namespace sakuraE::Codegen {
             IR::Scope<llvm::Value*> scope;
             LLVMModule* parent = nullptr;
             LLVMCodeGenerator& codegenContext;
+            IR::Function* sourceFn;
             
             LLVMFunction(fzlib::String n, 
                         llvm::Type* retT, 
@@ -54,6 +55,19 @@ namespace sakuraE::Codegen {
 
             ~LLVMFunction() {
                 name.free();
+            }
+
+            llvm::AllocaInst* createAlloca(llvm::Type *ty, llvm::Value *arraySize = nullptr, fzlib::String name = "") {
+                llvm::BasicBlock* currentBlock = codegenContext.builder->GetInsertBlock();
+                llvm::BasicBlock::iterator currentPoint = codegenContext.builder->GetInsertPoint();
+
+                codegenContext.builder->SetInsertPoint(entryBlock);
+
+                llvm::AllocaInst* alloca = codegenContext.builder->CreateAlloca(ty, arraySize, name.c_str());
+
+                codegenContext.builder->SetInsertPoint(currentBlock, currentPoint);
+
+                return alloca;
             }
 
             llvm::BasicBlock* entryBlock = nullptr;
@@ -70,8 +84,10 @@ namespace sakuraE::Codegen {
             llvm::Module* content = nullptr;
             std::map<fzlib::String, LLVMFunction*> fnMap;
             LLVMCodeGenerator& codegenContext;
+            IR::Module* sourceModule;
             // State Manager
             fzlib::String activeFunctionName;
+            
 
             LLVMModule(fzlib::String id, llvm::LLVMContext& ctx, LLVMCodeGenerator& codegen):
                 ID(id), content(nullptr), codegenContext(codegen) {}
@@ -123,15 +139,8 @@ namespace sakuraE::Codegen {
                 }
             }
 
-            LLVMFunction* getActive() {
-                if (!fnMap[activeFunctionName]) {
-                    throw std::runtime_error("activeFunction is null!");
-                }
-                return fnMap[activeFunctionName];
-            }
-
             // Instantiates an LLVM Module, performing the transformation from IR Module to LLVM Module.
-            void impl();
+            void impl(IR::Module* source);
 
             // Start LLVM IR Code generation
             void codegen();
@@ -150,35 +159,10 @@ namespace sakuraE::Codegen {
         inline void bind(IR::IRValue* sakIRVal, llvm::Value* llvmIRVal) {
             instructionMap[sakIRVal] = llvmIRVal;
         }
-
-        // Create referring
-        void buildMapping(IR::Instruction* ins) {
-            llvm::Value* result = instgen(ins);
-            if (result) {
-                bind(ins, result);
-            }
-        }
         // =====================================================================
 
-        // Module Manager ======================================================
-        std::vector<std::pair<fzlib::String, LLVMModule*>> moduleList;
-        long curModuleIndex = -1;
-
-        void createModule(fzlib::String id) {
-            for (auto mod: moduleList) {
-                if (mod.first == id) return ;
-            }
-            moduleList.emplace_back(id, new LLVMModule(id, *context, *this));
-            curModuleIndex ++;
-        }
-
-        LLVMModule* getCurrentUsingModule() {
-            return moduleList[curModuleIndex].second;
-        }
-
-        LLVMModule* getModule(long index) {
-            return moduleList[index].second;
-        }
+        // Module ==============================================================
+        std::vector<LLVMModule> modules;
         // =====================================================================
 
         // State Tools =========================================================
@@ -195,25 +179,6 @@ namespace sakuraE::Codegen {
         IR::Symbol<T>* IRScopeLookup(fzlib::String n) {
             return curIRFunc()->fnScope().lookup(n);
         }
-
-        // Look up an identifier matching the target name in the current active function's scope.
-        template<typename T>
-        IR::Symbol<T>* lookup(fzlib::String n) {
-            return getCurrentUsingModule()->getActive()->scope.lookup(n);
-        }
-
-        llvm::AllocaInst* createAlloca(llvm::Type *ty, llvm::Value *arraySize = nullptr, fzlib::String name = "") {
-            llvm::BasicBlock* currentBlock = builder->GetInsertBlock();
-            llvm::BasicBlock::iterator currentPoint = builder->GetInsertPoint();
-
-            builder->SetInsertPoint(getCurrentUsingModule()->getActive()->entryBlock);
-
-            llvm::AllocaInst* alloca = builder->CreateAlloca(ty, arraySize, name.c_str());
-
-            builder->SetInsertPoint(currentBlock, currentPoint);
-
-            return alloca;
-        }
         // =====================================================================
     public:
         LLVMCodeGenerator()=default;
@@ -222,7 +187,7 @@ namespace sakuraE::Codegen {
             context = new llvm::LLVMContext();
             builder = new llvm::IRBuilder<>(*context);
 
-            createModule("MainModule");
+            
 
             // Reset, for the state managing
             program->reset();
@@ -230,7 +195,7 @@ namespace sakuraE::Codegen {
 
         void start();
     private:
-        llvm::Value* instgen(IR::Instruction* ins);
+        llvm::Value* instgen(IR::Instruction* ins, LLVMFunction* curFn);
 
         // Tool Methods =========================================================
         llvm::Value* toLLVMConstant(IR::Constant* constant) {
