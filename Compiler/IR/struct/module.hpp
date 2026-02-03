@@ -8,7 +8,6 @@ namespace sakuraE::IR {
     class Program;
 
     // SakuraE Module
-    // Rule: Every block id around '@<' and '>'
     class Module {
         fzlib::String ID = "$DefaultModule";
         PositionInfo createInfo;
@@ -23,7 +22,7 @@ namespace sakuraE::IR {
         Program* program;
     public:
         Module(fzlib::String id, PositionInfo info):
-            ID("<" + id + ">"), createInfo(info), moduleScope(info) {
+            ID(id), createInfo(info), moduleScope(info) {
             moduleScope.setParent(nullptr);
         }
 
@@ -37,7 +36,7 @@ namespace sakuraE::IR {
 
         IRValue* buildFunction(fzlib::String name, IRType* retType, FormalParamsDefine params, PositionInfo info) {
             Function* func = new Function(name, retType, params, info);
-            func->setName("#" + name);
+            func->setName(name);
             func->buildBlock("entry");
             func->setParent(this);
             fnList.push_back(func);
