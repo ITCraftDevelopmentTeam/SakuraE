@@ -38,7 +38,7 @@ namespace sakuraE::IR {
             return &it->second;
         }
 
-        IRType* charTy = IRType::getIntNTy(8);
+        IRType* charTy = IRType::getCharTy();
         IRType* arrayTy = IRType::getArrayTy(charTy, val.len() + 1);
         IRType* stringTy = IRType::getPointerTo(arrayTy);
         auto newEntry = stringConstants.emplace(val, Constant(stringTy, val, info));
@@ -51,7 +51,7 @@ namespace sakuraE::IR {
             return &it->second;
         }
 
-        IRType* charTy = IRType::getIntNTy(8);
+        IRType* charTy = IRType::getCharTy();
         auto newEntry = charConstants.emplace(val, Constant(charTy, val, info));
         return &newEntry.first->second;
     }
@@ -62,7 +62,7 @@ namespace sakuraE::IR {
             return &it->second;
         }
 
-        IRType* boolTy = IRType::getIntNTy(1);
+        IRType* boolTy = IRType::getBoolTy();
         auto newEntry = boolConstants.emplace(val, Constant(boolTy, val, info));
         return &newEntry.first->second;
     }
