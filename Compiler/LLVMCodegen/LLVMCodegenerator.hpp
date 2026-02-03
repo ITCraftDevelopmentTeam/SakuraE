@@ -59,7 +59,7 @@ namespace sakuraE::Codegen {
             llvm::BasicBlock* entryBlock = nullptr;
             // Instantiates an LLVM Function, performing the transformation from IR Function to LLVM Function.
             // Note: This call resets the insertion point to the entry block of the current function.
-            void impl();
+            void impl(IR::Function* source);
             // Start LLVM IR Code generation
             void codegen();
         };
@@ -110,26 +110,6 @@ namespace sakuraE::Codegen {
                     fnMap[n] = fn;
 
                     activeFunctionName = n;
-                }
-            }
-
-            void implFunction(fzlib::String n) {
-                // Undeclare
-                if (fnMap.find(n) == fnMap.end()) declareFunction(n);
-                // Just declare but not complete the function type
-                else if (fnMap[n] == nullptr) return ;
-                // Fit
-                else {
-                    fnMap[n]->impl();
-                }
-            }
-
-            void implActive() {
-                // Just declare but not complete the function type
-                if (fnMap[activeFunctionName] == nullptr) return ;
-                // Fit
-                else {
-                    fnMap[activeFunctionName]->impl();
                 }
             }
 
