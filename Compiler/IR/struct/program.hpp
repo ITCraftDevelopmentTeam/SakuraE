@@ -40,6 +40,10 @@ namespace sakuraE::IR {
             return ID;
         }
 
+        std::vector<Module*> getMods() {
+            return moduleList;
+        }
+
         fzlib::String toString() {
             fzlib::String result = ID + " {";
             for (auto mod: moduleList) {
