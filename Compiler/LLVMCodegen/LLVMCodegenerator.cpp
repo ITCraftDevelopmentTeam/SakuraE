@@ -28,13 +28,13 @@ namespace sakuraE::Codegen {
             declareFunction(func->getName(), retTy, params, func->getInfo());
         }
 
-        for (auto it = fnMap.begin(); it != fnMap.end(); it ++) {
-            (*it).second->impl();
+        for (auto irFn: codegenContext.curIRModule()->getFunctions()) {
+            fnMap[irFn->getName()]->impl(irFn);
         }
     }
 
     // LLVM Function
-    void LLVMCodeGenerator::LLVMFunction::impl() {
+    void LLVMCodeGenerator::LLVMFunction::impl(IR::Function* source) {
         std::vector<llvm::Type*> params;
         for (auto param: formalParams) {
             params.push_back(param.second);
@@ -43,8 +43,7 @@ namespace sakuraE::Codegen {
         llvm::FunctionType* fnType = llvm::FunctionType::get(returnType, params, false);
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
-        auto irFunc = codegenContext.curIRModule()->curFunc();
-        auto irParams = irFunc->getFormalParams();
+        auto irParams = source->getFormalParams();
 
         std::size_t i = 0;
         for (auto& arg: content->args()) {
@@ -56,7 +55,7 @@ namespace sakuraE::Codegen {
             i ++;
         }
 
-        for (auto block: irFunc->getBlocks()) {
+        for (auto block: source->getBlocks()) {
             llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*codegenContext.context, block->getName().c_str(), content);
             codegenContext.bind(block, llvmBlock);
 
