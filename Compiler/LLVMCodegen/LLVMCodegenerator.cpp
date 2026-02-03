@@ -1,20 +1,23 @@
 #include "LLVMCodegenerator.hpp"
 #include "Compiler/IR/struct/instruction.hpp"
+#include "Compiler/IR/struct/module.hpp"
 #include <cstddef>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/Alignment.h>
 #include <llvm/Support/Casting.h>
+#include <llvm/Support/raw_ostream.h>
 
 namespace sakuraE::Codegen {
     // LLVM Module
-    void LLVMCodeGenerator::LLVMModule::impl() {
+    void LLVMCodeGenerator::LLVMModule::impl(IR::Module* source) {
         content = new llvm::Module(ID.c_str(), *codegenContext.context);
 
-        auto funcs = codegenContext.curIRModule()->getFunctions();
+        auto funcs = source->getFunctions();
 
         for (auto func: funcs) {
             auto retTy = func->getReturnType()->toLLVMType(*codegenContext.context);
@@ -28,8 +31,21 @@ namespace sakuraE::Codegen {
             declareFunction(func->getName(), retTy, params, func->getInfo());
         }
 
-        for (auto irFn: codegenContext.curIRModule()->getFunctions()) {
+        for (auto irFn: funcs) {
             fnMap[irFn->getName()]->impl(irFn);
+        }
+
+        sourceModule = source;
+    }
+
+    void LLVMCodeGenerator::LLVMModule::codegen() {
+        auto funcList = sourceModule->getFunctions();
+        for (auto fn: funcList) {
+            auto curFn = fnMap[fn->getName()];
+            curFn->codegen();
+            if (llvm::verifyFunction(*curFn->content, &llvm::errs())) {
+                abort();
+            }
         }
     }
 
@@ -47,7 +63,7 @@ namespace sakuraE::Codegen {
 
         std::size_t i = 0;
         for (auto& arg: content->args()) {
-            llvm::AllocaInst* argAlloca = codegenContext.createAlloca(arg.getType(), nullptr, irParams[i].first);
+            llvm::AllocaInst* argAlloca = createAlloca(arg.getType(), nullptr, irParams[i].first);
 
             codegenContext.builder->CreateStore(&arg, argAlloca);
 
@@ -63,21 +79,23 @@ namespace sakuraE::Codegen {
                 entryBlock = llvmBlock;
             }
         }
+
+        sourceFn = source;
     }
 
     void LLVMCodeGenerator::LLVMFunction::codegen() {
-        auto irBlocks = codegenContext.curIRFunc()->getBlocks();
+        auto irBlocks = sourceFn->getBlocks();
         for (auto irBlock: irBlocks) {
             codegenContext.builder->SetInsertPoint(llvm::cast<llvm::BasicBlock>(codegenContext.toLLVMValue(irBlock)));
 
             for (auto inst: irBlock->getInstructions()) {
-                codegenContext.instgen(inst);
+                codegenContext.instgen(inst, this);
             }
         }
     }
 
     // Instruction generation
-    llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins) {
+    llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins, LLVMFunction* curFn) {
         llvm::Value* instResult = nullptr;
         switch (ins->getKind())
         {
@@ -405,12 +423,12 @@ namespace sakuraE::Codegen {
 
                 auto identifierType = ins->getType()->toLLVMType(*context);
 
-                llvm::AllocaInst* alloca = createAlloca(identifierType, nullptr, identifierName);
+                llvm::AllocaInst* alloca = curFn->createAlloca(identifierType, nullptr, identifierName);
 
                 auto initVal = ins->arg(0);
                 if (initVal) {
                     if (identifierType->isArrayTy()) {
-                        auto arrSize = getCurrentUsingModule()->content->getDataLayout().getTypeAllocSize(identifierType);
+                        auto arrSize = curFn->parent->content->getDataLayout().getTypeAllocSize(identifierType);
                         builder->CreateMemCpy(alloca, llvm::MaybeAlign(8), toLLVMValue(initVal), llvm::MaybeAlign(8), arrSize);
                     }
                     else {
@@ -422,7 +440,7 @@ namespace sakuraE::Codegen {
                 }
 
                 bind(ins, alloca);
-                getCurrentUsingModule()->getActive()->scope.declare(identifierName, alloca, nullptr);
+                curFn->scope.declare(identifierName, alloca, nullptr);
 
                 break;
             }
@@ -431,13 +449,13 @@ namespace sakuraE::Codegen {
                 auto identifierName = insName.split('.')[1];
 
                 // TODO: Type is not only AllocaInst
-                auto alloca = llvm::dyn_cast<llvm::AllocaInst>(lookup<llvm::Value*>(identifierName)->address);
+                auto alloca = llvm::dyn_cast<llvm::AllocaInst>(curFn->scope.lookup(identifierName)->address);
                 auto val = toLLVMValue(ins->arg(1));
 
                 if (alloca && val) {
                     // TODO: Ignore the different type (Assume they are the same)
                     if (val->getType()->isArrayTy()) {
-                        auto arrSize = getCurrentUsingModule()->content->getDataLayout().getTypeAllocSize(val->getType());
+                        auto arrSize = curFn->parent->content->getDataLayout().getTypeAllocSize(val->getType());
                         builder->CreateMemCpy(alloca, llvm::MaybeAlign(8), val, llvm::MaybeAlign(8), arrSize);
                     }
                     else {
@@ -456,7 +474,7 @@ namespace sakuraE::Codegen {
                 }
                 auto arrayType = ins->getType()->toLLVMType(*context);
 
-                llvm::AllocaInst* alloca = createAlloca(arrayType, nullptr, ins->getName());
+                llvm::AllocaInst* alloca = curFn->createAlloca(arrayType, nullptr, ins->getName());
 
                 for (std::size_t i = 0; i < arrayContent.size(); i ++) {
                     auto ptr = builder->CreateGEP(arrayType, 
@@ -530,7 +548,7 @@ namespace sakuraE::Codegen {
                 auto insName = ins->getName();
                 auto fnName = insName.split('.')[1];
 
-                auto fn = getCurrentUsingModule()->get(fnName)->content;
+                auto fn = curFn->content;
 
                 auto arguments = ins->getOperands();
                 std::vector<llvm::Value*> llvmArguments;
@@ -549,5 +567,24 @@ namespace sakuraE::Codegen {
         if (instResult)
             bind(ins, instResult);
         return instResult;
+    }
+
+    // LLVMCodegeneration start
+    void LLVMCodeGenerator::start() {
+        auto irModList = program->getMods();
+        for (auto mod: irModList) {
+            modules.push_back(LLVMModule(mod->id(), *context, *this));
+        }
+
+        for (std::size_t i = 0; i < modules.size(); i ++) {
+            modules[i].impl(irModList[i]);
+        }
+
+        for (auto mod: modules) {
+            mod.codegen();
+            if (llvm::verifyModule(*mod.content, &llvm::errs())) {
+                abort();
+            }
+        }
     }
 }
