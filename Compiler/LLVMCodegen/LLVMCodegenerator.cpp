@@ -59,7 +59,20 @@ namespace sakuraE::Codegen {
         llvm::FunctionType* fnType = llvm::FunctionType::get(returnType, params, false);
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
+        content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
+
         auto irParams = source->getFormalParams();
+
+        for (auto block: source->getBlocks()) {
+            llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*codegenContext.context, block->getName().c_str(), content);
+            codegenContext.bind(block, llvmBlock);
+
+            if (block->getName() == "entry") {
+                entryBlock = llvmBlock;
+            }
+        }
+
+        codegenContext.builder->SetInsertPoint(entryBlock);
 
         std::size_t i = 0;
         for (auto& arg: content->args()) {
@@ -69,15 +82,6 @@ namespace sakuraE::Codegen {
 
             scope.declare(irParams[i].first, argAlloca, nullptr);
             i ++;
-        }
-
-        for (auto block: source->getBlocks()) {
-            llvm::BasicBlock* llvmBlock = llvm::BasicBlock::Create(*codegenContext.context, block->getName().c_str(), content);
-            codegenContext.bind(block, llvmBlock);
-
-            if (block->getName() == "entry") {
-                entryBlock = llvmBlock;
-            }
         }
 
         sourceFn = source;
@@ -101,6 +105,8 @@ namespace sakuraE::Codegen {
         {
             case IR::OpKind::constant: {
                 auto constant = dynamic_cast<IR::Constant*>(ins->arg(0));
+                auto llvmConst = toLLVMConstant(constant);
+                bind(ins, llvmConst);
                 return toLLVMConstant(constant);
             }
             case IR::OpKind::add: {
@@ -585,6 +591,13 @@ namespace sakuraE::Codegen {
             if (llvm::verifyModule(*mod.content, &llvm::errs())) {
                 abort();
             }
+        }
+    }
+
+    // Debug print
+    void LLVMCodeGenerator::print() {
+        for (auto mod: modules) {
+            mod.content->print(llvm::outs(), nullptr);
         }
     }
 }
