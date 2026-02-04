@@ -1,6 +1,0 @@
-#ifndef SAKURAE_SKEE_HPP
-#define SAKURAE_SKEE_HPP
-
-
-#endif //! SAKURAE_SKEE_HPP
-
