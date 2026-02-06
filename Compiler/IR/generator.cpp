@@ -1,5 +1,6 @@
 #include "generator.hpp"
 #include "Compiler/Error/error.hpp"
+#include "Compiler/Frontend/AST.hpp"
 #include "Compiler/IR/type/type.hpp"
 
 namespace sakuraE::IR {
@@ -302,7 +303,7 @@ namespace sakuraE::IR {
         IRValue* lhs = visitLogicExprNode(chain[0]);
 
         static int binaryID = 0;
-        fzlib::String resultAddrName = "$tbv." + std::to_string(binaryID);
+        fzlib::String resultAddrName = "tbv." + std::to_string(binaryID);
         binaryID ++;
         
         IRValue* resultAddr = declareSymbol(resultAddrName, IRType::getBoolTy(), lhs);
@@ -331,12 +332,7 @@ namespace sakuraE::IR {
                                                 {rhs, rhsBlock, mergeBlock},
                                                 "cond-br.rhs.merge");
 
-                        curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::assign,
-                                                IRType::getBoolTy(),
-                                                {resultAddr, rhs},
-                                                "assign." + resultAddrName);
+                        storeSymbol(resultAddr, rhs, opChain[i - 1]->getToken().info);
 
                         curFunc()
                             ->block(rhsBlockIndex)
@@ -362,13 +358,7 @@ namespace sakuraE::IR {
                                                 IRType::getVoidTy(),
                                                 {rhs, mergeBlock, rhsBlock},
                                                 "cond-br.rhs.merge");
-
-                        curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::assign,
-                                                IRType::getBoolTy(),
-                                                {resultAddr, rhs},
-                                                "assign." + resultAddrName);
+                        storeSymbol(resultAddr, rhs, opChain[i - 1]->getToken().info);
                                                 
                         curFunc()
                             ->block(rhsBlockIndex)
@@ -410,21 +400,11 @@ namespace sakuraE::IR {
         auto assignOp = (*node)[ASTTag::Op]->getToken().type;
         IRValue* expr = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
 
-        if (symbol->getType() != expr->getType()) {
-            throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "The type of the identifier does not match the type of the assigned value.",
-                                node->getPosInfo());
-        }
-
         switch (assignOp)
         {
             case TokenType::ASSIGN_OP:
-                return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign,
-                                            expr->getType(),
-                                            {symbol, expr},
-                                            "assign." + symbol->getName());
+                return storeSymbol(symbol, expr, (*node)[ASTTag::Op]->getToken().info);
+                
             case TokenType::ADD_ASSIGN: {
                 IRValue* result = curFunc()
                                         ->curBlock()
@@ -432,12 +412,7 @@ namespace sakuraE::IR {
                                                             handleUnlogicalBinaryCalc(symbol, expr),
                                                             {symbol, expr},
                                                             "add");
-                return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign,
-                                            expr->getType(),
-                                            {symbol, result},
-                                            "assign." + symbol->getName());
+                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
             }
             case TokenType::SUB_ASSIGN: {
                 IRValue* result = curFunc()
@@ -446,12 +421,7 @@ namespace sakuraE::IR {
                                                             handleUnlogicalBinaryCalc(symbol, expr),
                                                             {symbol, expr},
                                                             "sub");
-                return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign,
-                                            expr->getType(),
-                                            {symbol, result},
-                                            "assign." + symbol->getName());
+                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
             }
             case TokenType::MUL_ASSIGN: {
                 IRValue* result = curFunc()
@@ -460,12 +430,7 @@ namespace sakuraE::IR {
                                                             handleUnlogicalBinaryCalc(symbol, expr),
                                                             {symbol, expr},
                                                             "mul");
-                return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign,
-                                            expr->getType(),
-                                            {symbol, result},
-                                            "assign." + symbol->getName());
+                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
             }
             case TokenType::DIV_ASSIGN: {
                 IRValue* result = curFunc()
@@ -474,12 +439,7 @@ namespace sakuraE::IR {
                                                             handleUnlogicalBinaryCalc(symbol, expr),
                                                             {symbol, expr},
                                                             "div");
-                return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign,
-                                            expr->getType(),
-                                            {symbol, result},
-                                            "assign." + symbol->getName());
+                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
             }
             default:
                 throw SakuraError(OccurredTerm::IR_GENERATING,

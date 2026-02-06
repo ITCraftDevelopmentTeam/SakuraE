@@ -1,6 +1,8 @@
 #ifndef SAKURAE_GENERATOR_HPP
 #define SAKURAE_GENERATOR_HPP
 
+#include "Compiler/Error/error.hpp"
+#include "Compiler/IR/struct/instruction.hpp"
 #include "struct/program.hpp"
 #include "Compiler/Frontend/AST.hpp"
 #include "Compiler/IR/value/constant.hpp"
@@ -34,6 +36,17 @@ namespace sakuraE::IR {
             return addr;
         }
 
+        IRValue* storeSymbol(IRValue* addr, IRValue* value, PositionInfo info) {
+            if (addr->getType() != value->getType())
+                SakuraError(OccurredTerm::IR_GENERATING,
+                            "Cannot assign a value to an identifier of a different value type",
+                            info);
+            
+            return curFunc()
+                        ->curBlock()
+                        ->createInstruction(OpKind::assign, addr->getType(), {addr, value}, "assign." + addr->getName());
+        }
+
         IRValue* loadSymbol(fzlib::String name, PositionInfo info = {0, 0, "Normal Load"}) {
             Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(name);
 
@@ -50,11 +63,11 @@ namespace sakuraE::IR {
         // Used to obtain the type of the result from a non-logical binary operation
         IRType* handleUnlogicalBinaryCalc(IRValue* lhs, IRValue* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
             switch (lhs->getType()->getIRTypeID()) {
-                case IRTypeID::IntegerTyID: {
+                case IRTypeID::Integer32TyID: {
                     auto lhsType = dynamic_cast<IRIntegerType*>(lhs->getType());
                     switch (rhs->getType()->getIRTypeID())
                     {
-                        case IRTypeID::IntegerTyID: {
+                        case IRTypeID::Integer32TyID: {
                             auto rhsType = dynamic_cast<IRIntegerType*>(rhs->getType());
                             return IRType::getIntNTy(std::max(lhsType->getBitWidth(), rhsType->getBitWidth()));
                         }
@@ -71,7 +84,7 @@ namespace sakuraE::IR {
                 case IRTypeID::FloatTyID: {
                     switch (rhs->getType()->getIRTypeID())
                     {
-                        case IRTypeID::IntegerTyID: {
+                        case IRTypeID::Integer32TyID: {
                             return IRType::getFloatTy();
                         }
                         case IRTypeID::FloatTyID: {
