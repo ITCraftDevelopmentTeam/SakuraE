@@ -109,24 +109,7 @@ namespace sakuraE::Codegen {
                 llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
                 llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        instResult = builder->CreateAdd(lhs, rhs, "add.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        llvm::Value* promotedLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "lhs.promoted");
-                        instResult = builder->CreateFAdd(promotedLhs, rhs, "add.tmp");
-                    }
-                }
-                else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
-                        instResult = builder->CreateFAdd(lhs, promotedRhs, "add.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        instResult = builder->CreateFAdd(lhs, rhs, "add.tmp");
-                    }
-                }
+                instResult = add(lhs, rhs);
 
                 bind(ins, instResult);
                 break;
@@ -135,24 +118,7 @@ namespace sakuraE::Codegen {
                 llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
                 llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        instResult = builder->CreateSub(lhs, rhs, "sub.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        llvm::Value* promotedLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "lhs.promoted");
-                        instResult = builder->CreateFSub(promotedLhs, rhs, "sub.tmp");
-                    }
-                }
-                else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
-                        instResult = builder->CreateFSub(lhs, promotedRhs, "sub.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        instResult = builder->CreateFSub(lhs, rhs, "sub.tmp");
-                    }
-                }
+                instResult = sub(lhs, rhs);
 
                 bind(ins, instResult);
                 break;
@@ -161,24 +127,7 @@ namespace sakuraE::Codegen {
                 llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
                 llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        instResult = builder->CreateMul(lhs, rhs, "mul.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        llvm::Value* promotedLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "lhs.promoted");
-                        instResult = builder->CreateFMul(promotedLhs, rhs, "mul.tmp");
-                    }
-                }
-                else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
-                        instResult = builder->CreateFMul(lhs, promotedRhs, "mul.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        instResult = builder->CreateFMul(lhs, rhs, "mul.tmp");
-                    }
-                }
+                instResult = mul(lhs, rhs);
 
                 bind(ins, instResult);
                 break;
@@ -187,24 +136,7 @@ namespace sakuraE::Codegen {
                 llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
                 llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        instResult = builder->CreateSDiv(lhs, rhs, "div.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        llvm::Value* promotedLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "lhs.promoted");
-                        instResult = builder->CreateFDiv(promotedLhs, rhs, "div.tmp");
-                    }
-                }
-                else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
-                        llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
-                        instResult = builder->CreateFDiv(lhs, promotedRhs, "div.tmp");
-                    }
-                    else if (rhs->getType()->isDoubleTy()) {
-                        instResult = builder->CreateFDiv(lhs, rhs, "div.tmp");
-                    }
-                }
+                instResult = div(lhs, rhs);
 
                 bind(ins, instResult);
                 break;

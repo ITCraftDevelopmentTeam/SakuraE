@@ -2,6 +2,7 @@
 #define SAKURAE_LLVMCODEGENERATOR_HPP
 
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Use.h>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -202,7 +203,7 @@ namespace sakuraE::Codegen {
         // Tool Methods =========================================================
         llvm::Value* toLLVMConstant(IR::Constant* constant) {
             switch (constant->getType()->getIRTypeID()){
-                case IR::IRTypeID::IntegerTyID: {
+                case IR::IRTypeID::Integer32TyID: {
                     return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<int>());
                 }
                 case IR::IRTypeID::FloatTyID:
@@ -246,6 +247,105 @@ namespace sakuraE::Codegen {
 
         bool hasLLVMValue(IR::IRValue* value) {
             return instructionMap.contains(value);
+        }
+        // =====================================================================
+
+        // Calculation =========================================================
+
+        llvm::Value* add(llvm::Value* lhs, llvm::Value* rhs) {
+            llvm::Value* result = nullptr;
+
+            auto lTy = lhs->getType();
+            auto rTy = rhs->getType();
+
+            if (lTy->isIntegerTy(32)) {
+                if (rTy->isIntegerTy(32)) result = builder->CreateAdd(lhs, rhs, "addtmp");
+                else if (rTy->isDoubleTy()) {
+                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "promoted.lhs");
+                    result = builder->CreateFAdd(pLhs, rhs, "addtmp");
+                }
+            }
+            else if (lTy->isDoubleTy()) {
+                if (rTy->isDoubleTy()) result = builder->CreateFAdd(lhs, rhs, "addtmp");
+                else if (rTy->isIntegerTy(32)) {
+                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "promoted.rhs");
+                    result = builder->CreateFAdd(lhs, pRhs, "addtmp");
+                }
+            }
+
+            return result;
+        }
+
+        llvm::Value* sub(llvm::Value* lhs, llvm::Value* rhs) {
+            llvm::Value* result = nullptr;
+
+            auto lTy = lhs->getType();
+            auto rTy = rhs->getType();
+
+            if (lTy->isIntegerTy(32)) {
+                if (rTy->isIntegerTy(32)) result = builder->CreateSub(lhs, rhs, "subtmp");
+                else if (rTy->isDoubleTy()) {
+                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "promoted.lhs");
+                    result = builder->CreateFSub(pLhs, rhs, "subtmp");
+                }
+            }
+            else if (lTy->isDoubleTy()) {
+                if (rTy->isDoubleTy()) result = builder->CreateFSub(lhs, rhs, "subtmp");
+                else if (rTy->isIntegerTy(32)) {
+                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "promoted.rhs");
+                    result = builder->CreateFSub(lhs, pRhs, "subtmp");
+                }
+            }
+
+            return result;
+        }
+
+        llvm::Value* mul(llvm::Value* lhs, llvm::Value* rhs) {
+            llvm::Value* result = nullptr;
+
+            auto lTy = lhs->getType();
+            auto rTy = rhs->getType();
+
+            if (lTy->isIntegerTy(32)) {
+                if (rTy->isIntegerTy(32)) result = builder->CreateMul(lhs, rhs, "multmp");
+                else if (rTy->isDoubleTy()) {
+                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "promoted.lhs");
+                    result = builder->CreateFMul(pLhs, rhs, "multmp");
+                }
+            }
+            else if (lTy->isDoubleTy()) {
+                if (rTy->isDoubleTy()) result = builder->CreateFMul(lhs, rhs, "multmp");
+                else if (rTy->isIntegerTy(32)) {
+                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "promoted.rhs");
+                    result = builder->CreateFMul(lhs, pRhs, "multmp");
+                }
+            }
+
+            return result;
+        }
+
+        llvm::Value* div(llvm::Value* lhs, llvm::Value* rhs) {
+            llvm::Value* result = nullptr;
+
+            auto lTy = lhs->getType();
+            auto rTy = rhs->getType();
+
+            if (lTy->isIntegerTy(32)) {
+                if (rTy->isIntegerTy(32)) result = builder->CreateSDiv(lhs, rhs, "divdtmp");
+                else if (rTy->isDoubleTy()) {
+                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*context), "promoted.lhs");
+                    result = builder->CreateFDiv(pLhs, rhs, "divtmp");
+                }
+            }
+            else if (lTy->isDoubleTy()) {
+                if (rTy->isDoubleTy()) result = builder->CreateFDiv(lhs, rhs, "divtmp");
+                else if (rTy->isIntegerTy(32)) {
+                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "promoted.rhs");
+                    result = builder->CreateFDiv(lhs, pRhs, "divtmp");
+                }
+            }
+
+            return result;
         }
         // =====================================================================
     };
