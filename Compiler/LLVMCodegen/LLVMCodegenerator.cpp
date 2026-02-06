@@ -43,9 +43,6 @@ namespace sakuraE::Codegen {
         for (auto fn: funcList) {
             auto curFn = fnMap[fn->getName()];
             curFn->codegen();
-            if (llvm::verifyFunction(*curFn->content, &llvm::errs())) {
-                abort();
-            }
         }
     }
 
@@ -57,8 +54,6 @@ namespace sakuraE::Codegen {
         }
 
         llvm::FunctionType* fnType = llvm::FunctionType::get(returnType, params, false);
-        content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
-
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
         auto irParams = source->getFormalParams();
@@ -90,7 +85,7 @@ namespace sakuraE::Codegen {
     void LLVMCodeGenerator::LLVMFunction::codegen() {
         auto irBlocks = sourceFn->getBlocks();
         for (auto irBlock: irBlocks) {
-            codegenContext.builder->SetInsertPoint(llvm::cast<llvm::BasicBlock>(codegenContext.toLLVMValue(irBlock)));
+            codegenContext.builder->SetInsertPoint(llvm::cast<llvm::BasicBlock>(codegenContext.toLLVMValue(irBlock, this)));
 
             for (auto inst: irBlock->getInstructions()) {
                 codegenContext.instgen(inst, this);
@@ -101,6 +96,7 @@ namespace sakuraE::Codegen {
     // Instruction generation
     llvm::Value* LLVMCodeGenerator::instgen(IR::Instruction* ins, LLVMFunction* curFn) {
         llvm::Value* instResult = nullptr;
+        if (hasLLVMValue(ins)) return toLLVMValue(ins, curFn);
         switch (ins->getKind())
         {
             case IR::OpKind::constant: {
@@ -110,8 +106,8 @@ namespace sakuraE::Codegen {
                 return toLLVMConstant(constant);
             }
             case IR::OpKind::add: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
@@ -136,8 +132,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::sub: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
@@ -162,8 +158,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::mul: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
@@ -188,8 +184,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::div: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
 
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
@@ -214,10 +210,10 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_equal: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
+                if (lhs->getType()->isIntegerTy()) {
+                    if (rhs->getType()->isIntegerTy()) {
                         instResult = builder->CreateICmpEQ(lhs, rhs, "eq.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
@@ -226,12 +222,12 @@ namespace sakuraE::Codegen {
                     }
                 }
                 else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
+                    if (rhs->getType()->isIntegerTy()) {
                         llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
                         instResult = builder->CreateFCmpOEQ(lhs, promotedRhs, "eq.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
-                        builder->CreateFCmpOEQ(lhs, rhs, "eq.tmp");
+                        instResult = builder->CreateFCmpOEQ(lhs, rhs, "eq.tmp");
                     }
                 }
                 else if (lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
@@ -249,10 +245,10 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_not_equal: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
-                if (lhs->getType()->isIntegerTy(32)) {
-                    if (rhs->getType()->isIntegerTy(32)) {
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
+                if (lhs->getType()->isIntegerTy()) {
+                    if (rhs->getType()->isIntegerTy()) {
                         instResult = builder->CreateICmpNE(lhs, rhs, "neq.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
@@ -261,12 +257,12 @@ namespace sakuraE::Codegen {
                     }
                 }
                 else if (lhs->getType()->isDoubleTy()) {
-                    if (rhs->getType()->isIntegerTy(32)) {
+                    if (rhs->getType()->isIntegerTy()) {
                         llvm::Value* promotedRhs = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*context), "rhs.promoted");
                         instResult = builder->CreateFCmpONE(lhs, promotedRhs, "neq.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
-                        builder->CreateFCmpONE(lhs, rhs, "neq.tmp");
+                        instResult = builder->CreateFCmpONE(lhs, rhs, "neq.tmp");
                     }
                 }
                 else if (lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
@@ -284,8 +280,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_ls_than: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
                         instResult = builder->CreateICmpSLT(lhs, rhs, "ls.tmp");
@@ -301,7 +297,7 @@ namespace sakuraE::Codegen {
                         instResult = builder->CreateFCmpOLT(lhs, promotedRhs, "ls.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
-                        builder->CreateFCmpOLT(lhs, rhs, "ls.tmp");
+                        instResult = builder->CreateFCmpOLT(lhs, rhs, "ls.tmp");
                     }
                 }
                 else if (lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
@@ -319,8 +315,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_mr_than: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
                         instResult = builder->CreateICmpSGT(lhs, rhs, "gt.tmp");
@@ -336,7 +332,7 @@ namespace sakuraE::Codegen {
                         instResult = builder->CreateFCmpOGT(lhs, promotedRhs, "gt.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
-                        builder->CreateFCmpOGT(lhs, rhs, "gt.tmp");
+                        instResult = builder->CreateFCmpOGT(lhs, rhs, "gt.tmp");
                     }
                 }
                 else if (lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
@@ -354,8 +350,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_eq_ls_than: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
                         instResult = builder->CreateICmpSLE(lhs, rhs, "eqlt.tmp");
@@ -371,7 +367,7 @@ namespace sakuraE::Codegen {
                         instResult = builder->CreateFCmpOLE(lhs, promotedRhs, "eqlt.tmp");
                     }
                     else if (rhs->getType()->isDoubleTy()) {
-                        builder->CreateFCmpOLE(lhs, rhs, "eqlt.tmp");
+                        instResult = builder->CreateFCmpOLE(lhs, rhs, "eqlt.tmp");
                     }
                 }
                 else if (lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
@@ -389,8 +385,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::lgc_eq_mr_than: {
-                llvm::Value* lhs = toLLVMValue(ins->arg(0));
-                llvm::Value* rhs = toLLVMValue(ins->arg(1));
+                llvm::Value* lhs = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* rhs = toLLVMValue(ins->arg(1), curFn);
                 if (lhs->getType()->isIntegerTy(32)) {
                     if (rhs->getType()->isIntegerTy(32)) {
                         instResult = builder->CreateICmpSGE(lhs, rhs, "eqgt.tmp");
@@ -435,10 +431,10 @@ namespace sakuraE::Codegen {
                 if (initVal) {
                     if (identifierType->isArrayTy()) {
                         auto arrSize = curFn->parent->content->getDataLayout().getTypeAllocSize(identifierType);
-                        builder->CreateMemCpy(alloca, llvm::MaybeAlign(8), toLLVMValue(initVal), llvm::MaybeAlign(8), arrSize);
+                        builder->CreateMemCpy(alloca, llvm::MaybeAlign(8), toLLVMValue(initVal, curFn), llvm::MaybeAlign(8), arrSize);
                     }
                     else {
-                        builder->CreateStore(toLLVMValue(initVal), alloca);
+                        builder->CreateStore(toLLVMValue(initVal, curFn), alloca);
                     }
                 }
                 else {
@@ -456,7 +452,7 @@ namespace sakuraE::Codegen {
 
                 // TODO: Type is not only AllocaInst
                 auto alloca = llvm::dyn_cast<llvm::AllocaInst>(curFn->scope.lookup(identifierName)->address);
-                auto val = toLLVMValue(ins->arg(1));
+                auto val = toLLVMValue(ins->arg(1), curFn);
 
                 if (alloca && val) {
                     // TODO: Ignore the different type (Assume they are the same)
@@ -476,7 +472,7 @@ namespace sakuraE::Codegen {
                 auto irArray = ins->getOperands();
                 std::vector<llvm::Value*> arrayContent;
                 for (auto element: irArray) {
-                    arrayContent.push_back(toLLVMValue(element));
+                    arrayContent.push_back(toLLVMValue(element, curFn));
                 }
                 auto arrayType = ins->getType()->toLLVMType(*context);
 
@@ -493,8 +489,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::indexing: {
-                llvm::Value* addr = toLLVMValue(ins->arg(0));
-                llvm::Value* indexVal = toLLVMValue(ins->arg(1));
+                llvm::Value* addr = toLLVMValue(ins->arg(0), curFn);
+                llvm::Value* indexVal = toLLVMValue(ins->arg(1), curFn);
 
                 llvm::Type* type = ins->arg(0)->getType()->toLLVMType(*context);
                 auto ptr = builder->CreateGEP(type, addr, {builder->getInt32(0), indexVal}, "element_ptr");
@@ -505,7 +501,7 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::load: {
-                llvm::Value* addr = toLLVMValue(ins->arg(0));
+                llvm::Value* addr = toLLVMValue(ins->arg(0), curFn);
                 llvm::Type* type = ins->getType()->toLLVMType(*context);
 
                 instResult = builder->CreateLoad(type, addr, "load.tmp");
@@ -514,7 +510,10 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::br: {
-                auto targetBlockValue = toLLVMValue(ins->arg(0));
+                auto targetBlockValue = toLLVMValue(ins->arg(0), curFn);
+
+                auto currentBlock = llvm::cast<llvm::BasicBlock>(toLLVMValue(ins->getParent(), curFn));
+                builder->SetInsertPoint(currentBlock);
 
                 llvm::BasicBlock* targetBlock = llvm::cast<llvm::BasicBlock>(targetBlockValue);
 
@@ -524,9 +523,9 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::cond_br: {
-                auto cond = toLLVMValue(ins->arg(0));
-                auto trueBlockValue = toLLVMValue(ins->arg(1));
-                auto falseBlockValue = toLLVMValue(ins->arg(2));
+                auto cond = toLLVMValue(ins->arg(0), curFn);
+                auto trueBlockValue = toLLVMValue(ins->arg(1), curFn);
+                auto falseBlockValue = toLLVMValue(ins->arg(2), curFn);
 
                 llvm::BasicBlock* trueBlock = llvm::cast<llvm::BasicBlock>(trueBlockValue);
                 llvm::BasicBlock* falseBlock = llvm::cast<llvm::BasicBlock>(falseBlockValue);
@@ -543,7 +542,7 @@ namespace sakuraE::Codegen {
                     bind(ins, instResult);
                 } 
                 else {
-                    llvm::Value* retVal = toLLVMValue(ins->arg(0));
+                    llvm::Value* retVal = toLLVMValue(ins->arg(0), curFn);
                     instResult = builder->CreateRet(retVal);
 
                     bind(ins, instResult);
@@ -559,7 +558,7 @@ namespace sakuraE::Codegen {
                 auto arguments = ins->getOperands();
                 std::vector<llvm::Value*> llvmArguments;
                 for (std::size_t i = 0; i < arguments.size(); i ++) {
-                    llvmArguments.push_back(toLLVMValue(arguments[i]));
+                    llvmArguments.push_back(toLLVMValue(arguments[i], curFn));
                 }
 
                 instResult = builder->CreateCall(fn, llvmArguments, ins->getName().c_str());
@@ -588,9 +587,6 @@ namespace sakuraE::Codegen {
 
         for (auto mod: modules) {
             mod.codegen();
-            if (llvm::verifyModule(*mod.content, &llvm::errs())) {
-                abort();
-            }
         }
     }
 
