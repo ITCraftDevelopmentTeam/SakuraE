@@ -23,8 +23,10 @@
 #include "Compiler/Error/error.hpp"
 #include "Compiler/IR/generator.hpp"
 #include "Compiler/IR/struct/function.hpp"
+#include "Compiler/IR/struct/instruction.hpp"
 #include "Compiler/IR/struct/scope.hpp"
 #include "Compiler/IR/type/type.hpp"
+#include "Compiler/IR/value/value.hpp"
 
 namespace sakuraE::Codegen {
     class LLVMCodeGenerator {
@@ -61,7 +63,7 @@ namespace sakuraE::Codegen {
                 llvm::BasicBlock* currentBlock = codegenContext.builder->GetInsertBlock();
                 llvm::BasicBlock::iterator currentPoint = codegenContext.builder->GetInsertPoint();
 
-                codegenContext.builder->SetInsertPoint(entryBlock);
+                codegenContext.builder->SetInsertPoint(entryBlock, entryBlock->getFirstInsertionPt());
 
                 llvm::AllocaInst* alloca = codegenContext.builder->CreateAlloca(ty, arraySize, n.c_str());
 
@@ -229,14 +231,21 @@ namespace sakuraE::Codegen {
             return nullptr;
         }
 
-        llvm::Value* toLLVMValue(IR::IRValue* value) {
+        llvm::Value* toLLVMValue(IR::IRValue* value, LLVMFunction* curFn) {
             if (instructionMap.find(value) != instructionMap.end()) {
                 return getRef(value);
             }
             else if (auto* constant = dynamic_cast<IR::Constant*>(value)) {
                 return toLLVMConstant(constant);
             }
-            throw std::runtime_error("Expect to get unknown mapping");
+            else if (auto* inst = dynamic_cast<IR::Instruction*>(value)) {
+                return instgen(inst, curFn);
+            }
+            throw std::runtime_error("Unknown mapping");
+        }
+
+        bool hasLLVMValue(IR::IRValue* value) {
+            return instructionMap.contains(value);
         }
         // =====================================================================
     };
