@@ -11,8 +11,12 @@
 namespace sakuraE::IR {
     enum IRTypeID {
         VoidTyID,
-        IntegerTyID,
+        Integer32TyID,
+        Integer64TyID,
+        IntegerNTyID,
         FloatTyID,
+        CharTyID,
+        BoolTyID,
         TypeInfoTyID,
     
         PointerTyID,
@@ -23,8 +27,8 @@ namespace sakuraE::IR {
     };
 
     class IRType {
-        const IRTypeID irTypeID;
     protected:
+        const IRTypeID irTypeID;
         explicit IRType(IRTypeID id) : irTypeID(id) {}
 
     public:
@@ -78,7 +82,21 @@ namespace sakuraE::IR {
         friend class IRType;
         unsigned bitWidth;
 
-        explicit IRIntegerType(unsigned bw) : IRType(IntegerTyID), bitWidth(bw) {}
+        explicit IRIntegerType(unsigned bw): 
+            IRType([&]()->IRTypeID {
+                switch (bw) {
+                    case 1:
+                        return IRTypeID::BoolTyID;
+                    case 8:
+                        return IRTypeID::CharTyID;
+                    case 32:
+                        return IRTypeID::Integer32TyID;
+                    case 64:
+                        return IRTypeID::Integer64TyID;
+                    default:
+                        return IRTypeID::IntegerNTyID;
+                }
+            }()), bitWidth(bw) {}
 
     public:
         unsigned getBitWidth() const { return bitWidth; }
