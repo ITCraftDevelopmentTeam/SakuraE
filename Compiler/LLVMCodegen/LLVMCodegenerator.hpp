@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Use.h>
+#include <llvm/Support/Casting.h>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -138,6 +139,23 @@ namespace sakuraE::Codegen {
 
                 if (isRuntimeFunction(n)) {
                     runtimeCallee = getRuntime(n);
+                }
+
+                if (runtimeCallee) {
+                    auto llvmFn = llvm::cast<llvm::Function>(runtimeCallee.getCallee());
+
+                    LLVMFunction* wrapper = new LLVMFunction {
+                        n,
+                        runtimeCallee.getFunctionType()->getReturnType(),
+                        {},
+                        this,
+                        codegenContext,
+                        {0, 0, "runtime function"}
+                    };
+
+                    wrapper->content = llvmFn;
+
+                    fnMap[n] = wrapper;
                 }
 
                 if (fnMap.find(n) != fnMap.end()) {
