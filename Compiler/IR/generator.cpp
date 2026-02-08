@@ -1,6 +1,7 @@
 #include "generator.hpp"
 #include "Compiler/Error/error.hpp"
 #include "Compiler/Frontend/AST.hpp"
+#include "Compiler/IR/struct/scope.hpp"
 #include "Compiler/IR/type/type.hpp"
 
 namespace sakuraE::IR {
@@ -22,7 +23,7 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
-        std::vector<IRValue*> params = {addr};
+        std::vector<IRValue*> params;
 
         for (auto argExpr: (*node)[ASTTag::Exprs]->getChildren()) {
             params.push_back(visitWholeExprNode(argExpr));
@@ -34,9 +35,16 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
-        auto targetFn = (*node)[ASTTag::Identifier]->getToken().content;
-        IRValue* result = loadSymbol(targetFn);
+        auto targetName = (*node)[ASTTag::Identifier]->getToken().content;
+        Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(targetName);
 
+        if (!symbol) {
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                "Cannot find symbol: " + targetName,
+                node->getPosInfo());
+        }
+
+        IRValue* result = symbol->address;
         if (node->hasNode(ASTTag::Ops)) {
             for (auto op: (*node)[ASTTag::Ops]->getChildren()) {
                 switch (op->getTag()) {
@@ -45,13 +53,16 @@ namespace sakuraE::IR {
                         break;
                     }
                     case ASTTag::CallingOpNode: {
-                        result = visitCallingOpNode(result, targetFn, op);
+                        result = visitCallingOpNode(result, targetName, op);
                         break;
                     }
                     default:
                         break;
                 }
             }
+        }
+        else {
+            result = loadSymbol(targetName);
         }
 
         return result;
