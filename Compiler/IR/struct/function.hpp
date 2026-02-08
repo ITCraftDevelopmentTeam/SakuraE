@@ -28,7 +28,7 @@ namespace sakuraE::IR {
         Module* parent;
     public:
         Function(fzlib::String n, IRType* retType, PositionInfo info): 
-            IRValue(IRType::getFunctionTy(retType, {})), funcName("#" + n), returnType(retType), funcScope(info), createInfo(info) {}
+            IRValue(IRType::getFunctionTy(retType, {})), funcName(n), returnType(retType), funcScope(info), createInfo(info) {}
         
         // just for pre-defing
         Function(fzlib::String n, PositionInfo info):
@@ -62,7 +62,7 @@ namespace sakuraE::IR {
                 }()
             ));
 
-            setName("#" + funcName);
+            setName(funcName);
         }
 
         Module* getParent() {
