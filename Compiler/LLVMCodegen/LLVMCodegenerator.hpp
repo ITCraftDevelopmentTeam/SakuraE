@@ -52,6 +52,7 @@ namespace sakuraE::Codegen {
             IR::Scope<llvm::Value*> scope;
             LLVMModule* parent = nullptr;
             LLVMCodeGenerator& codegenContext;
+            std::map<fzlib::String, llvm::AllocaInst*> paramAllocaMap;
             IR::Function* sourceFn;
             
             LLVMFunction(fzlib::String n, 
@@ -77,6 +78,13 @@ namespace sakuraE::Codegen {
                 codegenContext.builder->SetInsertPoint(currentBlock, currentPoint);
 
                 return alloca;
+            }
+
+            llvm::Value* getParamAddress(fzlib::String n) {
+                if (paramAllocaMap.find(n) != paramAllocaMap.end()) {
+                    return paramAllocaMap[n];
+                }
+                return nullptr;
             }
 
             llvm::BasicBlock* entryBlock = nullptr;
