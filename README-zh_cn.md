@@ -1,0 +1,115 @@
+<div align="center">
+<img src="banner.png"/>
+
+<h1>
+   🌸SakuraE🌸
+   <br/>
+   <img src="https://img.shields.io/badge/Version-dev0.0-red"/>
+   <img src="https://img.shields.io/badge/Windows%2011-333333?style=flat&logo=quarto&logoColor=white&labelColor=0078D4"/>
+   <img src="https://img.shields.io/badge/Arch%20Linux-333333?style=flat&logo=archlinux&logoColor=white&labelColor=1793D1"/>
+</h1>
+
+[English Version](README.md)
+
+</div>
+
+### 基于 LLVM 的可编译编程语言
+
+## 项目结构 (主要)
+
+```
+SakuraE/
+├── CMakeLists.txt                 # CMake 构建配置文件
+├── main.cpp                       # 编译器主入口
+├── Compiler/                      # 核心编译器组件
+│   ├── Error/                     # 错误处理工具
+│   │   └── error.hpp              # 错误定义与处理
+│   ├── Frontend/                  # 前端组件 (词法分析, 语法分析, AST)
+│   │   ├── AST.hpp                # 抽象语法树定义
+│   │   ├── grammar.txt            # 语法解析规则
+│   │   ├── lexer.cpp              # 词法分析器实现
+│   │   ├── lexer.h                # 词法分析器头文件
+│   │   ├── parser_base.hpp        # 基础解析工具与解析组合子
+│   │   ├── parser.cpp             # 语法解析器实现
+│   │   └── parser.hpp             # 语法解析器头文件
+│   ├── IR/                        # 中间表示 (IR) 模块
+│   │   ├── generator.cpp          # IR 生成器实现 (AST 访问者)
+│   │   ├── generator.hpp          # IR 生成工具
+│   │   ├── IR.hpp                 # 核心 IR 定义
+│   │   ├── struct/                # IR 结构组件
+│   │   │   ├── block.hpp          # 基本块表示
+│   │   │   ├── function.hpp       # 带有作用域管理的函数表示
+│   │   │   ├── instruction.hpp    # 指令定义与 OpKind 枚举
+│   │   │   ├── module.hpp         # 模块表示
+│   │   │   ├── program.hpp        # 程序级 IR
+│   │   │   └── scope.hpp          # 符号作用域管理
+│   │   ├── type/                  # 类型系统
+│   │   │   ├── type.cpp           # IRType 实现
+│   │   │   ├── type.hpp           # IRType 定义 (int, float, array, pointer 等)
+│   │   │   ├── type_info.cpp      # TypeInfo 实现
+│   │   │   └── type_info.hpp      # 用于前端类型表示的 TypeInfo
+│   │   └── value/                 # 数值与常量系统
+│   │       ├── constant.cpp       # 常量值实现
+│   │       ├── constant.hpp       # 常量值定义
+│   │       └── value.hpp          # 数值表示
+│   ├── LLVMCodegen/               # LLVM 后端代码生成模块
+│   │   ├── LLVMCodegenerator.cpp  # sakIR 到 LLVM IR 转换的实现
+│   │   └── LLVMCodegenerator.hpp  # LLVM 代码生成定义与状态管理
+│   └── Utils/                     # 工具函数
+│       └── Logger.hpp             # 日志工具
+├── includes/                      # 外部依赖
+│   ├── magic_enum.hpp             # 枚举反射库
+│   └── String.hpp                 # 自定义字符串工具
+└── README.md                      # 本文件
+```
+
+## 构建
+
+### 前置条件
+- **C++ 编译器**: 支持 C++23 的 GCC 13+ 或 Clang 16+ (如 CMakeLists.txt 中指定)。
+- **CMake**: 3.24 或更高版本。
+- **LLVM**: 已安装并配置 16+ 版本 (项目需要使用 LLVM 库)。
+
+### 构建步骤
+1. **克隆仓库**:
+   ```bash
+   git clone https://github.com/powerangelxd/SakuraE.git
+   cd SakuraE
+   ```
+
+2. **创建构建目录**:
+   ```bash
+   mkdir build
+   cd build
+   ```
+
+3. **使用 CMake 配置**:
+   ```bash
+   cmake -G Ninja ..
+   ```
+   这将检测 LLVM 并使用 Ninja 设置支持 C++23 标准的构建。
+
+4. **编译项目**:
+   ```bash
+   ninja
+   ```
+
+5. **运行编译器** (可选测试):
+   ```bash
+   ./SakuraE ../demo.sak
+   ```
+
+如果遇到问题，请确保已安装 LLVM 开发库 (例如 `llvm-dev` 包) 并且 `llvm-config` 在 PATH 中可用。
+
+## IR 开发
+关于 IR 的更详细开发规范，请点击下方链接。
+
+[IR README](Compiler/IR/README-zh_cn.md)
+
+## 贡献者
+
+- [The Flysong](https://github.com/theflysong) : 受到 Parser 启发的贡献者
+
+## 赞助商
+
+- [SendsTeam](https://github.com/SendsTeam) : 在开发过程中提供 LLM 服务

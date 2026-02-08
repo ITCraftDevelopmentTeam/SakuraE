@@ -1,5 +1,7 @@
 # Instruction Naming
 
+[简体中文](ins-naming-zh_cn.md)
+
 ### This document establishes the naming conventions for SakuraE IR instructions to prevent naming confusion.
 
 1. The prefix of every instruction name must be the instruction's unique identifier, with hyphens ("-") used to replace underscores ("_") in multi-word names.

@@ -1,13 +1,12 @@
 # IR String Type
+
+[简体中文](string-zh_cn.md)
+
 ### This document primarily outlines the string types in SakuraE IR.
 
-## 1. String Constants
-Generally, the type of a string constant is char[N], where N is the length of the string (analogous to const char[] in C++).
+In SakuraE, for the sake of uniformity, all strings (whether literals or otherwise) are internally represented as `char*`.
 
-Therefore, during constant generation, if you invoke the `Constant* get(const fzlib::String& val, PositionInfo info)` method, the generated string type will be char[].
-
-## 2. Dynamic String
-When declaring a variable with the String type (or other type identifiers), the specified type should not be char[], as the length of the string held by this variable is unknown. Instead, its type should be char*.
+Therefore, when declaring a variable with the String type (or other type identifiers), the specified type should not be char[], as the length of the string held by this variable is unknown. Instead, its type should be char*.
 
 Therefore, when the String type is represented as a TypeInfo (in other words, when your type is derived from the TypeInfo class via `IRType* toIRType()`), the resulting String type will be char*.
 

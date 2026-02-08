@@ -9,6 +9,7 @@
    <img src="https://img.shields.io/badge/Arch%20Linux-333333?style=flat&logo=archlinux&logoColor=white&labelColor=1793D1"/>
 </h1>
 
+[简体中文](README-zh_cn.md)
 
 </div>
 
