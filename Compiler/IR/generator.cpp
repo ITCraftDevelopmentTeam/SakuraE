@@ -596,7 +596,8 @@ namespace sakuraE::IR {
         int elseExitBlockIndex = -1;
 
         if (node->hasNode(ASTTag::ElseStmtNode)) {
-            elseBlock = visitBlockStmtNode((*(*(*node)[ASTTag::ElseStmtNode])[ASTTag::ElseStmtNode])[ASTTag::Block], "if.else");
+            auto block = (*(*node)[ASTTag::ElseStmtNode])[ASTTag::Block];
+            elseBlock = visitBlockStmtNode(block, "if.else");
             elseExitBlockIndex = curFunc()->cur();
         }
         //
