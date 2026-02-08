@@ -1,7 +1,9 @@
 #ifndef SAKURAE_BLOCK_HPP
 #define SAKURAE_BLOCK_HPP
 
+#include "Compiler/IR/value/value.hpp"
 #include "instruction.hpp"
+#include <cstddef>
 
 namespace sakuraE::IR {
     class Function;
@@ -68,6 +70,36 @@ namespace sakuraE::IR {
             instructions.push_back(ins);
 
             return ins;
+        }
+
+        IRValue* createBr(IRValue* targetBlock) {
+            if (!instructions.back()->isTerminal())
+                return createInstruction(OpKind::br,
+                                        IRType::getVoidTy(),
+                                    {targetBlock},
+                                        "br.(" + targetBlock->getName() + ")");
+            
+            return nullptr;
+        }
+
+        IRValue* createCondBr(IRValue* cond, IRValue* thenBlock, IRValue* elseBlock) {
+            if (!instructions.back()->isTerminal())
+                return createInstruction(OpKind::cond_br,
+                                        IRType::getVoidTy(),
+                                        {cond, thenBlock, elseBlock},
+                                        "cond_br.(" + thenBlock->getName() + ").(" + elseBlock->getName() + ")");
+            
+            return nullptr;
+        }
+
+        IRValue* createReturn(IRValue* value) {
+            if (!instructions.back()->isTerminal())
+                return createInstruction(OpKind::ret,
+                                        IRType::getVoidTy(),
+                                        {value},
+                                        "ret");
+            
+            return nullptr;
         }
 
         Instruction* op(std::size_t pos) {
