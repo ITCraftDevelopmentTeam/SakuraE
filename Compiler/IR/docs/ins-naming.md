@@ -4,14 +4,20 @@
 
 ### This document establishes the naming conventions for SakuraE IR instructions to prevent naming confusion.
 
-1. The prefix of every instruction name must be the instruction's unique identifier, with hyphens ("-") used to replace underscores ("_") in multi-word names.
+1. The prefix of every instruction name must be the instruction's unique identifier, with underscores ("_") used to replace hyphens ("-") in multi-word names.
 > e.g.
-> The instruction cond_br should be named cond-br according to this convention.
-> Example: `generator.cpp: line 7`: 
+> The instruction cond-br should be named cond_br according to this convention.
+> Example: `block.hpp: line 85`: 
 > ```c++
-> return curFunc()
->            ->curBlock()
->            ->createInstruction(OpKind::constant, literal->getType(), {literal}, "constant");
+> IRValue* createCondBr(IRValue* cond, IRValue* thenBlock, IRValue* elseBlock) {
+>       if (!instructions.back()->isTerminal())
+>            return createInstruction(OpKind::cond_br,
+>                                      IRType::getVoidTy(),
+>                                      {cond, thenBlock, elseBlock},
+>                                      "cond_br.(" + thenBlock->getName() + ").(" + elseBlock->getName() + ")");
+>           
+>       return nullptr;
+>}
 > ```
 
 <br>

@@ -4,14 +4,20 @@
 
 ### 本文档规定了 SakuraE IR 指令的命名规范，以防止命名混淆。
 
-1. 每个指令名称的前缀必须是指令的唯一标识符，多单词名称中使用连字符 ("-") 代替下划线 ("_")。
-> 例如：
-> 根据此规范，指令 `cond_br` 应命名为 `cond-br`。
-> 示例：`generator.cpp: 第 7 行`: 
+1. 每个指令名称的前缀必须是指令的唯一标识符，多单词名称中使用下划线 ("_") 代替连字符 ("-")。
+> e.g.
+> 指令"cond-br"应该被命名为"cond_br"
+> 例: `block.hpp: line 85`: 
 > ```c++
-> return curFunc()
->            ->curBlock()
->            ->createInstruction(OpKind::constant, literal->getType(), {literal}, "constant");
+> IRValue* createCondBr(IRValue* cond, IRValue* thenBlock, IRValue* elseBlock) {
+>       if (!instructions.back()->isTerminal())
+>            return createInstruction(OpKind::cond_br,
+>                                      IRType::getVoidTy(),
+>                                      {cond, thenBlock, elseBlock},
+>                                      "cond_br.(" + thenBlock->getName() + ").(" + elseBlock->getName() + ")");
+>           
+>       return nullptr;
+>}
 > ```
 
 <br>
