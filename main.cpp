@@ -1,8 +1,13 @@
 #include <iostream>
+#include <llvm/IR/Module.h>
 #include <string>
 #include <vector>
 #include <memory>
 #include <stdexcept>
+
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/Support/TargetSelect.h>
 
 #include "Compiler/Frontend/lexer.h"
 #include "Compiler/Frontend/parser_base.hpp"
@@ -11,19 +16,15 @@
 #include "Compiler/LLVMCodegen/LLVMCodegenerator.hpp"
 
 const fzlib::String SOURCE_CODE = R"(
-func foo(a: int, b: int, s: string) -> int {
-    let VAR = "hello";
-    let VAR1 = "hello11";
-
-    if (VAR != VAR1 && a == 2) {
-        return 99;
+func main(a: int, b: int) -> int {
+    let g = 10;
+    for (let i=0; i<a+b; i++) {
+        g += i*2;
     }
-    else {
-        return 8;
-    }
+    return g;
 }
 )";
-
+typedef int (*SakuraFuncPtr)(int, int);
 int main() {
     std::cout << "--- Source ---\n" << SOURCE_CODE << "\n";
     try {
@@ -61,7 +62,42 @@ int main() {
 
             llvmCodegen.start();
 
+            llvmCodegen.optimize();
+
             llvmCodegen.print();
+
+            auto module = llvmCodegen.getModules()[0];
+            llvm::Module* rawModule = module->content; 
+            auto modulePtr = std::unique_ptr<llvm::Module>(rawModule);
+
+            llvm::InitializeNativeTarget();
+            llvm::InitializeNativeTargetAsmPrinter();
+            llvm::InitializeNativeTargetAsmParser();
+
+            std::string errStr;
+            llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(modulePtr))
+                                            .setErrorStr(&errStr)
+                                            .create();
+
+            if (!EE) {
+                std::cerr << "Failed to construct ExecutionEngine: " << errStr << std::endl;
+                return 1;
+            }
+
+            llvm::Function* mainFn = EE->FindFunctionNamed("main");
+            if (!mainFn) {
+                std::cerr << "Could not find main function in module" << std::endl;
+                return 1;
+            }
+
+            EE->finalizeObject();
+
+            auto addr = EE->getFunctionAddress("main");
+
+            SakuraFuncPtr func = reinterpret_cast<SakuraFuncPtr>(addr);
+
+            std::cout << "JIT Result: " << func(10,10) << std::endl;
+
         }
     } 
     catch (const std::runtime_error& e) {
