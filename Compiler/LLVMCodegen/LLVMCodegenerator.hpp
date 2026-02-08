@@ -22,6 +22,9 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/PromoteMemToReg.h>
 #include <llvm/Transforms/Utils.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Transforms/Utils/Mem2Reg.h>
+
 
 #include "Compiler/Error/error.hpp"
 #include "Compiler/IR/generator.hpp"
@@ -245,7 +248,7 @@ namespace sakuraE::Codegen {
         // =====================================================================
 
         // Module ==============================================================
-        std::vector<LLVMModule> modules;
+        std::vector<LLVMModule*> modules;
         // =====================================================================
 
         // State Tools =========================================================
@@ -286,7 +289,9 @@ namespace sakuraE::Codegen {
         }
 
         void start();
-
+        std::vector<LLVMModule*> getModules() {
+            return modules;
+        }
         void print();
     private:
         llvm::Value* compare(IR::Instruction* ins, LLVMFunction* curFn);
@@ -493,6 +498,38 @@ namespace sakuraE::Codegen {
         }
 
         // =====================================================================
+
+        // Optimizer ===========================================================
+        void moduleOptimize(llvm::Module* mod) {
+            llvm::LoopAnalysisManager LAM;
+            llvm::FunctionAnalysisManager FAM;
+            llvm::CGSCCAnalysisManager CGAM;
+            llvm::ModuleAnalysisManager MAM;
+
+            llvm::PassBuilder PB;
+            PB.registerModuleAnalyses(MAM);
+            PB.registerCGSCCAnalyses(CGAM);
+            PB.registerFunctionAnalyses(FAM);
+            PB.registerLoopAnalyses(LAM);
+            PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+
+            llvm::FunctionPassManager FPM;
+            FPM.addPass(llvm::PromotePass()); 
+
+            for (auto &F : *mod) {
+                if (!F.isDeclaration()) {
+                    FPM.run(F, FAM);
+                }
+            }
+        }
+    public:
+        void optimize() {
+            for (auto mod: modules) {
+                moduleOptimize(mod->content);
+            }
+        }
+        // =====================================================================
+
     };
 }
 
