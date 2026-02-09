@@ -391,8 +391,17 @@ namespace sakuraE::IR {
         
         auto chain = (*node)[ASTTag::Exprs]->getChildren();
 
-        for (auto expr: chain) {
-            array.push_back(visitWholeExprNode(expr));
+        IRValue* head = visitWholeExprNode(chain[0]);
+        array.push_back(head);
+
+        for (std::size_t i = 1; i < chain.size(); i ++) {
+            auto element = visitWholeExprNode(chain[i]);
+            if (head->getType() != element->getType()) {
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                "The types of elements in an array literal must be the same.",
+                                node->getPosInfo());
+            }
+            array.push_back(element);
         }
 
         return curFunc()
