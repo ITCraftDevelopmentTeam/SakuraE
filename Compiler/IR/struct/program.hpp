@@ -14,7 +14,8 @@ namespace sakuraE::IR {
         int cursor = -1;
     public:
         Program(fzlib::String id): ID(id) {
-            PositionInfo info = {0, 0, "System"};
+            /*
+            
             buildModule("RuntimeModule", info);
             auto runtimeMod = curMod();
             
@@ -26,7 +27,7 @@ namespace sakuraE::IR {
             runtimeMod->buildFunction("__print", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
             runtimeMod->buildFunction("__println", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
 
-            buildModule("MainModule", info);
+            */
         }
 
         Program& buildModule(fzlib::String id, PositionInfo info) {
