@@ -2,7 +2,9 @@
 #define SAKURAE_ATRI_COMMANDS_HPP
 
 #include <iostream>
+#include <llvm/ExecutionEngine/Orc/CoreContainers.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/Error.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -11,6 +13,13 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+#include <llvm/Support/TargetSelect.h>
+#include "Runtime/alloc.h"
+#include "Runtime/raw_string.h"
+#include "Runtime/print.h"
+
 
 #include "Compiler/Frontend/lexer.h"
 #include "Compiler/Frontend/parser_base.hpp"
@@ -103,29 +112,33 @@ namespace atri::cmds {
         llvm::InitializeNativeTargetAsmPrinter();
         llvm::InitializeNativeTargetAsmParser();
 
-        std::string errStr;
-        llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(modulePtr))
-                                        .setErrorStr(&errStr)
-                                        .create();
+        auto JIT = llvm::cantFail(llvm::orc::LLJITBuilder().create());
 
-        if (!EE) {
-            throw std::runtime_error("Failed to construct ExecutionEngine");
-        }
-        llvm::Function* mainFn = EE->FindFunctionNamed("main");
-        if (!mainFn) {
-            throw std::runtime_error("Could not find main function in module");
-        }
+        auto& JD = JIT->getMainJITDylib();
+        llvm::orc::SymbolMap runtimeSymbols;
 
-        EE->finalizeObject();
+        runtimeSymbols[JIT->mangleAndIntern("__alloc")] = {llvm::orc::ExecutorAddr::fromPtr(&__alloc), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("__free")] = { llvm::orc::ExecutorAddr::fromPtr(&__free), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("create_string")] = { llvm::orc::ExecutorAddr::fromPtr(&create_string), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("free_string")] = { llvm::orc::ExecutorAddr::fromPtr(&free_string), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("concat_string")] = { llvm::orc::ExecutorAddr::fromPtr(&concat_string), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("__print")] = { llvm::orc::ExecutorAddr::fromPtr(&__print), llvm::JITSymbolFlags::Exported };
+        runtimeSymbols[JIT->mangleAndIntern("__println")] = { llvm::orc::ExecutorAddr::fromPtr(&__println), llvm::JITSymbolFlags::Exported };
 
-        void* nativeMain = EE->getPointerToFunction(mainFn);
-        auto sakuraMain = (int (*)())nativeMain;
+        llvm::cantFail(JD.define(llvm::orc::absoluteSymbols(runtimeSymbols)));
 
-        int result = sakuraMain();
+        auto TSCtx = llvm::orc::ThreadSafeContext(std::unique_ptr<llvm::LLVMContext>(llvmCodegen.context));
+        auto TSM = llvm::orc::ThreadSafeModule(
+            std::move(modulePtr),
+            std::move(TSCtx)
+        );
 
-        std::cout << "Program exited with code: " << result << std::endl;
+        llvm::cantFail(JIT->addIRModule(std::move(TSM)));
 
-        delete EE;
+        auto mainSymbol = llvm::cantFail(JIT->lookup("main"));
+        auto sakuraMain = mainSymbol.toPtr<int(*)()>();
+
+        std::cout << "Result: " << sakuraMain() << std::endl;
     }
 }
 
