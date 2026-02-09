@@ -69,8 +69,11 @@ file(GLOB SRC_FILES "includes/magic_enum.hpp"
                     "Compiler/LLVMCodegen/*.hpp"
                     "atrI/*.hpp"
                     "atrI/config.*hpp")
+
+file(GLOB RUNTIME_FILES "Runtime/*.cpp"
+                        "Runtime/*.h")
         
-add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
+add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${RUNTIME_FILES})
 
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
