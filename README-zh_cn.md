@@ -115,14 +115,49 @@ SakuraE/
    这将检测 LLVM 并使用 Ninja 设置支持 C++23 标准的构建
 
 4. **编译项目**:
+    ```bash
+    ninja
+    ```
+
+5. **在 build 文件夹中创建一个 `.sak` 文件**
    ```bash
-   ninja
+   touch test.sak
+   ```
+   然后编写如下程序进行测试：
+   ```go
+   func foo(a: int, b: int) -> int {
+       return a * b;
+   }
+
+   func main() -> int {
+       let g = foo(1, 2);
+       let a = foo(10, 9);
+       for (let i=0; i<a; i++) {
+           g += i*2;
+       }
+       return g;
+   }
+   ```
+
+   ```bash
+   echo "func foo(a: int, b: int) -> int {
+       return a * b;
+   }
+
+   func main() -> int {
+       let g = foo(1, 2);
+       let a = foo(10, 9);
+       for (let i=0; i<a; i++) {
+           g += i*2;
+       }
+       return g;
+   }" >> test.sak
    ```
 
 5. **运行编译器** (可选测试):
-   ```bash
-   ./SakuraE
-   ```
+    ```bash
+    ./SakuraE
+    ```
 
 如果遇到问题，请确保已安装 LLVM 开发库 (例如 `llvm-dev` 包) 并且 `llvm-config` 在 PATH 中可用
 

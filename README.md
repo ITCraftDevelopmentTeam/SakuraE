@@ -119,6 +119,41 @@ SakuraE/
    ninja
    ```
 
+5. **Create a `.sak` file in folder build** 
+   ```bash
+   touch test.sak
+   ```
+   Then write this program for test:
+   ```go
+   func foo(a: int, b: int) -> int {
+       return a * b;
+   }
+
+   func main() -> int {
+       let g = foo(1, 2);
+       let a = foo(10, 9);
+       for (let i=0; i<a; i++) {
+           g += i*2;
+       }
+       return g;
+   }
+   ```
+
+   ```bash
+   echo "func foo(a: int, b: int) -> int {
+       return a * b;
+   }
+
+   func main() -> int {
+       let g = foo(1, 2);
+       let a = foo(10, 9);
+       for (let i=0; i<a; i++) {
+           g += i*2;
+       }
+       return g;
+   }" >> test.sak
+   ```
+
 5. **Run the compiler** (optional test):
    ```bash
    ./SakuraE
