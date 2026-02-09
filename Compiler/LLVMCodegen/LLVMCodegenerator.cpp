@@ -233,16 +233,16 @@ namespace sakuraE::Codegen {
                 }
                 auto arrayType = ins->getType()->toLLVMType(*context);
 
-                llvm::AllocaInst* alloca = curFn->createAlloca(arrayType, nullptr, ins->getName());
+                llvm::Value* arrayPtr = curFn->createHeapAlloc(arrayType, "tmparr");
 
                 for (std::size_t i = 0; i < arrayContent.size(); i ++) {
                     auto ptr = builder->CreateGEP(arrayType, 
-                                                            alloca, 
-                                                            {builder->getInt32(0), builder->getInt32(i)});
+                                                            arrayPtr, 
+                                                            {builder->getInt32(i)});
                     builder->CreateStore(arrayContent[i], ptr);
                 }
 
-                bind(ins, alloca);
+                bind(ins, arrayPtr);
                 break;
             }
             case IR::OpKind::indexing: {
@@ -250,9 +250,9 @@ namespace sakuraE::Codegen {
                 llvm::Value* indexVal = toLLVMValue(ins->arg(1), curFn);
 
                 llvm::Type* type = ins->arg(0)->getType()->toLLVMType(*context);
-                auto ptr = builder->CreateGEP(type, addr, {builder->getInt32(0), indexVal}, "element_ptr");
+                auto ptr = builder->CreateGEP(type, addr, {indexVal}, "indexing.ptr");
                 
-                instResult = builder->CreateLoad(type->getArrayElementType(), ptr, "element_val");
+                instResult = builder->CreateLoad(type->getArrayElementType(), ptr, "indexing.val");
 
                 bind(ins, instResult);
                 break;
@@ -333,6 +333,8 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::free_cur_heap: {
+                curFn->FreeCurrentHeap();
+
                 break;
             }
             default:
