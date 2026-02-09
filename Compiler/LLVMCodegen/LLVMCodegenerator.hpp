@@ -37,9 +37,11 @@
 
 namespace sakuraE::Codegen {
     class LLVMCodeGenerator {
+    public:
         IR::Program* program;
         llvm::LLVMContext* context;
         llvm::IRBuilder<>* builder;
+    private:
         
         // Struct Definition ==================================================
         struct LLVMModule;
