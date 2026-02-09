@@ -94,6 +94,7 @@ SakuraE/
 - **C++ Compiler**: GCC 13+ or Clang 16+ supporting C++23 (as specified in CMakeLists.txt).
 - **CMake**: Version 3.24 or higher.
 - **LLVM**: Version 16+ installed and configured (required for the project, as it uses LLVM libraries).
+- **Ninja**: Version 1.13.2
 
 ### Build Steps
 1. **Clone the repository**:
