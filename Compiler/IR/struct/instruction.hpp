@@ -27,6 +27,7 @@ namespace sakuraE::IR {
         load,
         gmem,
         param,
+        free_cur_heap,
         // terminal op
         br,
         cond_br,
