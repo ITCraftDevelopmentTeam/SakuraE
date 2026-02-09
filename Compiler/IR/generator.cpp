@@ -581,6 +581,7 @@ namespace sakuraE::IR {
             visitStmt(stmt);
         }
 
+        curFunc()->curBlock()->createFree();
         curFunc()->fnScope().leave();
         
         return block;
