@@ -19,6 +19,8 @@ namespace sakuraE::IR {
         // Indicates the current maximum index of fnList
         long cursor = -1;
 
+        std::vector<Module*> refs;
+
         Program* program;
     public:
         Module(fzlib::String id, PositionInfo info):
