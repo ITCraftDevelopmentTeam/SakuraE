@@ -18,6 +18,7 @@
 #include "Compiler/IR/generator.hpp"
 #include "Compiler/LLVMCodegen/LLVMCodegenerator.hpp"
 #include "utils.hpp"
+#include "config/config.hpp"
 
 namespace atri::cmds {
     inline void cmdHelp(std::vector<fzlib::String> args) {
@@ -30,7 +31,7 @@ namespace atri::cmds {
     }
 
     inline void cmdRun(std::vector<fzlib::String> args) {
-        if (args.size() != 1) {
+        if (args.size() < 1) {
             fzlib::String content = "Invalid argument for command: 'run': ";
             for (auto arg: args) {
                 content += arg + " ";
@@ -39,7 +40,13 @@ namespace atri::cmds {
         }
 
         auto content = readSourceFile(args[0]);
+        DebugConfig config;
 
+        if (args.size() >= 2 && args[1] == "-ast") config.displayAST = true; 
+        if (args.size() >= 3 && args[2] == "-sakir") config.displaySakIR = true; 
+        if (args.size() >= 4 && args[3] == "-rawllvm") config.displayRawLLVMIR = true; 
+        if (args.size() >= 5 && args[4] == "-llvmir") config.displayOptimizedLLVMIR = true; 
+        
         sakuraE::Lexer lexer(content);
         auto r = lexer.tokenize();
 
@@ -57,15 +64,37 @@ namespace atri::cmds {
 
             auto res = result.val->genResource();
 
+            if (config.displayAST) {
+                std::cout << "--------------================:DEBUG: AST DISPLAY:================--------------" << std::endl;
+                std::cout << res->toFormatString() << std::endl;
+            }
+
             generator.visitStmt(res);
             current = result.end;
+        }
+
+        if (config.displaySakIR) {
+            std::cout << "--------------================:DEBUG: SAKIR DISPLAY:================--------------" << std::endl;
+            std::cout << generator.toFormatString() << std::endl;
         }
 
         auto program = generator.getProgram();
 
         sakuraE::Codegen::LLVMCodeGenerator llvmCodegen(&program);
         llvmCodegen.start();
+
+        if (config.displayRawLLVMIR) {
+            std::cout << "--------------================:DEBUG: RAW LLVM IR DISPLAY:================--------------" << std::endl;
+            llvmCodegen.print();
+        }
+
         llvmCodegen.optimize();
+
+        if (config.displayOptimizedLLVMIR) {
+            std::cout << "--------------================:DEBUG: Optimized LLVM IR DISPLAY:================--------------" << std::endl;
+            llvmCodegen.print();
+        }
+
         auto module = llvmCodegen.getModules()[0];
         llvm::Module* rawModule = module->content; 
         auto modulePtr = std::unique_ptr<llvm::Module>(rawModule);
