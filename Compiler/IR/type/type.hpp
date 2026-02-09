@@ -14,6 +14,9 @@ namespace sakuraE::IR {
         Integer32TyID,
         Integer64TyID,
         IntegerNTyID,
+        UInteger32TyID,
+        UInteger64TyID,
+        UIntegerNTyID,
         FloatTyID,
         CharTyID,
         BoolTyID,
@@ -72,21 +75,34 @@ namespace sakuraE::IR {
 
     class IRIntegerType : public IRType {
         friend class IRType;
+        bool isUnsigned = false;
         unsigned bitWidth;
 
-        explicit IRIntegerType(unsigned bw): 
+        explicit IRIntegerType(unsigned bw, bool sign = true): 
             IRType([&]()->IRTypeID {
-                switch (bw) {
-                    case 1:
-                        return IRTypeID::BoolTyID;
-                    case 8:
-                        return IRTypeID::CharTyID;
-                    case 32:
-                        return IRTypeID::Integer32TyID;
-                    case 64:
-                        return IRTypeID::Integer64TyID;
-                    default:
-                        return IRTypeID::IntegerNTyID;
+                if (sign) {
+                    switch (bw) {
+                        case 1:
+                            return IRTypeID::BoolTyID;
+                        case 8:
+                            return IRTypeID::CharTyID;
+                        case 32:
+                            return IRTypeID::Integer32TyID;
+                        case 64:
+                            return IRTypeID::Integer64TyID;
+                        default:
+                            return IRTypeID::IntegerNTyID;
+                    }
+                }
+                else {
+                    switch (bw) {
+                        case 32:
+                            return IRTypeID::UInteger32TyID;
+                        case 64:
+                            return IRTypeID::UInteger64TyID;
+                        default:
+                            return IRTypeID::UIntegerNTyID;
+                    }
                 }
             }()), bitWidth(bw) {}
 
