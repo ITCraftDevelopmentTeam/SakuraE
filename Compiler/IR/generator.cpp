@@ -37,10 +37,13 @@ namespace sakuraE::IR {
     IRValue* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
         auto targetName = (*node)[ASTTag::Identifier]->getToken().content;
         Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(targetName);
+        if (!symbol) {
+            symbol = curModule()->lookup(targetName);
+        }
 
         if (!symbol) {
             throw SakuraError(OccurredTerm::IR_GENERATING,
-                "Cannot find symbol: " + targetName,
+                "Unknown symbol: " + targetName,
                 node->getPosInfo());
         }
 
