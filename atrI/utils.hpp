@@ -9,6 +9,11 @@
 namespace atri {
     inline fzlib::String readSourceFile(fzlib::String path) {
         std::ifstream file(path.c_str(), std::ios::binary | std::ios::ate);
+
+        if (!file.is_open()) {
+            throw std::runtime_error("Could not open file: " + std::string(path.c_str()));
+        }
+
         std::streamsize size = file.tellg();
         file.seekg(0, std::ios::beg);
         std::string content;
