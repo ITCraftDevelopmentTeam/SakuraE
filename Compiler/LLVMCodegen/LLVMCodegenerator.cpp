@@ -1,4 +1,5 @@
 #include "LLVMCodegenerator.hpp"
+#include "Compiler/Error/error.hpp"
 #include "Compiler/IR/struct/instruction.hpp"
 #include "Compiler/IR/struct/module.hpp"
 #include <cstddef>
@@ -19,23 +20,6 @@ namespace sakuraE::Codegen {
 
         auto funcs = source->getFunctions();
 
-        for (auto runtimeFn: runtimeFunctions) {
-            llvm::FunctionCallee runtimeCallee = nullptr;
-            runtimeCallee = getRuntime(runtimeFn);
-            auto llvmFn = llvm::cast<llvm::Function>(runtimeCallee.getCallee());
-
-            LLVMFunction* wrapper = new LLVMFunction {
-                runtimeFn,
-                runtimeCallee.getFunctionType()->getReturnType(),
-                {},
-                this,
-                codegenContext,
-                {0, 0, "runtime function"}
-            };
-            wrapper->content = llvmFn;
-            fnMap[runtimeFn] = wrapper;
-        }
-
         for (auto func: funcs) {
             auto retTy = func->getReturnType()->toLLVMType(*codegenContext.context);
             auto irParams = func->getFormalParams();
@@ -45,11 +29,41 @@ namespace sakuraE::Codegen {
                 params.emplace_back(param.first, param.second->toLLVMType(*codegenContext.context));
             }
 
-            declareFunction(func->getName(), retTy, params, func->getInfo());
+            if (source->id() == "__runtime")
+                declareFunction(FunctionType::ExternalLinkage, func->getName(), retTy, params, func->getInfo());
+            else 
+                declareFunction(FunctionType::Definition, func->getName(), retTy, params, func->getInfo());
+        }
+
+        for (auto usingMod: source->getUsingList()) {
+            for (auto func: usingMod->getFunctions()) {
+                if (fnMap.contains(func->getName())) {
+                    // TODO: Should handle in generator, but now handle in here
+                    throw SakuraError(OccurredTerm::COMPILING,
+                                    "Duplicate declaration of '" + func->getName() + "', originating from module '" + usingMod->id() + "'.",
+                                    func->getInfo());
+                }
+
+                auto retTy = func->getReturnType()->toLLVMType(*codegenContext.context);
+                auto irParams = func->getFormalParams();
+                std::vector<std::pair<fzlib::String, llvm::Type*>> params;
+
+                for (auto param: irParams) {
+                    params.emplace_back(param.first, param.second->toLLVMType(*codegenContext.context));
+                }
+
+                declareFunction(FunctionType::ExternalLinkage, func->getName(), retTy, params, func->getInfo());
+            }
         }
 
         for (auto irFn: funcs) {
             fnMap[irFn->getName()]->impl(irFn);
+        }
+
+        for (auto usingMod: source->getUsingList()) {
+            for (auto func: usingMod->getFunctions()) {
+                fnMap[func->getName()]->impl(func);
+            }
         }
 
         sourceModule = source;
@@ -59,14 +73,14 @@ namespace sakuraE::Codegen {
         auto funcList = sourceModule->getFunctions();
         for (auto fn: funcList) {
             auto curFn = fnMap[fn->getName()];
-            curFn->codegen();
+            if (curFn->type == FunctionType::Definition)
+                curFn->codegen();
         }
     }
 
     // LLVM Function
     void LLVMCodeGenerator::LLVMFunction::impl(IR::Function* source) {
-        // initialize the heapStack
-        heapStack.push({});
+        sourceFn = source;
 
         std::vector<llvm::Type*> params;
         for (auto param: formalParams) {
@@ -75,6 +89,10 @@ namespace sakuraE::Codegen {
 
         llvm::FunctionType* fnType = llvm::FunctionType::get(returnType, params, false);
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
+
+        if (type == FunctionType::ExternalLinkage) return ;
+        // initialize the heapStack
+        heapStack.push({});
 
         auto irParams = source->getFormalParams();
 
@@ -102,8 +120,6 @@ namespace sakuraE::Codegen {
             scope.declare(irParams[i].first, argAlloca, nullptr);
             i ++;
         }
-
-        sourceFn = source;
     }
 
     void LLVMCodeGenerator::LLVMFunction::codegen() {
@@ -208,7 +224,6 @@ namespace sakuraE::Codegen {
                 auto insName = ins->arg(0)->getName();
                 auto identifierName = insName.split('.')[1];
 
-                // TODO: Type is not only AllocaInst
                 auto alloca = llvm::dyn_cast<llvm::AllocaInst>(curFn->scope.lookup(identifierName)->address);
                 auto val = toLLVMValue(ins->arg(1), curFn);
 
@@ -322,7 +337,7 @@ namespace sakuraE::Codegen {
                 auto insName = ins->getName();
                 auto fnName = insName.split('.')[1];
 
-                auto fn = curFn->parent->get(fnName)->content;
+                auto fn = curFn->parent->lookup(fnName)->content;
 
                 auto arguments = ins->getOperands();
                 std::vector<llvm::Value*> llvmArguments;
