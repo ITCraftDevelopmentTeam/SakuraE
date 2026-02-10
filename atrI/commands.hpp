@@ -104,7 +104,7 @@ namespace atri::cmds {
             llvmCodegen.print();
         }
 
-        auto module = llvmCodegen.getModules()[0];
+        auto module = llvmCodegen.getModules()[1];
         llvm::Module* rawModule = module->content; 
         auto modulePtr = std::unique_ptr<llvm::Module>(rawModule);
 
@@ -137,8 +137,8 @@ namespace atri::cmds {
 
         auto mainSymbol = llvm::cantFail(JIT->lookup("main"));
         auto sakuraMain = mainSymbol.toPtr<int(*)()>();
-
-        std::cout << "Result: " << sakuraMain() << std::endl;
+        auto resultVal = sakuraMain();
+        std::cout << "Result: " << resultVal << std::endl;
     }
 }
 
