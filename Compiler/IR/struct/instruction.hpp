@@ -48,12 +48,6 @@ namespace sakuraE::IR {
         Instruction(OpKind k, IRType* t, std::vector<IRValue*> params): 
             IRValue(t), kind(k), args(params) {}
 
-        ~Instruction() {
-            for (auto arg: args) {
-                delete arg;
-            }
-        }
-
         bool isTerminal() {
             return kind == OpKind::br ||
                     kind == OpKind::cond_br ||
