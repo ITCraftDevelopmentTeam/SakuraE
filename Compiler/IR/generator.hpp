@@ -155,7 +155,7 @@ namespace sakuraE::IR {
             program.buildModule(name, {1, 1, "Start of the whole program"});
         }
 
-        Program getProgram() {
+        Program& getProgram() {
             return program;
         }
 
