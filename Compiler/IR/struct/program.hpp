@@ -15,22 +15,23 @@ namespace sakuraE::IR {
     public:
         Program(fzlib::String id): ID(id) {
             PositionInfo info = {0, 0, "System"};
-            buildModule("RuntimeModule", info);
+            buildModule("__runtime", info, true);
             auto runtimeMod = curMod();
             
-            runtimeMod->buildFunction("__alloc", IRType::getPointerTo(IRType::getCharTy()), { {"size", IRType::getUInt64Ty()} }, info);
-            runtimeMod->buildFunction("__free", IRType::getVoidTy(), { {"ptr", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->buildFunction("create_string", IRType::getPointerTo(IRType::getCharTy()), { {"literal", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->buildFunction("free_string", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->buildFunction("concat_string", IRType::getPointerTo(IRType::getCharTy()), { {"s1", IRType::getPointerTo(IRType::getCharTy())}, {"s2", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->buildFunction("__print", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->buildFunction("__println", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("__alloc", IRType::getPointerTo(IRType::getCharTy()), { {"size", IRType::getUInt32Ty()} }, info);
+            runtimeMod->declareFunction("__free", IRType::getVoidTy(), { {"ptr", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("create_string", IRType::getPointerTo(IRType::getCharTy()), { {"literal", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("free_string", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("concat_string", IRType::getPointerTo(IRType::getCharTy()), { {"s1", IRType::getPointerTo(IRType::getCharTy())}, {"s2", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("__print", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction("__println", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
         }
 
-        Program& buildModule(fzlib::String id, PositionInfo info) {
+        Program& buildModule(fzlib::String id, PositionInfo info, bool isRuntime = false) {
             Module* module = new Module(id, info);
             // Using runtime module
-            module->use(mod(0));
+            if (!isRuntime)
+                module->use(mod(0));
             moduleList.emplace_back(module);
             cursor ++;
 
