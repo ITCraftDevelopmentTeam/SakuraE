@@ -16,6 +16,7 @@
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <llvm/Support/TargetSelect.h>
+#include "Compiler/IR/type/type_info.hpp"
 #include "Runtime/alloc.h"
 #include "Runtime/raw_string.h"
 #include "Runtime/print.h"
@@ -87,7 +88,7 @@ namespace atri::cmds {
             std::cout << generator.toFormatString() << std::endl;
         }
 
-        auto program = generator.getProgram();
+        auto& program = generator.getProgram();
 
         sakuraE::Codegen::LLVMCodeGenerator llvmCodegen(&program);
         llvmCodegen.start();
@@ -143,6 +144,10 @@ namespace atri::cmds {
         auto sakuraMain = mainSymbol.toPtr<int(*)()>();
         auto resultVal = sakuraMain();
         std::cout << "Result: " << resultVal << std::endl;
+
+        //
+
+        sakuraE::IR::TypeInfo::clearAll();
     }
 }
 
