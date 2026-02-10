@@ -15,11 +15,20 @@ namespace sakuraE::IR {
 
     IRValue* IRGenerator::visitIndexOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
         IRValue* indexResult = visitAddExprNode((*node)[ASTTag::HeadExpr]);
-        auto elementType = dynamic_cast<IRArrayType*>(addr->getType())->getElementType();
-
-        return curFunc()
-                ->curBlock()
-                ->createInstruction(OpKind::indexing, elementType, {addr, indexResult}, "indexing." + target);
+        if (auto arrType = dynamic_cast<IRArrayType*>(addr->getType())) {
+            return curFunc()
+                    ->curBlock()
+                    ->createInstruction(OpKind::indexing, arrType->getElementType(), {addr, indexResult}, "indexing." + target);
+        }
+        else if (auto ptrType = dynamic_cast<IRPointerType*>(addr->getType())) {
+            return curFunc()
+                    ->curBlock()
+                    ->createInstruction(OpKind::indexing, ptrType->getElementType(), {addr, indexResult}, "indexing." + target);
+        }
+        else 
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                            "Indexing operation is only supported for arrays and pointers.",
+                            node->getPosInfo());
     }
 
     IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
