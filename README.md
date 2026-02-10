@@ -149,8 +149,8 @@ SakuraE/
    }
 
    func main() -> int {
-       __println("Hello world, check fib(21):");
-       return fib(21);
+      __println("Hello world, check fib(21):");
+      return fib(21);
    }
    ```
 
@@ -161,7 +161,7 @@ SakuraE/
     }
     return fib(n - 1) + fib(n - 2);
    }
-   
+
    func main() -> int {
        __println("Hello world, check fib(21):");
        return fib(21);

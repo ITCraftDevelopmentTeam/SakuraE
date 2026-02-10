@@ -142,16 +142,16 @@ SakuraE/
    然后编写如下程序进行测试：
    ```go
    func fib(n: int) -> int {
-      if (n <= 1) {
-         return n;
-      }
-      return fib(n - 1) + fib(n - 2);
-   }
+        if (n <= 1) {
+            return n;
+        }
+        return fib(n - 1) + fib(n - 2);
+    }
 
-   func main() -> int {
-       __println("Hello world, check fib(21):");
-       return fib(21);
-   }
+    func main() -> int {
+        __println("Hello world, check fib(21):");
+        return fib(21);
+    }
    ```
 
    ```bash
@@ -163,8 +163,8 @@ SakuraE/
    }
    
    func main() -> int {
-       __println("Hello world, check fib(21):");
-       return fib(21);
+        __println("Hello world, check fib(21):");
+        return fib(21);
    }" >> test.sak
    ```
 
