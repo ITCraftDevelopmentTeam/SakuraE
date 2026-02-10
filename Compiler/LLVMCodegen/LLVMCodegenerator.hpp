@@ -44,9 +44,16 @@ namespace sakuraE::Codegen {
     private:
         
         // Struct Definition ==================================================
+        enum class FunctionType {
+            Definition,
+            ExternalLinkage
+        };
+
         struct LLVMModule;
         // Represent LLVM Function Instantce
         struct LLVMFunction {
+            // Function Type
+            FunctionType type;
             // Function Name
             fzlib::String name;
             // LLVM IR Function represent
@@ -68,13 +75,14 @@ namespace sakuraE::Codegen {
             // SAK IR Function
             IR::Function* sourceFn;
             
-            LLVMFunction(fzlib::String n, 
+            LLVMFunction(FunctionType ty,
+                        fzlib::String n, 
                         llvm::Type* retT, 
                         std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, 
                         LLVMModule* p, 
                         LLVMCodeGenerator& codegen,
                         PositionInfo info):
-                name(n), content(nullptr), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)), parent(p), codegenContext(codegen) {}
+                type(ty), name(n), content(nullptr), returnType(retT), formalParams(formalP), scope(IR::Scope<llvm::Value*>(info)), parent(p), codegenContext(codegen) {}
 
             ~LLVMFunction() {
                 name.free();
@@ -107,7 +115,7 @@ namespace sakuraE::Codegen {
 
                 llvm::Value* sizeVal = llvm::ConstantInt::get(sizeTy, size);
 
-                auto allocator = parent->get("__alloc");
+                auto allocator = parent->lookup("__alloc");
 
                 auto result = codegenContext.builder->CreateCall(allocator->content, sizeVal, n.c_str());
 
@@ -117,7 +125,7 @@ namespace sakuraE::Codegen {
             }
 
             void FreeCurrentHeap() {
-                auto freer = parent->get("__free");
+                auto freer = parent->lookup("__free");
 
                 for (auto ptr: heapStack.top()) {
                     codegenContext.builder->CreateCall(freer->content, {ptr.second});
@@ -154,9 +162,9 @@ namespace sakuraE::Codegen {
             llvm::Module* content = nullptr;
             std::map<fzlib::String, LLVMFunction*> fnMap;
             LLVMCodeGenerator& codegenContext;
+
+            std::vector<LLVMModule*> useList;
             IR::Module* sourceModule;
-            // State Manager
-            fzlib::String activeFunctionName;
             
 
             LLVMModule(fzlib::String id, llvm::LLVMContext& ctx, LLVMCodeGenerator& codegen):
@@ -172,17 +180,15 @@ namespace sakuraE::Codegen {
                 else return;
             }
 
-            void declareFunction(fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
+            void declareFunction(FunctionType ty, fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
                 if (fnMap.find(n) != fnMap.end()) return;
                 else {
-                    LLVMFunction* fn = new LLVMFunction(n, retT, formalP, this, codegenContext, info);
+                    LLVMFunction* fn = new LLVMFunction(ty, n, retT, formalP, this, codegenContext, info);
                     fnMap[n] = fn;
-
-                    activeFunctionName = n;
                 }
             }
 
-            void declareFunction(fzlib::String n, IR::IRType* retT, IR::FormalParamsDefine formalP, PositionInfo info) {
+            void declareFunction(FunctionType ty, fzlib::String n, IR::IRType* retT, IR::FormalParamsDefine formalP, PositionInfo info) {
                 if (fnMap.find(n) != fnMap.end()) return;
                 else {
                     llvm::Type* llvmReturnType = retT->toLLVMType(*codegenContext.context);
@@ -192,37 +198,12 @@ namespace sakuraE::Codegen {
                         llvmFormalP.emplace_back(param.first, param.second->toLLVMType(*codegenContext.context));
                     }
 
-                    LLVMFunction* fn = new LLVMFunction(n, llvmReturnType, llvmFormalP, this, codegenContext, info);
+                    LLVMFunction* fn = new LLVMFunction(ty, n, llvmReturnType, llvmFormalP, this, codegenContext, info);
                     fnMap[n] = fn;
-
-                    activeFunctionName = n;
                 }
             }
 
-            LLVMFunction* get(fzlib::String n) {
-                llvm::FunctionCallee runtimeCallee = nullptr;
-
-                if (isRuntimeFunction(n)) {
-                    runtimeCallee = getRuntime(n);
-                }
-
-                if (runtimeCallee) {
-                    auto llvmFn = llvm::cast<llvm::Function>(runtimeCallee.getCallee());
-
-                    LLVMFunction* wrapper = new LLVMFunction {
-                        n,
-                        runtimeCallee.getFunctionType()->getReturnType(),
-                        {},
-                        this,
-                        codegenContext,
-                        {0, 0, "runtime function"}
-                    };
-
-                    wrapper->content = llvmFn;
-
-                    fnMap[n] = wrapper;
-                }
-
+            LLVMFunction* lookup(fzlib::String n) {
                 if (fnMap.find(n) != fnMap.end()) {
                     return fnMap[n];
                 }
@@ -240,49 +221,6 @@ namespace sakuraE::Codegen {
             bool isRuntimeFunction(fzlib::String n) {
                 return n == "create_string" || n == "free_string" || n == "concat_string" ||
                         n == "__alloc" || n == "__free";
-            }
-
-            llvm::FunctionCallee getRuntime(fzlib::String n) {
-                llvm::FunctionCallee result = nullptr;
-
-                if (n == "__alloc") {
-                    result = content->getOrInsertFunction(n.c_str(), 
-                            codegenContext.builder->getPtrTy(), 
-                            codegenContext.builder->getInt64Ty());
-                }
-                else if (n == "__free") {
-                    result = content->getOrInsertFunction(n.c_str(), 
-                            codegenContext.builder->getVoidTy(), 
-                            codegenContext.builder->getPtrTy());
-                }
-                else if (n == "create_string") {
-                    result = content->getOrInsertFunction(n.c_str(), 
-                            codegenContext.builder->getPtrTy(), 
-                            codegenContext.builder->getPtrTy());
-                }
-                else if (n == "free_string") {
-                    result = content->getOrInsertFunction(n.c_str(), 
-                            codegenContext.builder->getPtrTy(), 
-                            codegenContext.builder->getVoidTy());
-                }
-                else if (n == "concat_string") {
-                    result = content->getOrInsertFunction(n.c_str(), 
-                            codegenContext.builder->getPtrTy(), 
-                            codegenContext.builder->getPtrTy(),
-                            codegenContext.builder->getPtrTy());
-                }
-                else if (n == "__print") {
-                    result = content->getOrInsertFunction(n.c_str(),
-                                    codegenContext.builder->getVoidTy(),
-                                    codegenContext.builder->getPtrTy());
-                }
-                else if (n == "__println") {
-                    result = content->getOrInsertFunction(n.c_str(),
-                                    codegenContext.builder->getVoidTy(),
-                                    codegenContext.builder->getPtrTy());
-                }
-
-                return result;
             }
         };
 
