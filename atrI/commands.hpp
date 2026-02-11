@@ -52,10 +52,10 @@ namespace atri::cmds {
         auto content = readSourceFile(args[0]);
         DebugConfig config;
 
-        if (args.size() >= 2 && args[1] == "-ast") config.displayAST = true; 
-        if (args.size() >= 3 && args[2] == "-sakir") config.displaySakIR = true; 
-        if (args.size() >= 4 && args[3] == "-rawllvm") config.displayRawLLVMIR = true; 
-        if (args.size() >= 5 && args[4] == "-llvmir") config.displayOptimizedLLVMIR = true; 
+        if (contains(args, "-ast")) config.displayAST = true; 
+        if (contains(args, "-sakir")) config.displaySakIR = true; 
+        if (contains(args, "-rawllvm")) config.displayRawLLVMIR = true; 
+        if (contains(args, "-llvmir")) config.displayOptimizedLLVMIR = true; 
         
         sakuraE::Lexer lexer(content);
         auto r = lexer.tokenize();
