@@ -44,6 +44,7 @@ namespace sakuraE {
         KEYWORD_LET, KEYWORD_IF, KEYWORD_ELSE,
         KEYWORD_WHILE, KEYWORD_FOR, KEYWORD_FUNC,
         KEYWORD_RETURN, KEYWORD_CONST, KEYWORD_RANGE,
+        KEYWORD_BREAK, KEYWORD_CONTINUE,
         
         TYPE_INT, TYPE_CHAR, TYPE_BOOL, TYPE_FLOAT, TYPE_STRING,
 
@@ -59,10 +60,10 @@ namespace sakuraE {
 
         // 声明: 构造函数
         Token(TokenType t = TokenType::UNKNOWN,
-              const fzlib::String &c = "default",
-              int l = 0,
-              int col = 0,
-              const fzlib::String &det = "default");
+                const fzlib::String &c = "default",
+                int l = 0,
+                int col = 0,
+                const fzlib::String &det = "default");
 
         // 声明: toString 实现
         fzlib::String typeToString() const;
@@ -83,7 +84,7 @@ namespace sakuraE {
         const std::vector<fzlib::String> keywords = {
             "if", "else", "while", "for", "func", 
             "return", "let", "const", "range", "true", 
-            "false"
+            "false", "break", "continue"
         };
 
         const std::vector<fzlib::String> typeFields = {
