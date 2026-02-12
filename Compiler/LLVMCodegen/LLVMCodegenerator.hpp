@@ -2,6 +2,7 @@
 #define SAKURAE_LLVMCODEGENERATOR_HPP
 
 #include <cstddef>
+#include <llvm/IR/Constant.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Use.h>
 #include <llvm/Support/Casting.h>
@@ -321,6 +322,9 @@ namespace sakuraE::Codegen {
                         return heapStr;
                     }
                     break;
+                }
+                case IR::IRTypeID::CharTyID: {
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<char>());
                 }
                 default:
                     return nullptr;
