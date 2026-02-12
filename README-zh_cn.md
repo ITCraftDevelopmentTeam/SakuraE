@@ -141,7 +141,7 @@ SakuraE/
    ```
    然后编写如下程序进行测试：
    ```go
-   func fib(n: int) -> int {
+    func fib(n: int) -> int {
         if (n <= 1) {
             return n;
         }
