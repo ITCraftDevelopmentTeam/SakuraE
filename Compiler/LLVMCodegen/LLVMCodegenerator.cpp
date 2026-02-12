@@ -259,19 +259,22 @@ namespace sakuraE::Codegen {
                 if (addrIRType->getIRTypeID() == IR::IRTypeID::PointerTyID) {
                     addr = builder->CreateLoad(builder->getPtrTy(), addr, "load_ptr");
                 }
-
-                if (auto irArrayType = dynamic_cast<IR::IRArrayType*>(ins->arg(0)->getType())) {
-                    elementType = irArrayType->getElementType()->toLLVMType(*context);
+            
+                auto unboxedType = addrIRType->unboxComplex();
+            
+                if (unboxedType->isArray()) {
+                    elementType = static_cast<IR::IRArrayType*>(unboxedType)->getElementType()->toLLVMType(*context);
                 }
-                else if (auto irPtrType = dynamic_cast<IR::IRPointerType*>(ins->arg(0)->getType())) {
-                    elementType = irPtrType->getElementType()->toLLVMType(*context);
+                else if (unboxedType->isPointer()) {
+                    elementType = static_cast<IR::IRPointerType*>(unboxedType)->getElementType()->toLLVMType(*context);
                 }
-                
-
+                else {
+                    elementType = ins->getType()->toLLVMType(*context);
+                }
+            
                 auto ptr = builder->CreateGEP(elementType, addr, {indexVal}, "indexing.ptr");
-                
-                instResult = ptr;
 
+                instResult = ptr;
                 bind(ins, instResult);
                 break;
             }
