@@ -3,6 +3,8 @@
 
 #include "Compiler/Error/error.hpp"
 #include "Compiler/IR/struct/instruction.hpp"
+#include "Compiler/IR/type/type.hpp"
+#include "Compiler/IR/type/type_info.hpp"
 #include "Compiler/IR/value/value.hpp"
 #include "includes/String.hpp"
 #include "includes/magic_enum.hpp"
@@ -15,88 +17,80 @@ namespace sakuraE::IR {
     class IRGenerator {
         Program program;
 
-        IRValue* declareParam(fzlib::String name, IRType* t, PositionInfo info) {
+        // Create Alloca, RawType
+        IRValue* storeValue(IRValue* addr, IRValue* value, PositionInfo info) {
+            if (auto inst = dynamic_cast<Instruction*>(addr)) {
+                if (!inst->isLValue()) {
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "An L-value is required as the left operand of an assignment.",
+                                    info);
+                }
+
+                auto pureAddrType = addr->getType()->unboxComplex();
+
+                if (!pureAddrType->isEqual(value->getType())) {
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                            "Cannot assign a value of a different type from the original.",
+                            info);
+                }
+
+                return curFunc()
+                            ->curBlock()
+                            ->createInstruction(OpKind::store,
+                                                IRType::getVoidTy(),
+                                                {addr, value},
+                                                "store." + addr->getName());
+            }
+            else {
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "An L-value is required as the left operand of an assignment.",
+                                    info);
+            }
+        }
+
+        IRValue* declareParam(fzlib::String name, IRType* ty, PositionInfo info) {
+            IRType* finalType = ty;
+
+            if (ty->isComplexType()) {
+                finalType = IRType::getPointerTo(ty);
+            }
+
             auto param = curFunc()
                             ->curBlock()
                             ->createInstruction(
                                 OpKind::param,
-                                t,
+                                finalType,
                                 {},
                                 "param." + name
                             );
-            curFunc()->fnScope().declare(name, param, t);
+            curFunc()->fnScope().declare(name, param, finalType);
 
             return param;
         }
 
-        IRValue* declareSymbol(fzlib::String name, IRValue* t, IRValue* initVal, PositionInfo info) {
-            auto constInst = dynamic_cast<Instruction*>(t);
-            auto typeInfoConstant = dynamic_cast<Constant*>(constInst->getOperands()[0]);
-            TypeInfo* typeInfo = typeInfoConstant->getContentValue<TypeInfo*>();
-
-            auto dType = magic_enum::enum_name(typeInfo->toIRType()->getIRTypeID());
-
-            auto details = "Cannot declare a value to an identifier of a different value type, expect declare: "
-                                    + fzlib::String(dType)
-                                    + ", real: "
-                                    + (initVal?fzlib::String(magic_enum::enum_name(initVal->getType()->getIRTypeID())):"null_type");
-            if (initVal && initVal->getType()->getIRTypeID() != typeInfo->toIRType()->getIRTypeID()) 
+        IRValue* createAlloca(fzlib::String n, IRType* ty, IRValue* initVal, PositionInfo info) {
+            if (initVal && !ty->isEqual(initVal->getType())) {
                 throw SakuraError(OccurredTerm::IR_GENERATING,
-                            details,
-                            info);
-
-            IRValue* addr = curFunc()
-                                ->curBlock()
-                                ->createInstruction(OpKind::declare, typeInfo->toIRType(), {initVal}, "declare." + name);
-
-            curFunc()->fnScope().declare(name, addr, typeInfo->toIRType());
-
-            return addr;
-        }
-
-        IRValue* declareSymbol(fzlib::String name, IRType* t, IRValue* initVal, PositionInfo info) {
-            IRValue* addr = curFunc()
-                                ->curBlock()
-                                ->createInstruction(OpKind::declare, t, {initVal}, "declare." + name);
-            
-            auto dType = magic_enum::enum_name(t->getIRTypeID());
-
-            auto details = "Cannot declare a value to an identifier of a different value type, expect declare: "
-                                    + fzlib::String(dType)
-                                    + ", real: "
-                                    + (initVal?fzlib::String(magic_enum::enum_name(initVal->getType()->getIRTypeID())):"null_type");
-            if (initVal && initVal->getType()->getIRTypeID() != t->getIRTypeID()) 
-                throw SakuraError(OccurredTerm::IR_GENERATING,
-                            details,
-                            info);
-
-            curFunc()->fnScope().declare(name, addr, t);
-
-            return addr;
-        }
-
-        IRValue* storeSymbol(IRValue* addr, IRValue* value, PositionInfo info) {
-            if (addr->getType()->getIRTypeID() != value->getType()->getIRTypeID())
-                throw SakuraError(OccurredTerm::IR_GENERATING,
-                            "Cannot assign a value to an identifier of a different value type",
-                            info);
-            
-            return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::assign, addr->getType(), {addr, value}, "assign." + addr->getName());
-        }
-
-        IRValue* loadSymbol(fzlib::String name, PositionInfo info = {0, 0, "Normal Load"}) {
-            Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(name);
-
-            if (symbol == nullptr)
-                throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "Cannot find symbol: " + name,
+                                "Cannot declare a variable with a type that differs from the assigned value's type.",
                                 info);
-            
-            return curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::load, symbol->getType(), {symbol->address}, "load." + name);
+            }
+
+            IRType* finalType = ty;
+
+            if (ty->isComplexType()) {
+                finalType = IRType::getPointerTo(ty);
+            }
+
+            auto addr =  curFunc()
+                ->curBlock()
+                ->createInstruction(OpKind::create_alloca,
+                                    finalType,
+                                    {initVal?initVal:(finalType->isComplexType()?nullptr:Constant::getDefault(finalType, info))},
+                                    "create_alloca." + n);
+
+            curFunc()->fnScope().declare(n, addr, finalType);
+
+            return addr;
         }
 
         // Used to obtain the type of the result from a non-logical binary operation
