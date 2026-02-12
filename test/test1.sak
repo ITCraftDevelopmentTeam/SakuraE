@@ -7,7 +7,9 @@ func fib(n: int) -> int {
 
 func main() -> int {
     let str = "Hello world";
+    let arr = [1,2,3,4];
+    arr[0] = 114514;
     str[0] = 'F';
     __println(str);
-    return fib(21);
+    return fib(21) + arr[0];
 }
