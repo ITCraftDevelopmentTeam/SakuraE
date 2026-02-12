@@ -17,7 +17,27 @@ namespace sakuraE::IR {
     class IRGenerator {
         Program program;
 
-        // Create Alloca, RawType
+        
+        IRValue* createLoad(IRValue* addr, PositionInfo info) {
+            if (auto inst = dynamic_cast<Instruction*>(addr)) {
+                if (!inst->isLValue()) {
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                        "An L-value is required as the left operand of an assignment.",
+                        info);
+                }
+                
+                return curFunc()
+                    ->curBlock()
+                    ->createInstruction(OpKind::load,
+                        addr->getType()->unboxComplex(),
+                        {addr},
+                        "load" + addr->getName());
+            }
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                "An L-value is required as the left operand of an assignment.",
+                info);
+        }
+
         IRValue* storeValue(IRValue* addr, IRValue* value, PositionInfo info) {
             if (auto inst = dynamic_cast<Instruction*>(addr)) {
                 if (!inst->isLValue()) {
