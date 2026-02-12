@@ -48,7 +48,7 @@ namespace sakuraE::IR {
             }
         }
 
-        IRValue* declareParam(fzlib::String name, IRType* ty, PositionInfo info) {
+        IRValue* createParam(fzlib::String name, IRType* ty, PositionInfo info) {
             IRType* finalType = ty;
 
             if (ty->isComplexType()) {
