@@ -1,34 +1,56 @@
 #include "generator.hpp"
 #include "Compiler/Error/error.hpp"
 #include "Compiler/Frontend/AST.hpp"
+#include "Compiler/IR/struct/instruction.hpp"
 #include "Compiler/IR/struct/scope.hpp"
 #include "Compiler/IR/type/type.hpp"
+#include "Compiler/IR/type/type_info.hpp"
+#include "Compiler/IR/value/constant.hpp"
+#include "Compiler/IR/value/value.hpp"
+#include "includes/magic_enum.hpp"
 
 namespace sakuraE::IR {
     IRValue* IRGenerator::visitLiteralNode(NodePtr node) {
         auto literal = Constant::getFromToken((*node)[ASTTag::Literal]->getToken());
 
         return curFunc()
-                ->curBlock()
-                ->createInstruction(OpKind::constant, literal->getType(), {literal}, "constant");
+            ->curBlock()
+            ->createInstruction(
+                OpKind::constant, 
+                literal->getType(), 
+                {literal}, 
+                "constant"
+            );
     }
 
     IRValue* IRGenerator::visitIndexOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
-        IRValue* indexResult = visitAddExprNode((*node)[ASTTag::HeadExpr]);
-        if (auto arrType = dynamic_cast<IRArrayType*>(addr->getType())) {
-            return curFunc()
-                    ->curBlock()
-                    ->createInstruction(OpKind::indexing, arrType->getElementType(), {addr, indexResult}, "indexing." + target);
+        auto indexValue = visitAddExprNode((*node)[ASTTag::HeadExpr]);
+        auto ty = addr->getType()->unboxComplex();
+
+        if (ty->isArray()) {
+            ty = static_cast<IRArrayType*>(ty)->getElementType();
         }
-        else if (auto ptrType = dynamic_cast<IRPointerType*>(addr->getType())) {
-            return curFunc()
-                    ->curBlock()
-                    ->createInstruction(OpKind::indexing, ptrType->getElementType(), {addr, indexResult}, "indexing." + target);
+        else if (ty->isPointer()) {
+            ty = static_cast<IRPointerType*>(ty)->getElementType();
+            if (ty->getIRTypeID() != IRTypeID::CharTyID) goto error_indexing;
         }
-        else 
-            throw SakuraError(OccurredTerm::IR_GENERATING,
-                            "Indexing operation is only supported for arrays and pointers.",
-                            node->getPosInfo());
+        else {
+            error_indexing:
+            throw SakuraError(
+                OccurredTerm::IR_GENERATING,
+                "Cannot index a non-array value.",
+                node->getPosInfo()
+            );
+        }
+
+        return curFunc()
+            ->curBlock()
+            ->createInstruction(
+                OpKind::indexing,
+                ty,
+                {addr, indexValue},
+                "indexing." + addr->getName()
+            );
     }
 
     IRValue* IRGenerator::visitCallingOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
@@ -39,144 +61,162 @@ namespace sakuraE::IR {
         }
 
         return curFunc()
-                ->curBlock()
-                ->createInstruction(OpKind::call, IRType::getInt32Ty(), params, "call." + target);
+            ->curBlock()
+            ->createInstruction(
+                OpKind::call, 
+                IRType::getInt32Ty(), 
+                params, 
+                "call." + target
+            );
     }
 
     IRValue* IRGenerator::visitAtomIdentifierNode(NodePtr node) {
-        auto targetName = (*node)[ASTTag::Identifier]->getToken().content;
-        Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(targetName);
-        if (!symbol) {
-            symbol = curModule()->lookup(targetName);
-        }
+        auto name = (*node)[ASTTag::Identifier]->getToken().content;
+        auto symbol = lookup(name, node->getPosInfo());
 
-        if (!symbol) {
-            throw SakuraError(OccurredTerm::IR_GENERATING,
-                "Unknown symbol: " + targetName,
-                node->getPosInfo());
-        }
-
-        IRValue* result = symbol->address;
-        if (node->hasNode(ASTTag::Ops)) {
-            for (auto op: (*node)[ASTTag::Ops]->getChildren()) {
-                switch (op->getTag()) {
-                    case ASTTag::IndexOpNode: {
-                        result = visitIndexOpNode(result, targetName, op);
-                        break;
-                    }
-                    case ASTTag::CallingOpNode: {
-                        result = visitCallingOpNode(result, targetName, op);
-                        break;
-                    }
-                    default:
-                        break;
+        auto ops = (*node)[ASTTag::Ops]->getChildren();
+        auto resultAddr = symbol->address;
+        for (auto op: ops) {
+            switch (op->getTag()) {
+                case ASTTag::IndexOpNode: {
+                    resultAddr = visitIndexOpNode(symbol->address, name, op);
+                    break;
                 }
+                case ASTTag::CallingOpNode: {
+                    resultAddr = visitCallingOpNode(symbol->address, name, op);
+                    break;
+                }
+                default: break;
             }
         }
-        else {
-            result = loadSymbol(targetName);
-        }
 
-        return result;
+        return resultAddr;
     }
 
     IRValue* IRGenerator::visitIdentifierExprNode(NodePtr node) {
         auto chain = (*node)[ASTTag::Exprs]->getChildren();
-
-        IRValue* result = visitAtomIdentifierNode(chain[0]);
-
+        IRValue* resultAddr = visitAtomIdentifierNode(chain[0]);
         for (std::size_t i = 1; i < chain.size(); i ++) {
-            fzlib::String memberName = (*chain[i])[ASTTag::Identifier]->getToken().content;
-            result = curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::gmem, result->getType(), {result, Constant::get(memberName)}, "gmem");
+            auto name = (*chain[i])[ASTTag::Identifier]->getToken().content;
+
+            resultAddr = curFunc()
+                ->curBlock()
+                ->createInstruction(
+                    OpKind::gmem,
+                    resultAddr->getType(),
+                    {resultAddr, Constant::get(name, (*chain[i])[ASTTag::Identifier]->getToken().info)},
+                    "gmem." + name
+                );
             
             if (chain[i]->hasNode(ASTTag::Ops)) {
                 for (auto op: (*chain[i])[ASTTag::Ops]->getChildren()) {
                     switch (op->getTag()) {
                         case ASTTag::IndexOpNode: {
-                            result = visitIndexOpNode(result, memberName, op);
+                            resultAddr = visitIndexOpNode(resultAddr, name, op);
                             break;
                         }
                         case ASTTag::CallingOpNode: {
-                            result = visitCallingOpNode(result, memberName, op);
+                            resultAddr = visitCallingOpNode(resultAddr, name, op);
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
         }
-
+        
+        // If has any other op, then cast to RValue
+        IRValue* resultValue = resultAddr;
         if (node->hasNode(ASTTag::PreOp)) {
             auto preOp = (*node)[ASTTag::PreOp]->getToken();
-            switch (preOp.type)
-            {
-                case TokenType::LGC_NOT:
-                    return curFunc()
-                                ->curBlock()
-                                ->createInstruction(OpKind::lgc_not,
-                                                    IRType::getBoolTy(),
-                                                    {result},
-                                                    "lgc-not");
-                case TokenType::AINC: {
-                    curFunc()
-                        ->curBlock()
-                        ->createInstruction(OpKind::add,
-                                            handleUnlogicalBinaryCalc(result, Constant::get(1)),
-                                            {result, Constant::get(1)},
-                                            "add");
-                    return result;
-                }
+            switch (preOp.type) {
+                case TokenType::LGC_NOT: {
+                    resultValue = createLoad(resultAddr, preOp.info);
 
-                case TokenType::SDEC: {
-                    curFunc()
+                    resultValue = curFunc()
                         ->curBlock()
-                        ->createInstruction(OpKind::sub,
-                                            handleUnlogicalBinaryCalc(result, Constant::get(1)),
-                                            {result, Constant::get(1)},
-                                            "sub");
-                    return result;
+                        ->createInstruction(
+                            OpKind::lgc_not,
+                            IRType::getBoolTy(),
+                            {resultValue},
+                            "lgc_not." + resultValue->getName()
+                        );
+                    break;
                 }
-                                
+                case TokenType::AINC: {
+                    resultValue = createLoad(resultAddr, preOp.info);
+
+                    resultValue = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::add,
+                            handleUnlogicalBinaryCalc(resultAddr, Constant::get(1)),
+                            {resultValue, Constant::get(1)},
+                            "add"
+                        );
+                    
+                    return createStore(resultAddr, resultValue, preOp.info);
+                    break;
+                }
+                case TokenType::SDEC: {
+                    resultValue = createLoad(resultAddr, preOp.info);
+
+                    resultValue = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::sub,
+                            handleUnlogicalBinaryCalc(resultAddr, Constant::get(1)),
+                            {resultValue, Constant::get(1)},
+                            "sub"
+                        );
+                    
+                    return createStore(resultAddr, resultValue, preOp.info);
+                    break;
+                }
                 default:
-                    throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "Unknown operator.",
-                                node->getPosInfo());
+                    break;
             }
         }
-        else if (node->hasNode(ASTTag::Op)) {
-            auto Op = (*node)[ASTTag::Op]->getToken();
-            switch (Op.type)
-            {
-                case TokenType::AINC: {
-                    auto value = curFunc()
-                                                ->curBlock()
-                                                ->createInstruction(OpKind::add,
-                                                                handleUnlogicalBinaryCalc(result, Constant::get(1)),
-                                                                {result, Constant::get(1)},
-                                                                "add");
-                    return storeSymbol(result, value, Op.info);
-                }
 
-                case TokenType::SDEC: {
-                    auto value = curFunc()
-                                                ->curBlock()
-                                                ->createInstruction(OpKind::sub,
-                                                                handleUnlogicalBinaryCalc(result, Constant::get(1)),
-                                                                {result, Constant::get(1)},
-                                                                "sub");
-                    return storeSymbol(result, value, Op.info);
+        if (node->hasNode(ASTTag::Op)) {
+            auto op = (*node)[ASTTag::Op]->getToken();
+            switch (op.type) {
+                case TokenType::AINC: {
+                    resultValue = createLoad(resultAddr, op.info);
+
+                    resultValue = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::add,
+                            handleUnlogicalBinaryCalc(resultAddr, Constant::get(1)),
+                            {resultValue, Constant::get(1)},
+                            "add"
+                        );
+                    
+                    createStore(resultAddr, resultValue, op.info);
+                    break;
                 }
-                                
+                case TokenType::SDEC: {
+                    resultValue = createLoad(resultAddr, op.info);
+
+                    resultValue = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::sub,
+                            handleUnlogicalBinaryCalc(resultAddr, Constant::get(1)),
+                            {resultValue, Constant::get(1)},
+                            "sub"
+                        );
+
+                    createStore(resultAddr, resultValue, op.info);
+                    break;
+                }
                 default:
-                    throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "Unknown operator.",
-                                node->getPosInfo());
+                    break;
             }
         }
-        else return result;
+
+        return resultValue;
     }
 
     IRValue* IRGenerator::visitPrimExprNode(NodePtr node) {
@@ -184,7 +224,11 @@ namespace sakuraE::IR {
             return visitLiteralNode((*node)[ASTTag::Literal]);
         }
         else if (node->hasNode(ASTTag::Identifier)) {
-            return visitIdentifierExprNode((*node)[ASTTag::Identifier]);
+            auto result = visitIdentifierExprNode((*node)[ASTTag::Identifier]);
+            if (auto inst = dynamic_cast<Instruction*>(result)) {
+                if (inst->isLValue()) return createLoad(result, node->getPosInfo());
+            }
+            return result;
         }
         else {
             return visitWholeExprNode((*node)[ASTTag::HeadExpr]);
@@ -279,7 +323,7 @@ namespace sakuraE::IR {
                 switch (opChain[i - 1]->getToken().type)
                 {
                     case TokenType::LGC_LS_THAN: {
-                         lhs = curFunc()
+                        lhs = curFunc()
                                 ->curBlock()
                                 ->createInstruction(OpKind::lgc_ls_than, IRType::getBoolTy(), {lhs, rhs}, "lgc_ls_than");
                         break;
@@ -334,8 +378,7 @@ namespace sakuraE::IR {
         static int binaryID = 0;
         fzlib::String resultAddrName = "tbv." + std::to_string(binaryID);
         binaryID ++;
-        
-        IRValue* resultAddr = declareSymbol(resultAddrName, IRType::getBoolTy(), lhs, node->getPosInfo());
+        IRValue* resultAddr = createAlloca(resultAddrName, IRType::getBoolTy(), lhs, node->getPosInfo());
 
         if (node->hasNode(ASTTag::Ops)) {
             auto opChain = (*node)[ASTTag::Ops]->getChildren();
@@ -358,7 +401,7 @@ namespace sakuraE::IR {
                             ->block(beforeBlockIndex)
                             ->createCondBr(lhs, rhsBlock, mergeBlock);
 
-                        storeSymbol(resultAddr, rhs, opChain[i - 1]->getToken().info);
+                        createStore(resultAddr, rhs, opChain[i - 1]->getToken().info);
 
                         curFunc()
                             ->block(rhsBlockIndex)
@@ -380,7 +423,7 @@ namespace sakuraE::IR {
                             ->block(beforeBlockIndex)
                             ->createCondBr(lhs, mergeBlock, rhsBlock);
 
-                        storeSymbol(resultAddr, rhs, opChain[i - 1]->getToken().info);
+                        createStore(resultAddr, rhs, opChain[i - 1]->getToken().info);
                             
                         curFunc()
                             ->block(rhsBlockIndex)
@@ -395,7 +438,10 @@ namespace sakuraE::IR {
             }
             curFunc()->moveCursor(shortCurBlockIndex);
         }
-        return loadSymbol(resultAddrName);
+        Symbol<IRValue*>* symbol = curFunc()->fnScope().lookup(resultAddrName);
+        return curFunc()
+                        ->curBlock()
+                        ->createInstruction(OpKind::load, symbol->getType(), {symbol->address}, "load." + resultAddrName);
     }
 
     IRValue* IRGenerator::visitArrayExprNode(NodePtr node) {
@@ -425,56 +471,73 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitAssignExprNode(NodePtr node) {
-        IRValue* symbol = visitIdentifierExprNode((*node)[ASTTag::Identifier]);
-        auto assignOp = (*node)[ASTTag::Op]->getToken().type;
-        IRValue* expr = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+        IRValue* resultAddr = visitIdentifierExprNode((*node)[ASTTag::Identifier]);
+        IRValue* value = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+        auto op = (*node)[ASTTag::Op]->getToken();
 
-        switch (assignOp)
-        {
-            case TokenType::ASSIGN_OP:
-                return storeSymbol(symbol, expr, (*node)[ASTTag::Op]->getToken().info);
-                
+        IRValue* resultValue = resultAddr;
+        switch (op.type) {
+            case TokenType::ASSIGN_OP: {
+                resultValue = createStore(resultAddr, value, op.info);
+                break;
+            }
             case TokenType::ADD_ASSIGN: {
-                IRValue* result = curFunc()
-                                        ->curBlock()
-                                        ->createInstruction(OpKind::add,
-                                                            handleUnlogicalBinaryCalc(symbol, expr),
-                                                            {symbol, expr},
-                                                            "add");
-                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
+                resultValue = createLoad(resultAddr, op.info);
+                resultValue = curFunc()
+                    ->curBlock()
+                    ->createInstruction(
+                        OpKind::add,
+                        handleUnlogicalBinaryCalc(resultValue, value),
+                        {resultValue, value},
+                        "add"
+                    );
+                resultValue = createStore(resultAddr, resultValue, op.info);
+                break;
             }
             case TokenType::SUB_ASSIGN: {
-                IRValue* result = curFunc()
-                                        ->curBlock()
-                                        ->createInstruction(OpKind::sub,
-                                                            handleUnlogicalBinaryCalc(symbol, expr),
-                                                            {symbol, expr},
-                                                            "sub");
-                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
+                resultValue = createLoad(resultAddr, op.info);
+                resultValue = curFunc()
+                    ->curBlock()
+                    ->createInstruction(
+                        OpKind::sub,
+                        handleUnlogicalBinaryCalc(resultValue, value),
+                        {resultValue, value},
+                        "sub"
+                    );
+                resultValue = createStore(resultAddr, resultValue, op.info);
+                break;
             }
             case TokenType::MUL_ASSIGN: {
-                IRValue* result = curFunc()
-                                        ->curBlock()
-                                        ->createInstruction(OpKind::mul,
-                                                            handleUnlogicalBinaryCalc(symbol, expr),
-                                                            {symbol, expr},
-                                                            "mul");
-                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
+                resultValue = createLoad(resultAddr, op.info);
+                resultValue = curFunc()
+                    ->curBlock()
+                    ->createInstruction(
+                        OpKind::mul,
+                        handleUnlogicalBinaryCalc(resultValue, value),
+                        {resultValue, value},
+                        "mul"
+                    );
+                resultValue = createStore(resultAddr, resultValue, op.info);
+                break;
             }
             case TokenType::DIV_ASSIGN: {
-                IRValue* result = curFunc()
-                                        ->curBlock()
-                                        ->createInstruction(OpKind::div,
-                                                            handleUnlogicalBinaryCalc(symbol, expr),
-                                                            {symbol, expr},
-                                                            "div");
-                return storeSymbol(symbol, result, (*node)[ASTTag::Op]->getToken().info);
+                resultValue = createLoad(resultAddr, op.info);
+                resultValue = curFunc()
+                    ->curBlock()
+                    ->createInstruction(
+                        OpKind::div,
+                        handleUnlogicalBinaryCalc(resultValue, value),
+                        {resultValue, value},
+                        "div"
+                    );
+                resultValue = createStore(resultAddr, resultValue, op.info);
+                break;
             }
             default:
-                throw SakuraError(OccurredTerm::IR_GENERATING,
-                                "Unknown assign operator.",
-                                node->getPosInfo());
+                break;
         }
+
+        return resultValue;
     }
 
     IRValue* IRGenerator::visitWholeExprNode(NodePtr node) {
@@ -576,11 +639,16 @@ namespace sakuraE::IR {
                             "A let statement cannot be used to declare a identifier without a specified type or an initial value.",
                             node->getPosInfo());
         }
+
+        IRType* allocaTy = nullptr;
+        if (initVal && !typeInfoIRValue) allocaTy = initVal->getType();
+        else {
+            auto typeInfoConst = static_cast<Constant*>(typeInfoIRValue);
+            auto typeInfo = typeInfoConst->getContentValue<TypeInfo*>();
+            allocaTy = typeInfo->toIRType();
+        }
         
-        if (typeInfoIRValue)
-            return declareSymbol(identifier.content, typeInfoIRValue, initVal, node->getPosInfo());
-        else
-            return declareSymbol(identifier.content, initVal->getType(), initVal, node->getPosInfo());
+        return createAlloca(identifier.content, allocaTy, initVal, node->getPosInfo());
     }
 
     IRValue* IRGenerator::visitExprStmtNode(NodePtr node) {
@@ -796,7 +864,7 @@ namespace sakuraE::IR {
 
                 params.push_back(std::make_pair<fzlib::String, IRType*>(std::move(argName), std::move(argType)));
                 
-                declareParam(argName, argType, node->getPosInfo());
+                createParam(argName, argType, node->getPosInfo());
             }
         }
 
