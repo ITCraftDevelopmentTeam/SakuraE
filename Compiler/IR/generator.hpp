@@ -3,6 +3,7 @@
 
 #include "Compiler/Error/error.hpp"
 #include "Compiler/IR/struct/instruction.hpp"
+#include "Compiler/IR/struct/scope.hpp"
 #include "Compiler/IR/type/type.hpp"
 #include "Compiler/IR/type/type_info.hpp"
 #include "Compiler/IR/value/value.hpp"
@@ -17,6 +18,19 @@ namespace sakuraE::IR {
     class IRGenerator {
         Program program;
 
+        Symbol<IRValue*>* lookup(fzlib::String n, PositionInfo info) {
+            auto result = curFunc()->fnScope().lookup(n);
+            if (!result) {
+                result = curModule()->lookup(n);
+            }
+
+            if (!result) {
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                    "Unknown identifier: " + n,
+                    info);
+            }
+            return result;
+        }
         
         IRValue* createLoad(IRValue* addr, PositionInfo info) {
             if (auto inst = dynamic_cast<Instruction*>(addr)) {
@@ -38,7 +52,7 @@ namespace sakuraE::IR {
                 info);
         }
 
-        IRValue* storeValue(IRValue* addr, IRValue* value, PositionInfo info) {
+        IRValue* createStore(IRValue* addr, IRValue* value, PositionInfo info) {
             if (auto inst = dynamic_cast<Instruction*>(addr)) {
                 if (!inst->isLValue()) {
                     throw SakuraError(OccurredTerm::IR_GENERATING,
@@ -57,7 +71,7 @@ namespace sakuraE::IR {
                 return curFunc()
                             ->curBlock()
                             ->createInstruction(OpKind::store,
-                                                IRType::getVoidTy(),
+                                                pureAddrType,
                                                 {addr, value},
                                                 "store." + addr->getName());
             }
