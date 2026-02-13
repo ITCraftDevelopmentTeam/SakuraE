@@ -838,7 +838,9 @@ namespace sakuraE {
         IfStmtParser,
         WhileStmtParser,
         ForStmtParser,
-        ReturnStmtParser
+        ReturnStmtParser,
+        ContinueStmtParser,
+        BreakStmtParser
     >;
     using BlockStmtParserRule = 
     ConnectionParser<
@@ -910,7 +912,9 @@ namespace sakuraE {
         IfStmtParser,
         WhileStmtParser,
         ForStmtParser,
-        ReturnStmtParser
+        ReturnStmtParser,
+        ContinueStmtParser,
+        BreakStmtParser
     >;
     class StatementParser: public ResourceFetcher, public StatementParserRule {
         public:
