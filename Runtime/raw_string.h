@@ -1,3 +1,11 @@
+/*
+    SakuraE Runtime Library
+    raw_string.h
+    2026-2-7
+
+    By FZSGBall
+*/
+
 #ifndef SAKURAE_RUNTIME_RAW_STRING_H
 #define SAKURAE_RUNTIME_RAW_STRING_H
 
