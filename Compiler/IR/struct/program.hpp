@@ -18,13 +18,103 @@ namespace sakuraE::IR {
             buildModule("__runtime", info, true);
             auto runtimeMod = curMod();
             
-            runtimeMod->declareFunction("__alloc", IRType::getPointerTo(IRType::getCharTy()), { {"size", IRType::getUInt32Ty()} }, info);
-            runtimeMod->declareFunction("__free", IRType::getVoidTy(), { {"ptr", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->declareFunction("create_string", IRType::getPointerTo(IRType::getCharTy()), { {"literal", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->declareFunction("free_string", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->declareFunction("concat_string", IRType::getPointerTo(IRType::getCharTy()), { {"s1", IRType::getPointerTo(IRType::getCharTy())}, {"s2", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->declareFunction("__print", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
-            runtimeMod->declareFunction("__println", IRType::getVoidTy(), { {"str", IRType::getPointerTo(IRType::getCharTy())} }, info);
+            runtimeMod->declareFunction(
+                "__alloc", 
+                IRType::getPointerTo(IRType::getCharTy()), 
+                { {"size", IRType::getUInt32Ty()} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__free", 
+                IRType::getVoidTy(), 
+                { {"ptr", IRType::getPointerTo(IRType::getCharTy())} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "create_string", 
+                IRType::getPointerTo(IRType::getCharTy()), 
+                { {"literal", IRType::getPointerTo(IRType::getCharTy())} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "free_string", 
+                IRType::getVoidTy(), 
+                { {"str", IRType::getPointerTo(IRType::getCharTy())} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "concat_string", 
+                IRType::getPointerTo(IRType::getCharTy()), 
+                { 
+                    {"s1", IRType::getPointerTo(IRType::getCharTy())}, 
+                    {"s2", IRType::getPointerTo(IRType::getCharTy())} 
+                }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__print", 
+                IRType::getVoidTy(), 
+                { {"str", IRType::getPointerTo(IRType::getCharTy())} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__println", 
+                IRType::getVoidTy(), 
+                { {"str", IRType::getPointerTo(IRType::getCharTy())} }, 
+                info
+            );
+
+            // gc methods
+            runtimeMod->declareFunction(
+                "__gc_create_thread", 
+                IRType::getVoidTy(), 
+                {}, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__gc_alloc", 
+                IRType::getPointerTo(IRType::getVoidTy()), 
+                {
+                    { "size", IRType::getUInt64Ty() },
+                    { "ty", IRType::getUInt32Ty() }
+                }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__gc_register", 
+                IRType::getVoidTy(), 
+                { {"addr", IRType::getPointerTo(IRType::getPointerTo(IRType::getVoidTy()))} }, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__gc_safe_point", 
+                IRType::getVoidTy(), 
+                {}, 
+                info
+            );
+
+            runtimeMod->declareFunction(
+                "__gc_pop", 
+                IRType::getVoidTy(), 
+                { {"times", IRType::getUInt32Ty()} }, 
+                info
+            );
+            
+            runtimeMod->declareFunction(
+                "__gc_collect", 
+                IRType::getVoidTy(), 
+                {}, 
+                info
+            );
         }
 
         ~Program() {
