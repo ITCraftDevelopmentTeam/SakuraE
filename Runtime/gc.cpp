@@ -67,11 +67,13 @@ namespace sakuraE::runtime {
         
             GCMark expected = Unscanned;
             if (header->obj_status.compare_exchange_strong(expected, Uncomplete)) {
-                void** data = (void**)_ptr;
-                size_t element_size = header->obj_size / sizeof(void*);
+                if (header->obj_type != ObjectType::String) {
+                    void** data = (void**)_ptr;
+                    size_t element_size = header->obj_size / sizeof(void*);
 
-                for (size_t i = 0; i < element_size; i ++) {
-                    work_stack.push(data[i]);
+                    for (size_t i = 0; i < element_size; i ++) {
+                        work_stack.push(data[i]);
+                    }
                 }
 
                 header->obj_status.store(Marked);
