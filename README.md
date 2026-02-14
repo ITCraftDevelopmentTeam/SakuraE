@@ -15,21 +15,7 @@
 
 ### Based on LLVM, A Compilable Programming Language
 
-## TODO List
-
-For now `version dev 0.0`:
-
-- [x] Basic Variable Declaration
-- [x] Variable Assignment
-- [x] Array Declaration 
-- [x] Function Declaration and Calling
-- [ ] More Type Checker
-- [ ] Complete Runtime Support
-- [x] Complete String Implement
-- [ ] Implement of pointer type and other constant
-- [ ] Language Flexibility
-- [ ] Structure Declaration and Using
-- [ ] Module System
+## [TODO List](todo.md)
 
 ## Project Structure (Main)
 > [!warning]
