@@ -344,6 +344,9 @@ namespace sakuraE::Codegen {
                 case IR::IRTypeID::CharTyID: {
                     return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<char>());
                 }
+                case IR::IRTypeID::BoolTyID: {
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<bool>());
+                }
                 default:
                     return nullptr;
             }
