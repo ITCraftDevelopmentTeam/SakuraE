@@ -17,6 +17,12 @@
 #include <stdint.h>
 #include <cstdlib>
 #include <atomic>
+#include <algorithm>
+#include <atomic>
+#include <cstdint>
+#include <cstdlib>
+#include <mutex>
+#include <stack>
 
 namespace sakuraE::runtime {
     enum ObjectType: uint32_t {
@@ -44,7 +50,7 @@ namespace sakuraE::runtime {
 
     // alloc
     static std::atomic<size_t> allocated_bytes {0};
-    static size_t limit = 1024 * 1024;
+    inline size_t limit = 1024 * 1024;
     static thread_local std::vector<void**> own_stack; 
     static std::vector<std::vector<void**>*> global_stacks;
     static std::vector<ObjectHeader*> global_heap;
