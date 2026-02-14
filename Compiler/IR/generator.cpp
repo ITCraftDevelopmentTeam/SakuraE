@@ -371,7 +371,7 @@ namespace sakuraE::IR {
         auto chain = (*node)[ASTTag::Exprs]->getChildren();
         IRValue* lhs = visitLogicExprNode(chain[0]);
 
-        if (!chain[0]->hasNode(ASTTag::Ops)) {
+        if (!node->hasNode(ASTTag::Ops)) {
             return lhs;
         }
 
@@ -753,15 +753,18 @@ namespace sakuraE::IR {
         int prepareExitBlockIndex = curFunc()->cur();
         //
 
+        // while.merge
+        IRValue* mergeBlock = curFunc()->buildBlock("while.merge");
+        int mergeBlockIndex = curFunc()->cur();
+        //
+
+        curFunc()->enterLoop(prepareBlock, mergeBlock);
+
         // while.then
         IRValue* thenBlock = visitBlockStmtNode((*node)[ASTTag::Block], "while.then");
         int thenExitBlockIndex = curFunc()->cur();
         //
 
-        // while.merge
-        IRValue* mergeBlock = curFunc()->buildBlock("while.merge");
-        int mergeBlockIndex = curFunc()->cur();
-        //
             
         // then -> prep
         curFunc()
@@ -774,7 +777,7 @@ namespace sakuraE::IR {
             ->block(prepareExitBlockIndex)
             ->createCondBr(cond, thenBlock, mergeBlock);
         //
-
+        curFunc()->leaveLoop();
         curFunc()->moveCursor(mergeBlockIndex);
         return mergeBlock;
     }
@@ -810,6 +813,8 @@ namespace sakuraE::IR {
         int mergeBlockIndex = curFunc()->cur();
         //
 
+        curFunc()->enterLoop(condBlock, mergeBlock);
+
         // init -> cond
         curFunc()
             ->block(initExitIndex)
@@ -834,6 +839,7 @@ namespace sakuraE::IR {
             ->createBr(condBlock);
         //
 
+        curFunc()->leaveLoop();
         curFunc()->fnScope().leave();
         curFunc()->moveCursor(mergeBlockIndex);
         return mergeBlock;
@@ -892,6 +898,28 @@ namespace sakuraE::IR {
                     ->createReturn(retValue);
     }
 
+    IRValue* IRGenerator::visitBreakStmtNode(NodePtr node) {
+        if (curFunc()->isLookEmpty()) {
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                            "Break Statement used out of loop",
+                            node->getPosInfo());
+        }
+
+        IRValue* target = curFunc()->getLoopTop().breakTarget;
+        return curFunc()->curBlock()->createBr(target);
+    }
+
+    IRValue* IRGenerator::visitContinueStmtNode(NodePtr node) {
+        if (curFunc()->isLookEmpty()) {
+            throw SakuraError(OccurredTerm::IR_GENERATING,
+                            "Continue Statement used out of loop",
+                            node->getPosInfo());
+        }
+
+        IRValue* target = curFunc()->getLoopTop().continueTarget;
+        return curFunc()->curBlock()->createBr(target);
+    }
+
     IRValue* IRGenerator::visitStmt(NodePtr node) {
         NodePtr stmt;
         if (node->getTag() == ASTTag::Stmt)
@@ -922,6 +950,12 @@ namespace sakuraE::IR {
         }
         else if (stmt->getTag() == ASTTag::ReturnStmtNode) {
             return visitReturnStmtNode(stmt);
+        }
+        else if (stmt->getTag() == ASTTag::BreakStmtNode) {
+            return visitBreakStmtNode(stmt);
+        }
+        else if (stmt->getTag() == ASTTag::ContinueStmtNode) {
+            return visitContinueStmtNode(stmt);
         }
         
         throw SakuraError(OccurredTerm::IR_GENERATING,
