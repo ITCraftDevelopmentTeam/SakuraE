@@ -3,7 +3,9 @@
 #include "Compiler/IR/struct/instruction.hpp"
 #include "Compiler/IR/struct/module.hpp"
 #include "Compiler/IR/type/type.hpp"
+#include "Runtime/gc.h"
 #include <cstddef>
+#include <cstdint>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -39,7 +41,6 @@ namespace sakuraE::Codegen {
         for (auto usingMod: source->getUsingList()) {
             for (auto func: usingMod->getFunctions()) {
                 if (fnMap.contains(func->getName())) {
-                    // TODO: Should handle in generator, but now handle in here
                     throw SakuraError(OccurredTerm::COMPILING,
                                     "Duplicate declaration of '" + func->getName() + "', originating from module '" + usingMod->id() + "'.",
                                     func->getInfo());
@@ -57,14 +58,14 @@ namespace sakuraE::Codegen {
             }
         }
 
-        for (auto irFn: funcs) {
-            fnMap[irFn->getName()]->impl(irFn);
-        }
-
         for (auto usingMod: source->getUsingList()) {
             for (auto func: usingMod->getFunctions()) {
                 fnMap[func->getName()]->impl(func);
             }
+        }
+
+        for (auto irFn: funcs) {
+            fnMap[irFn->getName()]->impl(irFn);
         }
 
         sourceModule = source;
@@ -92,8 +93,6 @@ namespace sakuraE::Codegen {
         content = llvm::Function::Create(fnType, llvm::Function::ExternalLinkage, name.c_str(), parent->content);
 
         if (type == FunctionType::ExternalLinkage) return ;
-        // initialize the heapStack
-        heapStack.push({});
 
         auto irParams = source->getFormalParams();
 
@@ -107,6 +106,10 @@ namespace sakuraE::Codegen {
         }
 
         codegenContext.builder->SetInsertPoint(entryBlock);
+
+        if (name == "main") gcCreateThread();
+        gcRootCountStack.push(0);
+        gcInsertSafepoint();
 
         std::size_t i = 0;
         for (auto& arg: content->args()) {
@@ -237,7 +240,7 @@ namespace sakuraE::Codegen {
                 auto arrayType = ins->getType()->toLLVMType(*context);
                 auto elementType = arrayType->getArrayElementType();
 
-                llvm::Value* arrayPtr = curFn->createHeapAlloc(arrayType, "tmparr");
+                llvm::Value* arrayPtr = curFn->createHeapAlloc(arrayType, runtime::ObjectType::Array, "tmparr");
 
                 for (std::size_t i = 0; i < arrayContent.size(); i ++) {
                     auto ptr = builder->CreateGEP(elementType, 
@@ -323,6 +326,15 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::ret: {
+                auto tempStack = curFn->gcRootCountStack;
+                while (!tempStack.empty()) {
+                    uint32_t count = tempStack.top();
+                    if (count > 0) {
+                        curFn->gcPop(count);
+                    }
+                    tempStack.pop();
+                }
+
                 if (ins->getOperands().empty()) {
                     instResult = builder->CreateRetVoid();
 
@@ -356,11 +368,6 @@ namespace sakuraE::Codegen {
                 instResult = builder->CreateCall(fn, llvmArguments, ins->getName().c_str());
 
                 bind(ins, instResult);
-                break;
-            }
-            case IR::OpKind::free_cur_heap: {
-                curFn->FreeCurrentHeap();
-
                 break;
             }
             case IR::OpKind::enter_scope: {
