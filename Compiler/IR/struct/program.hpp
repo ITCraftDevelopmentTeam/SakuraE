@@ -15,20 +15,21 @@ namespace sakuraE::IR {
     public:
         Program(fzlib::String id): ID(id) {
             PositionInfo info = {0, 0, "System"};
+            size_t targetSize = sizeof(void*) * 8;
             buildModule("__runtime", info, true);
             auto runtimeMod = curMod();
             
             runtimeMod->declareFunction(
                 "__alloc", 
-                IRType::getPointerTo(IRType::getCharTy()), 
-                { {"size", IRType::getUInt32Ty()} }, 
+                IRType::getPointerTo(IRType::getVoidTy()), 
+                { {"size", IRType::getUIntNTy(targetSize)} }, 
                 info
             );
 
             runtimeMod->declareFunction(
                 "__free", 
                 IRType::getVoidTy(), 
-                { {"ptr", IRType::getPointerTo(IRType::getCharTy())} }, 
+                { {"ptr", IRType::getPointerTo(IRType::getVoidTy())} }, 
                 info
             );
 
@@ -82,7 +83,7 @@ namespace sakuraE::IR {
                 "__gc_alloc", 
                 IRType::getPointerTo(IRType::getVoidTy()), 
                 {
-                    { "size", IRType::getUInt64Ty() },
+                    { "size", IRType::getUIntNTy(targetSize) },
                     { "ty", IRType::getUInt32Ty() }
                 }, 
                 info
