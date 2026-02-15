@@ -1,5 +1,6 @@
 #include "type.hpp"
 #include <llvm/Support/Casting.h>
+#include <stdexcept>
 
 namespace sakuraE::IR {
     static std::map<unsigned, IRIntegerType> IRIntegerTypes;
@@ -55,7 +56,7 @@ namespace sakuraE::IR {
             case CharTyID:
             case BoolTyID:
             case TypeInfoTyID:
-            case FloatTyID:
+            case Float32TyID:
             case VoidTyID:
                 return true;
             case IntegerNTyID:
@@ -147,10 +148,15 @@ namespace sakuraE::IR {
         static IRTypeInfoType tinfoSingle;
         return &tinfoSingle;
     }
+
+    IRType* IRType::getFloat32Ty() {
+        static IRFloatType float32Single(32);
+        return &float32Single;
+    }
     
-    IRType* IRType::getFloatTy() {
-        static IRFloatType floatSingle;
-        return &floatSingle;
+    IRType* IRType::getFloat64Ty() {
+        static IRFloatType float64Single(64);
+        return &float64Single;
     }
 
     IRType* IRType::getPointerTo(IRType* elementType) {
@@ -197,7 +203,9 @@ namespace sakuraE::IR {
     }
 
     llvm::Type* IRFloatType::toLLVMType(llvm::LLVMContext& ctx) {
-        return llvm::Type::getFloatTy(ctx);
+        if (bitWidth == 32) return llvm::Type::getFloatTy(ctx);
+        else if (bitWidth == 64) return llvm::Type::getDoubleTy(ctx);
+        else throw std::runtime_error("Not support other float");
     }
 
     llvm::Type* IRIntegerType::toLLVMType(llvm::LLVMContext& ctx) {

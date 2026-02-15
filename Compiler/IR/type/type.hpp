@@ -17,7 +17,9 @@ namespace sakuraE::IR {
         UInteger32TyID,
         UInteger64TyID,
         UIntegerNTyID,
-        FloatTyID,
+        Float32TyID,
+        Float64TyID,
+        FloatNTyID,
         CharTyID,
         BoolTyID,
         TypeInfoTyID,
@@ -56,7 +58,8 @@ namespace sakuraE::IR {
         static IRType* getUInt32Ty();
         static IRType* getUInt64Ty();
         static IRType* getUIntNTy(unsigned bitWidth);
-        static IRType* getFloatTy();
+        static IRType* getFloat32Ty();
+        static IRType* getFloat64Ty();
         static IRType* getTypeInfoTy();
         static IRType* getPointerTo(IRType* elementType);
         static IRType* getArrayTy(IRType* elementType, uint64_t numElements);
@@ -75,7 +78,16 @@ namespace sakuraE::IR {
 
     class IRFloatType : public IRType {
         friend class IRType;
-        IRFloatType() : IRType(FloatTyID) {}
+        unsigned bitWidth;
+
+        IRFloatType(unsigned bw) 
+            : IRType([&]() -> IRTypeID{
+                switch (bw) {
+                    case 32: return IRTypeID::Float32TyID;
+                    case 64: return IRTypeID::Float64TyID;
+                    default: return IRTypeID::FloatNTyID;
+                }
+            }()) {}
     public:
         llvm::Type* toLLVMType(llvm::LLVMContext& ctx) override;
         fzlib::String toString() override;
