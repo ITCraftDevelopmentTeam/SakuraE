@@ -152,8 +152,67 @@ namespace sakuraE::IR {
         switch (tok.type) {
             case TokenType::BOOL_CONST:
                 return Constant::get(tok.content == "true", tok.info);
-            case TokenType::INT_N:
-                return Constant::get(std::stoi(tok.content.c_str()), tok.info);
+            case TokenType::INT_N: {
+                std::string str = tok.content.c_str();
+                if (str.empty()) return Constant::get(0, tok.info);
+
+                long long sign = 1;
+                size_t pos = 0;
+                if (str[pos] == '-') {
+                    sign = -1;
+                    pos++;
+                }
+
+                int base = 10;
+                if (pos + 1 < str.size() && str[pos] == '0') {
+                    char p = std::tolower(str[pos + 1]);
+                    if (p == 'x') { base = 16; pos += 2; }
+                    else if (p == 'b') { base = 2; pos += 2; }
+                    else if (p == 'o') { base = 8; pos += 2; }
+                }
+
+                std::string suffix = "";
+                size_t end_pos = str.size();
+                auto isEndsWith = [&](const std::string& s) {
+                    if (str.size() - pos < s.size()) return false;
+                    std::string sub = str.substr(str.size() - s.size());
+                    for (char &c : sub) c = std::toupper(c);
+                    return sub == s;
+                };
+
+                if (isEndsWith("UL") || isEndsWith("LU")) { suffix = "UL"; end_pos -= 2; }
+                else if (isEndsWith("U")) { suffix = "U"; end_pos -= 1; }
+                else if (isEndsWith("L")) { suffix = "L"; end_pos -= 1; }
+
+                std::string val_part = str.substr(pos, end_pos - pos);
+                try {
+                    if (suffix == "UL") {
+                        unsigned long long val = std::stoull(val_part, nullptr, base);
+                        return Constant::get(sign == 1 ? val : (unsigned long long)-(long long)val, tok.info);
+                    } 
+                    else if (suffix == "L") {
+                        long long val = std::stoll(val_part, nullptr, base);
+                        return Constant::get(sign * val, tok.info);
+                    } 
+                    else if (suffix == "U") {
+                        unsigned int val = (unsigned int)std::stoul(val_part, nullptr, base);
+                        return Constant::get(sign == 1 ? val : (unsigned int)-(int)val, tok.info);
+                    } 
+                    else {
+                        long long val = std::stoll(val_part, nullptr, base);
+                        val *= sign;
+                        if (val > INT_MAX || val < INT_MIN) {
+                            return Constant::get(val, tok.info);
+                        }
+                        return Constant::get((int)val, tok.info);
+                    }
+                } 
+                catch (...) {
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                                        "Literal value out of range or invalid: " + tok.content,
+                                        tok.info);
+                }
+            }
             case TokenType::FLOAT_N:
                 return Constant::get(std::stof(tok.content.c_str()), tok.info);
             case TokenType::STRING:
