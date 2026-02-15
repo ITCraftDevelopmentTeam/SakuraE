@@ -11,6 +11,7 @@ namespace sakuraE::IR {
         IRType* type;
         fzlib::String name;
     public:
+        explicit IRValue(IRType* ty, fzlib::String n) : type(ty), name(n) {}
         explicit IRValue(IRType* ty) : type(ty) {}
         virtual ~IRValue() = default;
 
