@@ -102,6 +102,7 @@ namespace sakuraE {
         Token makeNumberLiteral();
         Token makeCharLiteral();
         Token makeStringLiteral();
+        Token makeNonDecimalLiteral();
         Token makeSymbol();
     };
 

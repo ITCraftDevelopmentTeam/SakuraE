@@ -161,6 +161,34 @@ sakuraE::Token sakuraE::Lexer::makeNumberLiteral() {
     return Token(type, content, start_line, start_column, details);
 }
 
+sakuraE::Token sakuraE::Lexer::makeNonDecimalLiteral() {
+    int start_line = current_line;
+    int start_column = current_column;
+    TokenType type = TokenType::INT_N;
+    fzlib::String content;
+
+    content += next(); content += next();
+    char prefix = content[1];
+    while (std::isdigit(peek()) || std::isalpha(peek())) {
+        if (prefix == 'b' && (peek() != '0' && peek() != '1'))
+            throw SakuraError(OccurredTerm::LEXER,
+                            "Binary literals can only contain '0' and '1'.",
+                            {current_line, current_column, "Lexer error"});
+        else if (prefix == 'o' && (peek() < '0' || peek() > '7'))
+            throw SakuraError(OccurredTerm::LEXER,
+                            "Octal literals must consist of digits from 0 to 7.",
+                            {current_line, current_column, "Lexer error"});
+        else if (prefix == 'x' && !std::isxdigit(peek()))
+            throw SakuraError(OccurredTerm::LEXER,
+                            "Hexadecimal literals must consist of 0-9, a-f, or A-F.",
+                            {current_line, current_column, "Lexer error"});
+        
+        content += next();
+    }
+
+    return Token(type, content, start_line, start_column);
+}
+
 sakuraE::Token sakuraE::Lexer::makeCharLiteral() {
     int start_line = current_line;
     int start_column = current_column;
@@ -430,6 +458,9 @@ std::vector<sakuraE::Token> sakuraE::Lexer::tokenize() {
         if (std::isalpha(c) || c == '_') {
             token = makeIdentifierOrKeyword();
         } 
+        else if (c == '0' && (peek(1) == 'b' || peek(1) == 'x' || peek(1) == 'o')) {
+            token = makeNonDecimalLiteral();
+        }
         else if (std::isdigit(c) || (c == '-' && std::isdigit(peek(1)))) {
             token = makeNumberLiteral();
         } 
