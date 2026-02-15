@@ -251,39 +251,40 @@ namespace sakuraE::IR {
     // toString
 
     fzlib::String IRVoidType::toString() {
-        return "<VoidType>";
+        return "void";
     }
 
     fzlib::String IRFloatType::toString() {
-        return "<FloatType>";
+        if (bitWidth == 32) return "f32";
+        else if (bitWidth == 64) return "f64";
+        else return "fN";
     }
 
     fzlib::String IRIntegerType::toString() {
-        return "<Int" + std::to_string(bitWidth) + "Type>";
+        return "i" + std::to_string(bitWidth) ;
     }
 
     fzlib::String IRTypeInfoType::toString() {
-        return "<TypeInfo>";
+        return "tinfo";
     }
 
     fzlib::String IRPointerType::toString() {
-        return "<" + elementType->toString() + "PointerType>";
+        return "ptr@" + elementType->toString();
     }
 
     fzlib::String IRArrayType::toString() {
-        return "<" + elementType->toString() + "[" + std::to_string(numElements) + "]>";
+        return "" + elementType->toString() + "[" + std::to_string(numElements) + "]";
     }
 
     fzlib::String IRBlockType::toString() {
-        return "<IRBlockType>";
+        return "irblock";
     }
 
     fzlib::String IRFunctionType::toString() {
-        fzlib::String result = "<IRFunctionType -> " + returnType->toString() + ", [";
+        fzlib::String result = "fn->" + returnType->toString() + ",";
         for (auto type: paramsType) {
-            result += type->toString() + " ";
+            result += type->toString() + "|";
         }
-        result += "]>";
 
         return result;
     }
