@@ -75,7 +75,7 @@ namespace sakuraE::IR {
             return &it->second;
         }
 
-        IRType* float64Ty = IRType::getFloat32Ty();
+        IRType* float64Ty = IRType::getFloat64Ty();
         auto newEntry = f64Constants.emplace(val, Constant(float64Ty, val, info));
         return &newEntry.first->second;
     }
@@ -225,8 +225,14 @@ namespace sakuraE::IR {
                                         tok.info);
                 }
             }
-            case TokenType::FLOAT_N:
+            case TokenType::FLOAT_N: {
+                std::string str = tok.content.c_str();
+                if (!str.empty() && (str.back() == 'f')) {
+                    str.pop_back();
+                    return Constant::get(std::stod(str), tok.info);
+                }
                 return Constant::get(std::stof(tok.content.c_str()), tok.info);
+            }
             case TokenType::STRING:
                 return Constant::get(fzlib::String(tok.content.c_str()), tok.info);
             case TokenType::CHAR:
