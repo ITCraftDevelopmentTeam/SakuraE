@@ -643,7 +643,8 @@ namespace sakuraE::IR {
         IRType* allocaTy = nullptr;
         if (initVal && !typeInfoIRValue) allocaTy = initVal->getType();
         else {
-            auto typeInfoConst = static_cast<Constant*>(typeInfoIRValue);
+            auto inst = dynamic_cast<Instruction*>(typeInfoIRValue);
+            auto typeInfoConst = static_cast<Constant*>(inst->getOperands()[0]);
             auto typeInfo = typeInfoConst->getContentValue<TypeInfo*>();
             allocaTy = typeInfo->toIRType();
         }
