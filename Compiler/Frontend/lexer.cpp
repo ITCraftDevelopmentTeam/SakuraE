@@ -149,6 +149,7 @@ sakuraE::Token sakuraE::Lexer::makeNumberLiteral() {
     }
 
     if (suffix == "U" || suffix == "UL" || suffix == "L" || suffix == "f") {
+        if (suffix == "f") type = TokenType::FLOAT_N;
         content += suffix;
     }
     else if (!suffix.isEmpty()) {
