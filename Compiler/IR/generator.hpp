@@ -13,6 +13,7 @@
 #include "Compiler/Frontend/AST.hpp"
 #include "Compiler/IR/value/constant.hpp"
 #include "Compiler/Frontend/lexer.h"
+#include <algorithm>
 
 
 
@@ -131,46 +132,29 @@ namespace sakuraE::IR {
 
         // Used to obtain the type of the result from a non-logical binary operation
         IRType* handleUnlogicalBinaryCalc(IRValue* lhs, IRValue* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
-            switch (lhs->getType()->getIRTypeID()) {
-                case IRTypeID::Integer32TyID: {
-                    auto lhsType = dynamic_cast<IRIntegerType*>(lhs->getType());
-                    switch (rhs->getType()->getIRTypeID())
-                    {
-                        case IRTypeID::Integer32TyID: {
-                            auto rhsType = dynamic_cast<IRIntegerType*>(rhs->getType());
-                            return IRType::getIntNTy(std::max(lhsType->getBitWidth(), rhsType->getBitWidth()));
-                        }
-                        case IRTypeID::FloatTyID: {
-                            return IRType::getFloatTy();
-                        }
-                        default:
-                            throw SakuraError(OccurredTerm::IR_GENERATING,
-                                    "Used a type that does not support '+' '-' '*' '%' and '/' operations",
-                                    info);
-                    }
-                    break;
-                }
-                case IRTypeID::FloatTyID: {
-                    switch (rhs->getType()->getIRTypeID())
-                    {
-                        case IRTypeID::Integer32TyID: {
-                            return IRType::getFloatTy();
-                        }
-                        case IRTypeID::FloatTyID: {
-                            return IRType::getFloatTy();
-                        }
-                        default:
-                            throw SakuraError(OccurredTerm::IR_GENERATING,
-                                    "Used a type that does not support '+' '-' '*' '%' and '/' operations",
-                                    info);
-                    }
-                    break;
-                }
-                default:
-                    throw SakuraError(OccurredTerm::IR_GENERATING,
-                                    "Used a type that does not support '+' '-' '*' '%' and '/' operations",
-                                    info);
+            int lrk = rankList[lhs->getType()->getIRTypeID()];
+            int rrk = rankList[rhs->getType()->getIRTypeID()];
+
+            if (lrk == 0 || rrk == 0) {
+                throw SakuraError(OccurredTerm::IR_GENERATING,
+                        "Used a type that does not support '+' '-' '*' '%' and '/' operations",
+                        info);
             }
+
+            int resultRank = std::max(lrk, rrk);
+            switch (resultRank) {
+                case 1: return IRType::getBoolTy();
+                case 2: return IRType::getCharTy();
+                case 3: return IRType::getUInt32Ty();
+                case 4: return IRType::getInt32Ty();
+                case 5: return IRType::getUInt64Ty();
+                case 6: return IRType::getInt64Ty();
+                case 7: return IRType::getFloat32Ty();
+                case 8: return IRType::getFloat64Ty();
+                default: break;
+            }
+
+            throw SakuraError(OccurredTerm::IR_GENERATING, "Internal error: unhandled type rank", info);
         }
 
         Function* curFunc() {
