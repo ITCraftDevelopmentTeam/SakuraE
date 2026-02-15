@@ -46,7 +46,9 @@ namespace sakuraE {
         KEYWORD_RETURN, KEYWORD_CONST, KEYWORD_RANGE,
         KEYWORD_BREAK, KEYWORD_CONTINUE,
         
-        TYPE_INT, TYPE_CHAR, TYPE_BOOL, TYPE_FLOAT, TYPE_STRING,
+        TYPE_I32, TYPE_I64, TYPE_F32, 
+        TYPE_F64, TYPE_CHAR, TYPE_BOOL, 
+        TYPE_STRING, TYPE_UI32, TYPE_UI64,
 
         _EOF_,
         UNKNOWN
@@ -84,11 +86,12 @@ namespace sakuraE {
         const std::vector<fzlib::String> keywords = {
             "if", "else", "while", "for", "func", 
             "return", "let", "const", "range", "true", 
-            "false", "break", "continue"
+            "false", "break", "continue", "match", "repeat",
+            "struct", "impl", "is", "typeof"
         };
 
         const std::vector<fzlib::String> typeFields = {
-            "int", "float", "bool", "char", "string"
+            "i32", "i64", "f32", "f64", "ui32", "ui64", "bool", "char", "string"
         };
 
         char peek(int offset = 0) const;

@@ -438,9 +438,13 @@ namespace sakuraE {
 
     using BasicTypeModifierParserRule = 
     OptionsParser<
-        TokenParser<TokenType::TYPE_INT>,
+        TokenParser<TokenType::TYPE_I32>,
+        TokenParser<TokenType::TYPE_I64>,
+        TokenParser<TokenType::TYPE_UI32>,
+        TokenParser<TokenType::TYPE_UI64>,
         TokenParser<TokenType::TYPE_CHAR>, 
-        TokenParser<TokenType::TYPE_FLOAT>, 
+        TokenParser<TokenType::TYPE_F32>,
+        TokenParser<TokenType::TYPE_F64>, 
         TokenParser<TokenType::TYPE_BOOL>,
         TokenParser<TokenType::TYPE_STRING>
     >;
