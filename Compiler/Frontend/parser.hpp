@@ -142,6 +142,7 @@ namespace sakuraE {
             TokenParser<TokenType::AINC>,
             TokenParser<TokenType::SDEC>,
             TokenParser<TokenType::AND>,
+            TokenParser<TokenType::MUL>,
             NullParser
         >,
         AtomIdentifierExprParser,
