@@ -317,11 +317,18 @@ namespace sakuraE::Codegen {
         // Tool Methods =========================================================
         llvm::Value* toLLVMConstant(IR::Constant* constant, LLVMFunction* curFn) {
             switch (constant->getType()->getIRTypeID()){
-                case IR::IRTypeID::Integer32TyID: {
+                case IR::IRTypeID::Integer32TyID: 
                     return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<int>());
-                }
+                case IR::IRTypeID::Integer64TyID: 
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<long long>());
+                case IR::IRTypeID::UInteger32TyID: 
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<unsigned int>());
+                case IR::IRTypeID::UInteger64TyID: 
+                    return llvm::ConstantInt::get(constant->getType()->toLLVMType(*context), constant->getContentValue<unsigned long long>());
                 case IR::IRTypeID::Float32TyID:
                     return llvm::ConstantFP::get(constant->getType()->toLLVMType(*context), constant->getContentValue<float>());
+                case IR::IRTypeID::Float64TyID:
+                    return llvm::ConstantFP::get(constant->getType()->toLLVMType(*context), constant->getContentValue<double>());
                 case IR::IRTypeID::PointerTyID: {
                     auto ptrType = dynamic_cast<IR::IRPointerType*>(constant->getType());
                     if (ptrType->getElementType() == IR::IRType::getCharTy()) {
@@ -377,111 +384,72 @@ namespace sakuraE::Codegen {
 
         // Calculation =========================================================
 
-        llvm::Value* add(llvm::Value* lhs, llvm::Value* rhs) {
-            llvm::Value* result = nullptr;
-
+    private:
+        llvm::Type* promote(llvm::Value*& lhs, llvm::Value*& rhs) {
             auto lTy = lhs->getType();
             auto rTy = rhs->getType();
+            if (lTy == rTy) return lTy;
 
-            if (lTy->isIntegerTy(32)) {
-                if (rTy->isIntegerTy(32)) result = builder->CreateAdd(lhs, rhs, "addtmp");
-                else if (rTy->isFloatTy()) {
-                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getFloatTy(*context), "promoted.lhs");
-                    result = builder->CreateFAdd(pLhs, rhs, "addtmp");
-                }
-            }
-            else if (lTy->isFloatTy()) {
-                if (rTy->isFloatTy()) result = builder->CreateFAdd(lhs, rhs, "addtmp");
-                else if (rTy->isIntegerTy(32)) {
-                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getFloatTy(*context), "promoted.rhs");
-                    result = builder->CreateFAdd(lhs, pRhs, "addtmp");
-                }
+            if (lTy->isFloatingPointTy() || rTy->isFloatingPointTy()) {
+                llvm::Type* targetTy = (lTy->isDoubleTy() || rTy->isDoubleTy()) ? 
+                                        builder->getDoubleTy() : builder->getFloatTy();
+                
+                if (lTy->isIntegerTy()) lhs = builder->CreateSIToFP(lhs, targetTy, "lhs.fpromoted");
+                else if (lTy != targetTy) lhs = builder->CreateFPExt(lhs, targetTy, "lhs.fpromoted");
+
+                if (rTy->isIntegerTy()) rhs = builder->CreateSIToFP(rhs, targetTy, "rhs.fpromoted");
+                else if (rTy != targetTy) rhs = builder->CreateFPExt(rhs, targetTy, "rhs.fpromoted");
+
+                return targetTy;
             }
 
-            return result;
+            if (lTy->isIntegerTy() && rTy->isIntegerTy()) {
+                unsigned lWidth = lTy->getIntegerBitWidth();
+                unsigned rWidth = rTy->getIntegerBitWidth();
+                unsigned maxWidth = std::max(lWidth, rWidth);
+                llvm::Type* targetTy = llvm::Type::getIntNTy(*context, maxWidth);
+
+                if (lWidth < maxWidth) lhs = builder->CreateSExt(lhs, targetTy, "lhs.iext");
+                if (rWidth < maxWidth) rhs = builder->CreateSExt(rhs, targetTy, "rhs.iext");
+
+                return targetTy;
+            }
+            return nullptr;
+        }
+
+    public:
+        llvm::Value* add(llvm::Value* lhs, llvm::Value* rhs) {
+            auto targetTy = promote(lhs, rhs);
+            if (!targetTy) return nullptr;
+            return targetTy->isFloatingPointTy() ? 
+                builder->CreateFAdd(lhs, rhs, "addftmp") : builder->CreateAdd(lhs, rhs, "addtmp");
         }
 
         llvm::Value* sub(llvm::Value* lhs, llvm::Value* rhs) {
-            llvm::Value* result = nullptr;
-
-            auto lTy = lhs->getType();
-            auto rTy = rhs->getType();
-
-            if (lTy->isIntegerTy(32)) {
-                if (rTy->isIntegerTy(32)) result = builder->CreateSub(lhs, rhs, "subtmp");
-                else if (rTy->isFloatTy()) {
-                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getFloatTy(*context), "promoted.lhs");
-                    result = builder->CreateFSub(pLhs, rhs, "subtmp");
-                }
-            }
-            else if (lTy->isFloatTy()) {
-                if (rTy->isFloatTy()) result = builder->CreateFSub(lhs, rhs, "subtmp");
-                else if (rTy->isIntegerTy(32)) {
-                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getFloatTy(*context), "promoted.rhs");
-                    result = builder->CreateFSub(lhs, pRhs, "subtmp");
-                }
-            }
-
-            return result;
+            auto targetTy = promote(lhs, rhs);
+            if (!targetTy) return nullptr;
+            return targetTy->isFloatingPointTy() ? 
+                builder->CreateFSub(lhs, rhs, "subftmp") : builder->CreateSub(lhs, rhs, "subtmp");
         }
 
         llvm::Value* mul(llvm::Value* lhs, llvm::Value* rhs) {
-            llvm::Value* result = nullptr;
-
-            auto lTy = lhs->getType();
-            auto rTy = rhs->getType();
-
-            if (lTy->isIntegerTy(32)) {
-                if (rTy->isIntegerTy(32)) result = builder->CreateMul(lhs, rhs, "multmp");
-                else if (rTy->isFloatTy()) {
-                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getFloatTy(*context), "promoted.lhs");
-                    result = builder->CreateFMul(pLhs, rhs, "multmp");
-                }
-            }
-            else if (lTy->isFloatTy()) {
-                if (rTy->isFloatTy()) result = builder->CreateFMul(lhs, rhs, "multmp");
-                else if (rTy->isIntegerTy(32)) {
-                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getFloatTy(*context), "promoted.rhs");
-                    result = builder->CreateFMul(lhs, pRhs, "multmp");
-                }
-            }
-
-            return result;
+            auto targetTy = promote(lhs, rhs);
+            if (!targetTy) return nullptr;
+            return targetTy->isFloatingPointTy() ? 
+                builder->CreateFMul(lhs, rhs, "mulftmp") : builder->CreateMul(lhs, rhs, "multmp");
         }
 
         llvm::Value* div(llvm::Value* lhs, llvm::Value* rhs) {
-            llvm::Value* result = nullptr;
-
-            auto lTy = lhs->getType();
-            auto rTy = rhs->getType();
-
-            if (lTy->isIntegerTy(32)) {
-                if (rTy->isIntegerTy(32)) result = builder->CreateSDiv(lhs, rhs, "divdtmp");
-                else if (rTy->isFloatTy()) {
-                    auto pLhs = builder->CreateSIToFP(lhs, llvm::Type::getFloatTy(*context), "promoted.lhs");
-                    result = builder->CreateFDiv(pLhs, rhs, "divtmp");
-                }
-            }
-            else if (lTy->isFloatTy()) {
-                if (rTy->isFloatTy()) result = builder->CreateFDiv(lhs, rhs, "divtmp");
-                else if (rTy->isIntegerTy(32)) {
-                    auto pRhs = builder->CreateSIToFP(rhs, llvm::Type::getFloatTy(*context), "promoted.rhs");
-                    result = builder->CreateFDiv(lhs, pRhs, "divtmp");
-                }
-            }
-
-            return result;
+            auto targetTy = promote(lhs, rhs);
+            if (!targetTy) return nullptr;
+            return targetTy->isFloatingPointTy() ? 
+                builder->CreateFDiv(lhs, rhs, "divftmp") : builder->CreateSDiv(lhs, rhs, "divtmp");
         }
 
         llvm::Value* compare(llvm::Value* lhs, llvm::Value* rhs, IR::OpKind kind, LLVMFunction* curFn) {
-            if (lhs->getType()->isFloatTy() || rhs->getType()->isFloatTy()) {
-                if (lhs->getType()->isIntegerTy()) {
-                    lhs = builder->CreateSIToFP(lhs, llvm::Type::getFloatTy(*context), "lhs.promoted");
-                }
-                if (rhs->getType()->isIntegerTy()) {
-                    rhs = builder->CreateSIToFP(rhs, llvm::Type::getFloatTy(*context), "rhs.promoted");
-                }
+            auto targetTy = promote(lhs, rhs);
             
+            if (targetTy && targetTy->isFloatingPointTy()) {
                 llvm::FCmpInst::Predicate pred;
                 switch (kind) {
                     case IR::OpKind::lgc_equal:       pred = llvm::FCmpInst::FCMP_OEQ; break;
@@ -492,17 +460,11 @@ namespace sakuraE::Codegen {
                     case IR::OpKind::lgc_eq_ls_than:   pred = llvm::FCmpInst::FCMP_OLE; break;
                     default: return nullptr;
                 }
+                // Correcting the typo FCInst to FCmpInst
                 return builder->CreateFCmp(pred, lhs, rhs, "fcmp.tmp");
             }
 
-            if (lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
-                if (lhs->getType()->getIntegerBitWidth() != rhs->getType()->getIntegerBitWidth()) {
-                    unsigned maxBit = std::max(lhs->getType()->getIntegerBitWidth(), rhs->getType()->getIntegerBitWidth());
-                    auto* targetTy = llvm::Type::getIntNTy(*context, maxBit);
-                    lhs = builder->CreateSExt(lhs, targetTy);
-                    rhs = builder->CreateSExt(rhs, targetTy);
-                }
-
+            if (targetTy && targetTy->isIntegerTy()) {
                 llvm::ICmpInst::Predicate pred;
                 switch (kind) {
                     case IR::OpKind::lgc_equal:       pred = llvm::ICmpInst::ICMP_EQ;  break;
