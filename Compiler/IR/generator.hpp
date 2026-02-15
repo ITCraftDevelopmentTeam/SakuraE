@@ -132,16 +132,20 @@ namespace sakuraE::IR {
 
         // Used to obtain the type of the result from a non-logical binary operation
         IRType* handleUnlogicalBinaryCalc(IRValue* lhs, IRValue* rhs, PositionInfo info = {0, 0, "Normal Calc"}) {
-            int lrk = rankList[lhs->getType()->getIRTypeID()];
-            int rrk = rankList[rhs->getType()->getIRTypeID()];
+            auto lTy = lhs->getType();
+            auto rTy = rhs->getType();
+            
+            auto lIt = rankList.find(lTy->getIRTypeID());
+            auto rIt = rankList.find(rTy->getIRTypeID());
 
-            if (lrk == 0 || rrk == 0) {
+            if (lIt == rankList.end() || rIt == rankList.end()) {
                 throw SakuraError(OccurredTerm::IR_GENERATING,
-                        "Used a type that does not support '+' '-' '*' '%' and '/' operations",
+                        "Types '" + lTy->toString() + "' and '" + rTy->toString() + 
+                        "' do not support '+', '-', '*', '%', and '/' operations",
                         info);
             }
 
-            int resultRank = std::max(lrk, rrk);
+            int resultRank = std::max(lIt->second, rIt->second);
             switch (resultRank) {
                 case 1: return IRType::getBoolTy();
                 case 2: return IRType::getCharTy();
