@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "AST.hpp"
+#include "Compiler/Frontend/lexer.h"
 #include "parser_base.hpp"
 
 #include "includes/String.hpp"
@@ -140,6 +141,7 @@ namespace sakuraE {
             TokenParser<TokenType::LGC_NOT>, 
             TokenParser<TokenType::AINC>,
             TokenParser<TokenType::SDEC>,
+            TokenParser<TokenType::AND>,
             NullParser
         >,
         AtomIdentifierExprParser,
@@ -534,7 +536,18 @@ namespace sakuraE {
     };
 
     
-    using TypeModifierParserRule = OptionsParser<BasicTypeModifierParser, ArrayTypeModifierParser>;
+    using TypeModifierParserRule = 
+    ConnectionParser<
+        OptionsParser<
+            BasicTypeModifierParser, 
+            ArrayTypeModifierParser
+        >,
+        OptionsParser<
+            ClosureParser<TokenParser<TokenType::MUL>>,
+            TokenParser<TokenType::AND>,
+            NullParser
+        >
+    >;
     class TypeModifierParser: public ResourceFetcher, public TypeModifierParserRule {
     public:
         TypeModifierParser(TypeModifierParserRule&& base) : TypeModifierParserRule(std::move(base)) {}

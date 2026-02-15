@@ -317,7 +317,20 @@ sakuraE::NodePtr sakuraE::TypeModifierParser::genResource() {
             (*root)[ASTTag::ArrayTypeModifierNode] = res;
         }
 
-    }, option());
+    }, std::get<0>(getTuple())->option());
+
+    std::visit([&](auto& var) {
+        using VarType = std::decay_t<decltype(var)>;
+
+        if constexpr (std::is_same_v<VarType, std::shared_ptr<ClosureParser<TokenParser<TokenType::MUL>>>>) {
+            for (auto& unit : var->getClosure()) {
+                (*root)[ASTTag::Ops]->addChild(std::make_shared<Node>(unit->token));
+            }
+        }
+        else if constexpr (std::is_same_v<VarType, std::shared_ptr<TokenParser<TokenType::AND>>>) {
+            (*root)[ASTTag::Op] = std::make_shared<Node>(var->token);
+        }
+    }, std::get<1>(getTuple())->option());
 
     return root;
 }
