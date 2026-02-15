@@ -556,35 +556,25 @@ namespace sakuraE::IR {
     }
 
     IRValue* IRGenerator::visitBasicTypeModifierNode(NodePtr node) {
+        auto createTypeConst = [&](TypeID tid) {
+            return curFunc()
+                ->curBlock()
+                ->createInstruction(OpKind::constant,
+                                    IRType::getTypeInfoTy(),
+                                    {Constant::get(TypeInfo::makeTypeID(tid))},
+                                    "constant");
+        };
+
         switch ((*node)[ASTTag::Keyword]->getToken().type) {
-            case TokenType::TYPE_INT:
-                return curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::constant,
-                                                IRType::getTypeInfoTy(),
-                                                {Constant::get(TypeInfo::makeTypeID(TypeID::Int32))},
-                                                "constant");
-            case TokenType::TYPE_FLOAT:
-                return curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::constant,
-                                                IRType::getTypeInfoTy(),
-                                                {Constant::get(TypeInfo::makeTypeID(TypeID::Float))},
-                                                "constant");     
-            case TokenType::TYPE_STRING:
-                return curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::constant,
-                                                IRType::getTypeInfoTy(),
-                                                {Constant::get(TypeInfo::makeTypeID(TypeID::String))},
-                                                "constant");
-            case TokenType::TYPE_BOOL:
-                return curFunc()
-                            ->curBlock()
-                            ->createInstruction(OpKind::constant,
-                                                IRType::getTypeInfoTy(),
-                                                {Constant::get(TypeInfo::makeTypeID(TypeID::Bool))},
-                                                "constant");
+            case TokenType::TYPE_I32:    return createTypeConst(TypeID::Int32);
+            case TokenType::TYPE_I64:    return createTypeConst(TypeID::Int64);
+            case TokenType::TYPE_UI32:   return createTypeConst(TypeID::UInt32);
+            case TokenType::TYPE_UI64:   return createTypeConst(TypeID::UInt64);
+            case TokenType::TYPE_F32:    return createTypeConst(TypeID::Float32);
+            case TokenType::TYPE_F64:    return createTypeConst(TypeID::Float64);
+            case TokenType::TYPE_BOOL:   return createTypeConst(TypeID::Bool);
+            case TokenType::TYPE_CHAR:   return createTypeConst(TypeID::Char);
+            case TokenType::TYPE_STRING: return createTypeConst(TypeID::String);
             default:
                 throw SakuraError(OccurredTerm::IR_GENERATING,
                                     "Unknown TypeID",
