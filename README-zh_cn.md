@@ -47,7 +47,6 @@ SakuraE/
 │   │   ├── docs/                   # IR 文档与规范
 │   │   ├── generator.cpp           # IR 生成器实现 (AST 访问者)
 │   │   ├── generator.hpp           # IR 生成工具
-│   │   ├── IR.hpp                  # 核心 IR 定义
 │   │   ├── README-zh_cn.md         # IR 文档 (中文)
 │   │   ├── README.md               # IR 文档 (英文)
 │   │   ├── struct/                 # IR 结构组件
@@ -74,19 +73,27 @@ SakuraE/
 ├── Runtime/                        # 运行时库
 │   ├── alloc.cpp                   # 内存分配器实现
 │   ├── alloc.h                     # 分配器头文件
+│   ├── gc.cpp                      # 垃圾回收器 (GC) 实现
+│   ├── gc.h                        # GC 头文件
 │   ├── print.cpp                   # 基础 I/O 实现
+│   ├── print.h                     # I/O 头文件
 │   ├── raw_string.cpp              # 字符串处理实现
+│   ├── raw_string.h                # 字符串工具头文件
 │   ├── README-zh_cn.md             # 运行时文档 (中文)
 │   └── README.md                   # 运行时文档 (英文)
 ├── includes/                       # 外部依赖
 │   ├── magic_enum.hpp              # 枚举反射库
 │   └── String.hpp                  # 自定义字符串工具
-├── sakurae/                        # VSCode 插件
+├── sakurae-vsc/                    # VSCode 插件
 │   ├── language-configuration.json # 语言配置
 │   ├── package.json                # 插件清单
 │   ├── README.md                   # 插件文档
 │   └── syntaxes/                   # 语法高亮
 │       └── sak.tmLanguage.json     # SakuraE 的 TextMate 语法
+├── test/                           # 测试用例
+│   └── test0.sak                   # 示例 SakuraE 源文件
+├── tools/                          # 辅助工具
+│   └── line.py                     # 代码行数统计工具
 └── README.md                       # 本文件
 ```
 

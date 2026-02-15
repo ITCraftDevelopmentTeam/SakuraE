@@ -47,7 +47,6 @@ SakuraE/
 │   │   ├── docs/                   # IR documentation and specifications
 │   │   ├── generator.cpp           # IR generator implementation (AST visitor)
 │   │   ├── generator.hpp           # IR generation utilities
-│   │   ├── IR.hpp                  # Core IR definitions
 │   │   ├── README-zh_cn.md         # IR documentation (Chinese)
 │   │   ├── README.md               # IR documentation (English)
 │   │   ├── struct/                 # IR structural components
@@ -74,19 +73,27 @@ SakuraE/
 ├── Runtime/                        # Runtime Library
 │   ├── alloc.cpp                   # Memory allocator implementation
 │   ├── alloc.h                     # Allocator header
+│   ├── gc.cpp                      # Garbage Collector implementation
+│   ├── gc.h                        # GC header
 │   ├── print.cpp                   # Basic I/O implementation
+│   ├── print.h                     # I/O header
 │   ├── raw_string.cpp              # String manipulation implementation
+│   ├── raw_string.h                # String utility header
 │   ├── README-zh_cn.md             # Runtime documentation (Chinese)
 │   └── README.md                   # Runtime documentation (English)
 ├── includes/                       # External dependencies
 │   ├── magic_enum.hpp              # Enum reflection library
 │   └── String.hpp                  # Custom string utilities
-├── sakurae/                        # VSCode Extension
+├── sakurae-vsc/                    # VSCode Extension
 │   ├── language-configuration.json # Language configuration
 │   ├── package.json                # Extension manifest
 │   ├── README.md                   # Extension documentation
 │   └── syntaxes/                   # Syntax highlighting
 │       └── sak.tmLanguage.json     # TextMate grammar for SakuraE
+├── test/                           # Test cases
+│   └── test0.sak                   # Sample SakuraE source files
+├── tools/                          # Helper tools
+│   └── line.py                     # Line counting utility
 └── README.md                       # This file
 ```
 
