@@ -131,8 +131,10 @@ namespace sakuraE::IR {
             else return tid2IRType(typeID);
         }
 
-        static TypeInfo* makeTypeID(TypeID typeID);
-        static TypeInfo* makeTypeID(std::vector<TypeInfo*> tArray);
+        static TypeInfo* makeBasicTypeID(TypeID typeID);
+        static TypeInfo* makeArrayTypeID(std::vector<TypeInfo*> tArray);
+        static TypeInfo* makePointerTypeID(TypeInfo* typeID);
+        static TypeInfo* makeRefTypeID(TypeInfo* typeID);
         static void clearAll();
     };
 }
