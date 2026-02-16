@@ -18,8 +18,6 @@ fzlib::String sakuraE::Token::toString() const {
     return "<" + content + ", " + typeToString() + ">";
 }
 
-// --- Lexer Implementations (构造函数从 .h 移动，其余为原有实现) ---
-
 sakuraE::Lexer::Lexer(const fzlib::String& source) 
     : source_code(source), current_pos(0), current_line(1), current_column(1) {}
 

@@ -56,18 +56,16 @@ namespace sakuraE {
 
     class Token {
     public:
-        PositionInfo info;      // PositionInfo
-        fzlib::String content; // Raw content of the token
-        TokenType type;      // Type of the token
+        PositionInfo info;
+        fzlib::String content; 
+        TokenType type;
 
-        // 声明: 构造函数
         Token(TokenType t = TokenType::UNKNOWN,
                 const fzlib::String &c = "default",
                 int l = 0,
                 int col = 0,
                 const fzlib::String &det = "default");
 
-        // 声明: toString 实现
         fzlib::String typeToString() const;
         fzlib::String toString() const;
     };
