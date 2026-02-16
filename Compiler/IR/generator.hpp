@@ -140,23 +140,52 @@ namespace sakuraE::IR {
                     return getTypeInfoFromNode((*node)[ASTTag::ArrayTypeModifierNode]);
                 }
             }
+
+            TypeInfo* resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Null);
         
             if (node->getTag() == ASTTag::BasicTypeModifierNode) {
                 auto kwNode = (*node)[ASTTag::Keyword];
                 auto token = kwNode->getToken();
 
                 switch (token.type) {
-                    case TokenType::TYPE_I32:   return TypeInfo::makeTypeID(TypeID::Int32);
-                    case TokenType::TYPE_I64:   return TypeInfo::makeTypeID(TypeID::Int64);
-                    case TokenType::TYPE_UI32:  return TypeInfo::makeTypeID(TypeID::UInt32);
-                    case TokenType::TYPE_UI64:  return TypeInfo::makeTypeID(TypeID::UInt64);
-                    case TokenType::TYPE_F32:   return TypeInfo::makeTypeID(TypeID::Float32);
-                    case TokenType::TYPE_F64:   return TypeInfo::makeTypeID(TypeID::Float64);
-                    case TokenType::TYPE_CHAR:  return TypeInfo::makeTypeID(TypeID::Char);
-                    case TokenType::TYPE_BOOL:  return TypeInfo::makeTypeID(TypeID::Bool);
-                    case TokenType::TYPE_STRING:return TypeInfo::makeTypeID(TypeID::String);
+                    case TokenType::TYPE_I32:    { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Int32);
+                        break;
+                    }
+                    case TokenType::TYPE_I64:    { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Int64);
+                        break;
+                    }
+                    case TokenType::TYPE_UI32:   { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::UInt32);
+                        break;
+                    }
+                    case TokenType::TYPE_UI64:   { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::UInt64);
+                        break;
+                    }
+                    case TokenType::TYPE_F32:    { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Float32);
+                        break;
+                    }
+                    case TokenType::TYPE_F64:    { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Float64);
+                        break;
+                    }
+                    case TokenType::TYPE_CHAR:   { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Char);
+                        break;
+                    }
+                    case TokenType::TYPE_BOOL:   { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Bool);
+                        break;
+                    }
+                    case TokenType::TYPE_STRING: { 
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::String);
+                        break;
+                    }
                     default:
-                        return TypeInfo::makeTypeID(TypeID::Custom);
+                        resultTyInfo = TypeInfo::makeBasicTypeID(TypeID::Custom);
                 }
             }
         
@@ -168,12 +197,26 @@ namespace sakuraE::IR {
                 for (auto it = dims.rbegin(); it != dims.rend(); it ++) {
                     std::vector<TypeInfo*> elements;
                     elements.push_back(currentType); 
-                    currentType = TypeInfo::makeTypeID(elements);
+                    currentType = TypeInfo::makeArrayTypeID(elements);
                 }
-                return currentType;
+
+                resultTyInfo = currentType;
+            }
+
+            // Ptr or Ref
+
+            if (node->hasNode(ASTTag::Op)) {
+                // Is ref type info
+                resultTyInfo = TypeInfo::makeRefTypeID(resultTyInfo);
+            }
+            else if (node->hasNode(ASTTag::Ops)) {
+                // Is ptr type info
+                auto ptrDepth = (*node)[ASTTag::Ops]->getChildren().size();
+                for (std::size_t i = 0; i < ptrDepth; i ++) 
+                    resultTyInfo = TypeInfo::makePointerTypeID(resultTyInfo);
             }
         
-            return TypeInfo::makeTypeID(TypeID::Null);
+            return resultTyInfo;
         }
 
         fzlib::String mangleFnName(fzlib::String n, FormalParamsDefine args) {
@@ -284,8 +327,6 @@ namespace sakuraE::IR {
         IRValue* visitBinaryExprNode(NodePtr node);
         IRValue* visitArrayExprNode(NodePtr node);
         IRValue* visitWholeExprNode(NodePtr node);
-        IRValue* visitBasicTypeModifierNode(NodePtr node);
-        IRValue* visitArrayTypeModifierNode(NodePtr node);
         IRValue* visitTypeModifierNode(NodePtr node);
         IRValue* visitAssignExprNode(NodePtr node);
         // TODO: Range implement
