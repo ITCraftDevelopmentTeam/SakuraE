@@ -296,6 +296,14 @@ namespace sakuraE::Codegen {
                 bind(ins, realAddr); 
                 break;
             }
+            case IR::OpKind::gaddr: {
+                bind(ins, toLLVMValue(ins->arg(0), curFn));
+                break;
+            }
+            case IR::OpKind::deref: {
+                bind(ins, toLLVMValue(ins->arg(0), curFn));
+                break;
+            }
             case IR::OpKind::load: {
                 llvm::Value* addr = toLLVMValue(ins->arg(0), curFn);
                 llvm::Type* type = ins->getType()->toLLVMType(*context);
