@@ -182,6 +182,42 @@ namespace sakuraE::IR {
                     return createStore(resultAddr, resultValue, preOp.info);
                     break;
                 }
+                case TokenType::AND: {
+                    if (auto inst = dynamic_cast<Instruction*>(resultAddr)) {
+                        if (inst->isLValue()) 
+                            return curFunc()
+                                ->curBlock()
+                                ->createInstruction(
+                                    OpKind::gaddr,
+                                    IRType::getPointerTo(resultAddr->getType()),
+                                    {resultAddr},
+                                    "gaddr"
+                                );
+                    }
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "Cannot take the address of an rvalue",
+                                    node->getPosInfo());
+                    break;
+                }
+                case TokenType::MUL: {
+                    if (auto inst = dynamic_cast<Instruction*>(resultAddr)) {
+                        if (inst->isLValue()) {
+                            auto load = createLoad(resultAddr, preOp.info);
+                            return curFunc()
+                                ->curBlock()
+                                ->createInstruction(
+                                    OpKind::deref,
+                                    load->getType(),
+                                    {load},
+                                    "deref"
+                                );
+                        }
+                    }
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "Cannot take the address of an rvalue",
+                                    node->getPosInfo());
+                    break;
+                }
                 default:
                     break;
             }
