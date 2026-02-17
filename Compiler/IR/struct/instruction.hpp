@@ -26,6 +26,8 @@ namespace sakuraE::IR {
         call,
         load,
         gmem,
+        gaddr,
+        deref,
         param,
         enter_scope,
         leave_scope,
@@ -58,7 +60,8 @@ namespace sakuraE::IR {
             return kind == OpKind::create_alloca ||
                     kind == OpKind::indexing ||
                     kind == OpKind::param ||
-                    kind == OpKind::gmem;
+                    kind == OpKind::gmem ||
+                    kind == OpKind::deref;
         }
 
         void setParent(Block* blk) {
