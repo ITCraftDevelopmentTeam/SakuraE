@@ -301,7 +301,14 @@ namespace sakuraE::Codegen {
                 break;
             }
             case IR::OpKind::deref: {
-                bind(ins, toLLVMValue(ins->arg(0), curFn));
+                instResult = toLLVMValue(ins->arg(0), curFn);
+
+                if (ins->arg(0)->getType()->isRef()) {
+                    auto ty = ins->getType()->toLLVMType(*context);
+                    instResult = builder->CreateLoad(ty, instResult);
+                }
+
+                bind(ins, instResult);
                 break;
             }
             case IR::OpKind::load: {
