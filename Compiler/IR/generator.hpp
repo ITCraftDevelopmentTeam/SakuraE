@@ -44,6 +44,19 @@ namespace sakuraE::IR {
                         info);
                 }
 
+                if (addr->getType()->isRef()) {
+                    auto refTy = dynamic_cast<IRRefType*>(addr->getType());
+                    auto tmp = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::deref,
+                            IRType::getPointerTo(refTy->getElementType()),
+                            {addr},
+                            "gaddr." + addr->getName()
+                        );
+                    return createLoad(tmp, info);
+                }
+
                 return curFunc()
                     ->curBlock()
                     ->createInstruction(OpKind::load,
@@ -62,6 +75,19 @@ namespace sakuraE::IR {
                     throw SakuraError(OccurredTerm::IR_GENERATING,
                                     "An L-value is required as the left operand of an assignment.",
                                     info);
+                }
+
+                if (addr->getType()->isRef()) {
+                    auto refTy = dynamic_cast<IRRefType*>(addr->getType());
+                    auto tmp = curFunc()
+                        ->curBlock()
+                        ->createInstruction(
+                            OpKind::deref,
+                            IRType::getPointerTo(refTy->getElementType()),
+                            {addr},
+                            "gaddr." + addr->getName()
+                        );
+                    return createStore(tmp, value, info);
                 }
 
                 auto pureAddrType = addr->getType()->unboxComplex();
@@ -116,7 +142,8 @@ namespace sakuraE::IR {
             IRType* finalType = ty;
 
             if (ty->isComplexType()) {
-                finalType = IRType::getPointerTo(ty);
+                if (ty->isRef()) {}
+                else finalType = IRType::getPointerTo(ty);
             }
 
             auto addr =  curFunc()

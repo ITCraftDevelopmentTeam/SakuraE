@@ -191,11 +191,28 @@ namespace sakuraE::IR {
                                     OpKind::gaddr,
                                     IRType::getPointerTo(resultAddr->getType()),
                                     {resultAddr},
-                                    "gaddr"
+                                    "gaddr." + resultAddr->getName()
                                 );
                     }
                     throw SakuraError(OccurredTerm::IR_GENERATING,
                                     "Cannot take the address of an rvalue",
+                                    node->getPosInfo());
+                    break;
+                }
+                case TokenType::KEYWORD_REF: {
+                    if (auto inst = dynamic_cast<Instruction*>(resultAddr)) {
+                        if (inst->isLValue()) 
+                            return curFunc()
+                                ->curBlock()
+                                ->createInstruction(
+                                    OpKind::gaddr,
+                                    IRType::getRefTo(resultAddr->getType()),
+                                    {resultAddr},
+                                    "gaddr.ref." + resultAddr->getName()
+                                );
+                    }
+                    throw SakuraError(OccurredTerm::IR_GENERATING,
+                                    "Cannot take the reference of an rvalue",
                                     node->getPosInfo());
                     break;
                 }
@@ -209,7 +226,7 @@ namespace sakuraE::IR {
                                     OpKind::deref,
                                     load->getType(),
                                     {load},
-                                    "deref"
+                                    "deref." + load->getName()
                                 );
                         }
                     }
@@ -521,6 +538,7 @@ namespace sakuraE::IR {
         auto op = (*node)[ASTTag::Op]->getToken();
 
         IRValue* resultValue = resultAddr;
+
         switch (op.type) {
             case TokenType::ASSIGN_OP: {
                 resultValue = createStore(resultAddr, value, op.info);
