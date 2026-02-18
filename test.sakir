@@ -1,57 +1,32 @@
-TestProject  {
-  TestProject  {
-    foo(a<Int32Type>, b<Int32Type>, s<<Int8Type>PointerType>) -> <Int32Type>  {
-      :entry  {
-        constant <TypeInfo>;
-        declare <null>;
-        constant <TypeInfo>;
-        declare <null>;
-        constant <TypeInfo>;
-        declare <null>;
-        constant <TypeInfo>;
-        br $fn.foo;
+REF:
+:fn.main  {
+        %enter_scope = enter_scope;
+        %constant = constant i32 3;
+        %create_alloca.a = create_alloca i32 %constant;
+        %gaddr.ref.create_alloca.a = gaddr i32 %create_alloca.a;
+        %create_alloca.f = create_alloca ref@i32 %gaddr.ref.create_alloca.a;
+        
+        %constant = constant i32 10;
+        %store.create_alloca.f = store ref@i32 %create_alloca.f i32 %constant;
+        %loadcreate_alloca.a = load i32 %create_alloca.a;
+        %free_cur_heap = free_cur_heap;
+        %leave_scope = leave_scope;
+        %ret = ret i32 %loadcreate_alloca.a;
         
       }
-      :fn.foo  {
-        constant hello;
-        declare $constant;
-        constant hello11;
-        declare $constant;
-        load $declare.VAR;
-        load $declare.VAR1;
-        lgc_not_equal $load.VAR $load.VAR1;
-        declare $lgc-not-equal;
-        cond_br $lgc-equal $and.rhs0 $short.cur.merge;
+
+PTR:
+:fn.main  {
+        %constant = constant i32 3;
+        %create_alloca.a = create_alloca i32 %constant;
+        %gaddr = gaddr i32 %create_alloca.a;
+        %create_alloca.f = create_alloca ptr@i32 %gaddr;
+        %loadcreate_alloca.f = load ptr@ptr@i32 %create_alloca.f;
+        %deref.loadcreate_alloca.f = deref ptr@i32 %loadcreate_alloca.f;
+
+        %constant = constant i32 10;
+        %store.deref.loadcreate_alloca.f = store ptr@i32 %deref.loadcreate_alloca.f i32 %constant;
+        %loadcreate_alloca.a = load i32 %create_alloca.a;
+        %ret = ret i32 %loadcreate_alloca.a;
         
       }
-      :short.cur.merge  {
-        load $declare.tbv.0;
-        cond_br $load.tbv.0 $if.then $if.else;
-        
-      }
-      :and.rhs0  {
-        load $declare.a;
-        constant 2;
-        lgc_equal $load.a $constant;
-        assign $declare.tbv.0 $lgc-equal;
-        br $short.cur.merge;
-        
-      }
-      :if.then  {
-        constant 99;
-        ret $constant;
-        br $if.merge;
-        
-      }
-      :if.else  {
-        constant 8;
-        ret $constant;
-        br $if.merge;
-        
-      }
-      :if.merge  {
-        
-      }
-    }
-  }
-}
