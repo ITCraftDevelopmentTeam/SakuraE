@@ -57,10 +57,13 @@ namespace sakuraE::IR {
                     return createLoad(tmp, info);
                 }
 
+                auto pureAddrTy = addr->getType();
+                if (addr->getType()->isPointer()) pureAddrTy = addr->getType()->unwrapPointer();
+
                 return curFunc()
                     ->curBlock()
                     ->createInstruction(OpKind::load,
-                        inst->getType()->unboxComplex(),
+                        pureAddrTy,
                         {addr},
                         "load" + addr->getName());
             }
@@ -90,11 +93,13 @@ namespace sakuraE::IR {
                     return createStore(tmp, value, info);
                 }
 
-                auto pureAddrType = addr->getType()->unboxComplex();
-
+                auto pureAddrType = addr->getType();
+                if (pureAddrType->isPointer()) pureAddrType = pureAddrType->getStorageType();
+                
                 if (!pureAddrType->isEqual(value->getType())) {
                     throw SakuraError(OccurredTerm::IR_GENERATING,
-                            "Cannot assign a value of a different type from the original.",
+                            "Cannot assign a value of a different type from the original. Expected to assign '" + 
+                                value->getType()->toString() + "' to '" + pureAddrType->toString() +"'",
                             info);
                 }
 

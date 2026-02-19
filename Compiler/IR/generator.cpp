@@ -25,7 +25,10 @@ namespace sakuraE::IR {
 
     IRValue* IRGenerator::visitIndexOpNode(IRValue* addr, fzlib::String target, NodePtr node) {
         auto indexValue = visitAddExprNode((*node)[ASTTag::HeadExpr]);
-        auto ty = addr->getType()->unboxComplex();
+        auto ty = addr->getType();
+        if (ty->isPointer()) {
+            ty = ty->unwrapPointer();
+        }
 
         if (ty->isArray()) {
             ty = static_cast<IRArrayType*>(ty)->getElementType();
