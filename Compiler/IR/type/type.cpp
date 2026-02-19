@@ -10,45 +10,29 @@ namespace sakuraE::IR {
     static std::map<std::pair<IRType*, uint64_t>, IRArrayType> arrayTypes;
     static std::map<std::pair<IRType*, std::vector<IRType*>>, IRFunctionType> funcTypes;
 
-    IRType* IRType::unboxComplex() {
-        if (!isComplexType()) return this;
+    IRType* IRType::unwrapPointer() {
+        if (!isPointer()) return this;
         else {
-            IRType* result = this;
-            bool flag = false;
+            auto ptr = static_cast<IRPointerType*>(this);
+            return ptr->getElementType();
+        }
+    }
 
-            auto isBasicType = [&]()->bool {
-                if (!result->isComplexType()) return true;
-
-                if (result->irTypeID == PointerTyID) {
+    IRType* IRType::getStorageType() {
+        if (!isPointer()) return this;
+        else {
+            auto result = this;
+            auto checker = [&]() -> bool {
+                if (result->isPointer()) {
                     auto ptr = static_cast<IRPointerType*>(result);
-                    if (ptr->getElementType()->irTypeID == IRTypeID::CharTyID) return true;
-                    if (flag) return true;
-                    flag = true;
+                    if (ptr->elementType->getIRTypeID() == CharTyID) return true;
+                    else return false;
                 }
-                else if (result->irTypeID == RefTyID) {
-                    if (flag) return true;
-                    flag = true;
-                }
-                else if (result->irTypeID == ArrayTyID) {
-                    return true;
-                }
-
-                return false;
+                else return true;
             };
 
-            while (!isBasicType()) {
-                if (result->irTypeID == ArrayTyID) {
-                    auto arrTy = static_cast<IRArrayType*>(result);
-                    result = arrTy->getElementType();
-                }
-                else if (result->irTypeID == PointerTyID) {
-                    auto ptrTy = static_cast<IRPointerType*>(result);
-                    result = ptrTy->getElementType();
-                }
-                else if (result->irTypeID == RefTyID) {
-                    auto refTy = static_cast<IRRefType*>(result);
-                    result = refTy->getElementType();
-                }
+            while (!checker()) {
+                result = static_cast<IRPointerType*>(result)->getElementType();
             }
 
             return result;

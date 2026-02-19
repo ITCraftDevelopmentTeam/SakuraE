@@ -51,7 +51,8 @@ namespace sakuraE::IR {
     public:
         virtual ~IRType() = default;
 
-        IRType* unboxComplex();
+        IRType* unwrapPointer();
+        IRType* getStorageType();
         IRTypeID getIRTypeID() const { return irTypeID; }
         bool isPointer() { return irTypeID == PointerTyID; }
         bool isRef() { return irTypeID == RefTyID; }
