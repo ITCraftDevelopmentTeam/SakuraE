@@ -53,7 +53,7 @@ sakuraE::NodePtr sakuraE::AtomIdentifierExprParser::genResource() {
         using VarType = std::decay_t<decltype(var)>;
         using TargetType = ConnectionParser<
             TokenParser<TokenType::LEFT_PAREN>,
-            WholeExprParser,
+            IdentifierExprParser,
             TokenParser<TokenType::RIGHT_PAREN>
         >;
 

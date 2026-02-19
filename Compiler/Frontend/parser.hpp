@@ -14,6 +14,7 @@ namespace sakuraE {
     class WholeExprParser;
     class BlockStmtParser;
     class ElseStmtParser;
+    class IdentifierExprParser;
     //
 
     using LiteralParserRule = OptionsParser<
@@ -110,7 +111,7 @@ namespace sakuraE {
             TokenParser<TokenType::IDENTIFIER>,
             ConnectionParser<
                 TokenParser<TokenType::LEFT_PAREN>,
-                WholeExprParser,
+                IdentifierExprParser,
                 TokenParser<TokenType::RIGHT_PAREN>
             >
         >,
