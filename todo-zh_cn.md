@@ -13,4 +13,6 @@
 - [ ] 完整的runtime支持
 - [x] gc系统
 - [ ] 变长参数
-- [ ] 更多控制流语句（break，continue等）
+- [ ] 更多控制流语句（break，continue，repeat，match等）
+- [ ] 显式类型转换
+- [ ] typeof 关键字和TypeInfo结构体支持

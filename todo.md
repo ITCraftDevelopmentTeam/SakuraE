@@ -13,4 +13,6 @@ This file mainly outlines the goals to be completed for each version of SakuraE.
 - [ ] Complete runtime support
 - [x] GC system
 - [ ] Variadic parameters
-- [ ] More control flow statements (break, continue, etc.)
+- [ ] More control flow statements (break, continue, repeat, match, etc.)
+- [ ] Explicit type conversion
+- [ ] Support for the typeof keyword and the TypeInfo struct.
