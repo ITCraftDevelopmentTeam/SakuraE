@@ -1,6 +1,7 @@
 #include "constant.hpp"
 #include "Compiler/Error/error.hpp"
 #include "Compiler/IR/type/type.hpp"
+#include "Compiler/IR/value/array.hpp"
 
 namespace sakuraE::IR {
     static std::map<int, Constant> i32Constants;
@@ -13,6 +14,7 @@ namespace sakuraE::IR {
     static std::map<char, Constant> charConstants;
     static std::map<bool, Constant> boolConstants;
     static std::map<TypeInfo*, Constant> typeInfoConstants;
+    static std::map<IRArray*, Constant> arrConstants;
 
 
     Constant* Constant::get(unsigned int val, PositionInfo info) {
@@ -121,6 +123,17 @@ namespace sakuraE::IR {
 
         IRType* tinfoTy = IRType::getTypeInfoTy();
         auto newEntry = typeInfoConstants.emplace(val, Constant(tinfoTy, val, info));
+        return &newEntry.first->second;
+    }
+
+    Constant* Constant::get(IRArray* val, PositionInfo info) {
+        auto it = arrConstants.find(val);
+        if (it != arrConstants.end()) {
+            return &it->second;
+        }
+
+        IRType* arrTy = val->getType();
+        auto newEntry = arrConstants.emplace(val, Constant(arrTy, val, info));
         return &newEntry.first->second;
     }
 

@@ -67,6 +67,7 @@ namespace sakuraE::IR {
         static Constant* get(char val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(bool val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(TypeInfo* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
+        static Constant* get(IRArray* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* getDefault(IRType* ty, PositionInfo info);
         static Constant* getFromToken(const Token& tok);
 
