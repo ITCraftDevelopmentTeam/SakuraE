@@ -1,6 +1,7 @@
 #ifndef SAKURAE_CONSTANT_HPP
 #define SAKURAE_CONSTANT_HPP
 
+#include <type_traits>
 #include <variant>
 #include <map>
 
@@ -90,21 +91,38 @@ namespace sakuraE::IR {
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, std::monostate>) {
                     return "null";
-                } else if constexpr (std::is_same_v<T, int>) {
+                } 
+                else if constexpr (std::is_same_v<T, int>) {
                     return std::to_string(arg);
-                } else if constexpr (std::is_same_v<T, float>) {
+                } 
+                else if constexpr (std::is_same_v<T, float>) {
                     return std::to_string(arg);
-                } else if constexpr (std::is_same_v<T, fzlib::String>) {
+                } 
+                else if constexpr (std::is_same_v<T, fzlib::String>) {
                     return arg;
-                } else if constexpr (std::is_same_v<T, char>) {
+                } 
+                else if constexpr (std::is_same_v<T, char>) {
                     char buf[4] = {'\'', arg, '\'', '\0'};
                     return fzlib::String(buf);
-                } else if constexpr (std::is_same_v<T, bool>) {
+                } 
+                else if constexpr (std::is_same_v<T, bool>) {
                     return arg ? "true" : "false";
-                } else if constexpr (std::is_same_v<T, TypeInfo*>) {
+                } 
+                else if constexpr (std::is_same_v<T, TypeInfo*>) {
                     return "<TypeInfo>";
-                } else if constexpr (std::is_same_v<T, IRValue*>) {
+                } 
+                else if constexpr (std::is_same_v<T, IRValue*>) {
                     return arg ? arg->getName() : "null";
+                }
+                else if constexpr (std::is_same_v<T, IRArray*>) {
+                    fzlib::String result = "[";
+                    for (std::size_t i = 0; i < arg->getSize(); i ++) {
+                        if (i == arg->getSize() - 1) 
+                            result += arg->getArray()[i]->getName() + "]";
+                        else 
+                            result += arg->getArray()[i]->getName() + ", ";
+                    }
+                    return result;
                 }
                 return "unknown";
             }, content);
