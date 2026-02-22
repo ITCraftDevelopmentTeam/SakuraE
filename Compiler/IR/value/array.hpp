@@ -3,12 +3,12 @@
 
 #include "Compiler/Error/error.hpp"
 #include "value.hpp"
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
 namespace sakuraE::IR {
     class IRArray {
-        IRType* arrType;
         std::vector<IRValue*> arrContent;
     public:
         IRArray(std::vector<IRValue*> arr, PositionInfo info) {
@@ -21,15 +21,37 @@ namespace sakuraE::IR {
                 }
             }
 
-            arrType = IRType::getArrayTy(arr[0]->getType(), arr.size());
             arrContent = arr;
         }
 
-        IRType* getType() { return arrType; }
+        IRType* getType() { return IRType::getArrayTy(arrContent[0]->getType(), arrContent.size()); }
         std::vector<IRValue*>& getArray() { return arrContent; }
         IRValue* getHead() { return arrContent[0]; }
         std::size_t getSize() { return arrContent.size(); }
+
+        bool isEqual(std::vector<IRValue*> arr) {
+            if (arr.size() != arrContent.size()) return false;
+
+            for (std::size_t i = 0; i < arrContent.size(); i ++) {
+                if (arrContent[i] != arr[i]) return false;
+            }
+
+            return true;
+        }
     };
+
+    static std::vector<IRArray*> arrPool;
+
+    static IRArray* createArray(std::vector<IRValue*> arr, PositionInfo info) {
+        for (auto irArr: arrPool) {
+            if (irArr->isEqual(arr)) return irArr;
+        }
+
+        IRArray* newArr = new IRArray(arr, info);
+        arrPool.push_back(newArr);
+
+        return newArr;
+    }
 }
 
 #endif // ! SAKURAE_ARRAY_HPP
