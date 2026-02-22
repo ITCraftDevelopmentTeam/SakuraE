@@ -562,7 +562,7 @@ namespace sakuraE::IR {
             rawArray.push_back(element);
         }
 
-        IRArray* irArr = createArray(rawArray, node->getPosInfo());
+        IRArray* irArr = IRArray::createArray(rawArray, node->getPosInfo());
         Constant* arrConstant = Constant::get(irArr, irArr->getInfo());
 
         return curFunc()
