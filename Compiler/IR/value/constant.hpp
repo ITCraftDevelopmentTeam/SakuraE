@@ -6,7 +6,9 @@
 
 #include <llvm/IR/Type.h>
 
-#include "value.hpp"
+#include "Compiler/Error/error.hpp"
+#include "Compiler/IR/value/value.hpp"
+#include "array.hpp"
 #include "Compiler/Frontend/lexer.h"
 #include "Compiler/IR/type/type_info.hpp"
 
@@ -27,7 +29,7 @@ namespace sakuraE::IR {
             char, 
             bool, 
             TypeInfo*,
-            IRValue*
+            IRArray*
         > content;
         PositionInfo createInfo;
 
@@ -51,7 +53,7 @@ namespace sakuraE::IR {
             : IRValue(ty), content(val), createInfo(info) {}
         Constant(IRType* ty, TypeInfo* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : IRValue(ty), content(val), createInfo(info) {}
-        Constant(IRType* ty, IRValue* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
+        Constant(IRType* ty, IRArray* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"})
             : IRValue(ty), content(val), createInfo(info) {}
 
     public:
@@ -65,7 +67,6 @@ namespace sakuraE::IR {
         static Constant* get(char val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(bool val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* get(TypeInfo* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
-        static Constant* get(IRValue* val, PositionInfo info = {0, 0, "NormalConstant, Not from token"});
         static Constant* getDefault(IRType* ty, PositionInfo info);
         static Constant* getFromToken(const Token& tok);
 
