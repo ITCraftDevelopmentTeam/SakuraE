@@ -29,6 +29,10 @@ namespace sakuraE::runtime {
         String, Array, Struct
     };
 
+    struct ObjectTypeInfo {
+
+    };
+
     enum GCMark: uint32_t {
         Unscanned,
         Uncomplete,
@@ -42,16 +46,16 @@ namespace sakuraE::runtime {
     };
 
     // status
-    static std::atomic<bool> need_gc {false};         
-    static std::atomic<int>  total_active {0};        
-    static std::atomic<int>  safepoints {0}; 
-    static std::condition_variable gc_cv;           
-    static std::condition_variable resume_cv;   
+    static std::atomic<bool> need_gc {false};
+    static std::atomic<int>  total_active {0};
+    static std::atomic<int>  safepoints {0};
+    static std::condition_variable gc_cv;
+    static std::condition_variable resume_cv;
 
     // alloc
     static std::atomic<size_t> allocated_bytes {0};
     inline size_t limit = 1024 * 1024;
-    static thread_local std::vector<void**> own_stack; 
+    static thread_local std::vector<void**> own_stack;
     static std::vector<std::vector<void**>*> global_stacks;
     static std::vector<ObjectHeader*> global_heap;
     static std::mutex gc_mutex;
