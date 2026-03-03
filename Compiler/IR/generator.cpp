@@ -30,6 +30,7 @@ namespace sakuraE::IR {
         auto ty = addr->getType();
 
         // check is lvalue
+        // // TODO: ERROR HERE
         if (ty->isArray()) {
             ty = static_cast<IRArrayType*>(ty)->getElementType();
         }
