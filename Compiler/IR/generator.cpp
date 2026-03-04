@@ -29,13 +29,24 @@ namespace sakuraE::IR {
     IRValue* IRGenerator::visitIndexOpNode(IRValue* addr, NodePtr node) {
         auto indexValue = visitAddExprNode((*node)[ASTTag::HeadExpr]);
         auto ty = addr->getType();
+
         // check is lvalue
-        // // TODO: ERROR HERE
-        // 如果用 a[0] = 19 ，而a为ptr的话，不会报错，但是会在运行时出现问题
         if (ty->isArray()) {
             ty = static_cast<IRArrayType*>(ty)->getElementType();
         }
+        else if (ty->isPointer()) {
+            ty = static_cast<IRPointerType*>(ty)->getElementType();
+            if (ty->getIRTypeID() == CharTyID) {}
+            else goto err_case;
+        }
+        else if (ty->isRef()) {
+            ty = static_cast<IRRefType*>(ty)->getElementType();
+            if (!ty->isArray()) goto err_case;
+
+            ty = static_cast<IRArrayType*>(ty)->getElementType();
+        }
         else {
+            err_case:
             throw SakuraError(
                 OccurredTerm::IR_GENERATING,
                 "Cannot index a non-array value.",
