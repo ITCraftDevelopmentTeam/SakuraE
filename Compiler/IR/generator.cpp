@@ -9,6 +9,7 @@
 #include "Compiler/IR/value/array.hpp"
 #include "Compiler/IR/value/constant.hpp"
 #include "Compiler/IR/value/value.hpp"
+#include "Compiler/Utils/Logger.hpp"
 #include "includes/magic_enum.hpp"
 
 namespace sakuraE::IR {
@@ -28,28 +29,13 @@ namespace sakuraE::IR {
     IRValue* IRGenerator::visitIndexOpNode(IRValue* addr, NodePtr node) {
         auto indexValue = visitAddExprNode((*node)[ASTTag::HeadExpr]);
         auto ty = addr->getType();
-
         // check is lvalue
         // // TODO: ERROR HERE
+        // 如果用 a[0] = 19 ，而a为ptr的话，不会报错，但是会在运行时出现问题
         if (ty->isArray()) {
             ty = static_cast<IRArrayType*>(ty)->getElementType();
         }
-        else if (ty->isPointer()) {
-            ty = static_cast<IRPointerType*>(ty)->getElementType();
-            if (ty->getIRTypeID() == IRTypeID::CharTyID) {}
-            else if (ty->isArray()) {
-                ty = static_cast<IRArrayType*>(ty)->getElementType();
-            }
-            else goto error_indexing;
-        }
-        else if (ty->isRef()) {
-            ty = static_cast<IRRefType*>(ty)->getElementType();
-            if (!ty->isArray()) goto error_indexing;
-
-            ty = static_cast<IRArrayType*>(ty)->getElementType();
-        }
         else {
-            error_indexing:
             throw SakuraError(
                 OccurredTerm::IR_GENERATING,
                 "Cannot index a non-array value.",
@@ -266,12 +252,21 @@ namespace sakuraE::IR {
                 case TokenType::MUL: {
                     if (auto inst = dynamic_cast<Instruction*>(resultAddr)) {
                         if (inst->isLValue()) {
+                            if (!resultAddr->getType()->isPointer()) {
+                                throw SakuraError(
+                                    OccurredTerm::IR_GENERATING,
+                                    "Cannot deref a non pointer identifier.",
+                                    node->getPosInfo()
+                                );
+                            }
                             auto load = createLoad(resultAddr, preOp.info);
+                            auto loadedType = load->getType();
+                            loadedType = dynamic_cast<IRPointerType*>(loadedType)->getElementType();
                             return curFunc()
                                 ->curBlock()
                                 ->createInstruction(
                                     OpKind::deref,
-                                    load->getType(),
+                                    loadedType,
                                     {load},
                                     "deref." + load->getName()
                                 );
