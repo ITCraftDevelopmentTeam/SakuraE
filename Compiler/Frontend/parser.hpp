@@ -37,9 +37,9 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
-            return {result.status, 
-                    std::make_shared<LiteralParser>(std::move(*result.val)), 
+
+            return {result.status,
+                    std::make_shared<LiteralParser>(std::move(*result.val)),
                     result.end};
         }
 
@@ -64,9 +64,9 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
-            return {result.status, 
-                    std::make_shared<IndexOpParser>(std::move(*result.val)), 
+
+            return {result.status,
+                    std::make_shared<IndexOpParser>(std::move(*result.val)),
                     result.end};
         }
 
@@ -97,7 +97,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<CallingOpParser>(std::move(*result.val)),
                     result.end};
@@ -135,7 +135,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<AtomIdentifierExprParser>(std::move(*result.val)),
                     result.end};
@@ -146,7 +146,7 @@ namespace sakuraE {
 
     using IdentifierExprParserRule = ConnectionParser<
         OptionsParser<
-            TokenParser<TokenType::LGC_NOT>, 
+            TokenParser<TokenType::LGC_NOT>,
             TokenParser<TokenType::AINC>,
             TokenParser<TokenType::SDEC>,
             TokenParser<TokenType::AND>,
@@ -180,7 +180,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<IdentifierExprParser>(std::move(*result.val)),
                     result.end};
@@ -211,7 +211,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<PrimExprParser>(std::move(*result.val)),
                     result.end};
@@ -246,7 +246,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<MulExprParser>(std::move(*result.val)),
                     result.end};
@@ -280,7 +280,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<AddExprParser>(std::move(*result.val)),
                     result.end};
@@ -288,7 +288,7 @@ namespace sakuraE {
 
         NodePtr genResource() override;
     };
-    
+
     using LogicExprParserRule = ConnectionParser<
         AddExprParser,
         ClosureParser<
@@ -318,7 +318,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<LogicExprParser>(std::move(*result.val)),
                     result.end};
@@ -352,7 +352,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<BinaryExprParser>(std::move(*result.val)),
                     result.end};
@@ -379,7 +379,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<ArrayExprParser>(std::move(*result.val)),
                     result.end};
@@ -412,7 +412,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<AssignExprParser>(std::move(*result.val)),
                     result.end};
@@ -429,7 +429,7 @@ namespace sakuraE {
     class WholeExprParser: public ResourceFetcher, public WholeExprParserRule {
     public:
         WholeExprParser(WholeExprParserRule&& base) : WholeExprParserRule(std::move(base)) {}
-        
+
         static bool check(TokenIter begin, TokenIter end) {
             return WholeExprParserRule::check(begin, end);
         }
@@ -439,7 +439,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<WholeExprParser>(std::move(*result.val)),
                     result.end};
@@ -448,15 +448,15 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using BasicTypeModifierParserRule = 
+    using BasicTypeModifierParserRule =
     OptionsParser<
         TokenParser<TokenType::TYPE_I32>,
         TokenParser<TokenType::TYPE_I64>,
         TokenParser<TokenType::TYPE_UI32>,
         TokenParser<TokenType::TYPE_UI64>,
-        TokenParser<TokenType::TYPE_CHAR>, 
+        TokenParser<TokenType::TYPE_CHAR>,
         TokenParser<TokenType::TYPE_F32>,
-        TokenParser<TokenType::TYPE_F64>, 
+        TokenParser<TokenType::TYPE_F64>,
         TokenParser<TokenType::TYPE_BOOL>,
         TokenParser<TokenType::TYPE_STRING>
     >;
@@ -473,7 +473,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<BasicTypeModifierParser>(std::move(*result.val)),
                     result.end};
@@ -481,7 +481,7 @@ namespace sakuraE {
 
         NodePtr genResource() override;
     };
-    
+
     using ArrayTypeModifierParserRule =
     ConnectionParser<
         BasicTypeModifierParser,
@@ -506,16 +506,16 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<ArrayTypeModifierParser>(std::move(*result.val)),
                     result.end};
-        } 
-        
+        }
+
         NodePtr genResource() override;
     };
 
-    using RangeExprParserRule = 
+    using RangeExprParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_RANGE>,
         OptionsParser<
@@ -536,7 +536,7 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<RangeExprParser>(std::move(*result.val)),
                     result.end};
@@ -545,11 +545,11 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    
-    using TypeModifierParserRule = 
+
+    using TypeModifierParserRule =
     ConnectionParser<
         OptionsParser<
-            BasicTypeModifierParser, 
+            BasicTypeModifierParser,
             ArrayTypeModifierParser
         >,
         OptionsParser<
@@ -571,17 +571,17 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<TypeModifierParser>(std::move(*result.val)),
                     result.end};
-        }   
-        
+        }
+
         NodePtr genResource() override;
     };
-    
-    // Statement parsers 
-    using DeclareStmtParserRule = 
+
+    // Statement parsers
+    using DeclareStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_LET>,
         TokenParser<TokenType::IDENTIFIER>,
@@ -612,16 +612,16 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<DeclareStmtParser>(std::move(*result.val)),
                     result.end};
-        }   
-        
+        }
+
         NodePtr genResource() override;
     };
 
-    using ExprStmtParserRule = 
+    using ExprStmtParserRule =
     ConnectionParser<
         OptionsParser<
             AssignExprParser,
@@ -642,16 +642,16 @@ namespace sakuraE {
             if (result.status != ParseStatus::SUCCESS) {
                 return {result.status, nullptr, result.end, result.err, result.err_pos};
             }
-            
+
             return {result.status,
                     std::make_shared<ExprStmtParser>(std::move(*result.val)),
                     result.end};
-        }   
-        
+        }
+
         NodePtr genResource() override;
     };
 
-    using IfStmtParserRule = 
+    using IfStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_IF>,
         TokenParser<TokenType::LEFT_PAREN>,
@@ -681,9 +681,9 @@ namespace sakuraE {
 
         NodePtr genResource() override;
     };
-    
 
-    using ElseStmtParserRule = 
+
+    using ElseStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_ELSE>,
         BlockStmtParser
@@ -706,9 +706,9 @@ namespace sakuraE {
 
         NodePtr genResource() override;
     };
-    
 
-    using WhileStmtParserRule = 
+
+    using WhileStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_WHILE>,
         TokenParser<TokenType::LEFT_PAREN>,
@@ -735,14 +735,41 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using TraditionalConditionChain = 
+    using RepeatStmtParserRule =
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_REPEAT>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        WholeExprParser,
+        TokenParser<TokenType::RIGHT_PAREN>,
+        BlockStmtParser
+    >;
+    class RepeatStmtParser: public ResourceFetcher, public RepeatStmtParserRule {
+    public:
+        RepeatStmtParser(RepeatStmtParserRule&& base) : RepeatStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return RepeatStmtParserRule::check(begin, end);
+        }
+
+        static Result<RepeatStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = RepeatStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end, result.err, result.err_pos};
+            }
+            return {result.status, std::make_shared<RepeatStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
+    using TraditionalConditionChain =
     ConnectionParser<
         DeclareStmtParser,
         BinaryExprParser,
         TokenParser<TokenType::STMT_END>,
         WholeExprParser
     >;
-    using RangeConditionChain = 
+    using RangeConditionChain =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_LET>,
         TokenParser<TokenType::IDENTIFIER>,
@@ -755,7 +782,7 @@ namespace sakuraE {
         TokenParser<TokenType::ASSIGN_OP>,
         RangeExprParser
     >;
-    using ForStmtParserRule = 
+    using ForStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_FOR>,
         TokenParser<TokenType::LEFT_PAREN>,
@@ -785,7 +812,7 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using ReturnStmtParserRule = 
+    using ReturnStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_RETURN>,
         WholeExprParser,
@@ -810,7 +837,7 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using BreakStmtParserRule = 
+    using BreakStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_BREAK>,
         TokenParser<TokenType::STMT_END>
@@ -834,7 +861,7 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using ContinueStmtParserRule = 
+    using ContinueStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::KEYWORD_CONTINUE>,
         TokenParser<TokenType::STMT_END>
@@ -857,8 +884,8 @@ namespace sakuraE {
 
         NodePtr genResource() override;
     };
-    
-    using ContainableStmt = 
+
+    using ContainableStmt =
     OptionsParser<
         DeclareStmtParser,
         ExprStmtParser,
@@ -869,7 +896,7 @@ namespace sakuraE {
         ContinueStmtParser,
         BreakStmtParser
     >;
-    using BlockStmtParserRule = 
+    using BlockStmtParserRule =
     ConnectionParser<
         TokenParser<TokenType::LEFT_BRACKET>,
         ClosureParser<ContainableStmt>,
@@ -894,7 +921,7 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    using MemberUnit = 
+    using MemberUnit =
     ConnectionParser<
         TokenParser<TokenType::IDENTIFIER>,
         TokenParser<TokenType::CONSTRAINT_OP>,
@@ -930,8 +957,8 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
-    
-    using StatementParserRule = 
+
+    using StatementParserRule =
     OptionsParser<
         FuncDefineStmtParser,
         DeclareStmtParser,

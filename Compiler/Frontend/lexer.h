@@ -16,14 +16,14 @@
 
 namespace sakuraE {
     enum class TokenType {
-        IDENTIFIER, KEYWORD,  
+        IDENTIFIER, KEYWORD,
 
         INT_N, FLOAT_N,
         STRING, CHAR,
         BOOL_CONST,
 
         ADD, SUB, MUL, DIV, MOD,
-        OR, AND, 
+        OR, AND,
         LGC_NOT, LGC_NOT_EQU, LGC_AND, LGC_OR, LGC_EQU, LGC_MR_THAN, LGC_LS_THAN, LGC_MREQU_THAN, LGC_LSEQU_THAN,
         LEFT_PAREN, RIGHT_PAREN, // ()
         LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, // []
@@ -45,10 +45,11 @@ namespace sakuraE {
         KEYWORD_WHILE, KEYWORD_FOR, KEYWORD_FUNC,
         KEYWORD_RETURN, KEYWORD_CONST, KEYWORD_RANGE,
         KEYWORD_BREAK, KEYWORD_CONTINUE, KEYWORD_REF,
-        KEYWORD_STRUCT, KEYWORD_IMPL,
-        
-        TYPE_I32, TYPE_I64, TYPE_F32, 
-        TYPE_F64, TYPE_CHAR, TYPE_BOOL, 
+        KEYWORD_STRUCT, KEYWORD_IMPL, KEYWORD_REPEAT,
+        KEYWORD_MATCH,
+
+        TYPE_I32, TYPE_I64, TYPE_F32,
+        TYPE_F64, TYPE_CHAR, TYPE_BOOL,
         TYPE_STRING, TYPE_UI32, TYPE_UI64,
 
         _EOF_,
@@ -58,7 +59,7 @@ namespace sakuraE {
     class Token {
     public:
         PositionInfo info;
-        fzlib::String content; 
+        fzlib::String content;
         TokenType type;
 
         Token(TokenType t = TokenType::UNKNOWN,
@@ -83,8 +84,8 @@ namespace sakuraE {
         int current_column = 1;
 
         const std::vector<fzlib::String> keywords = {
-            "if", "else", "while", "for", "func", 
-            "return", "let", "const", "range", "true", 
+            "if", "else", "while", "for", "func",
+            "return", "let", "const", "range", "true",
             "false", "break", "continue", "match", "repeat",
             "struct", "impl", "is", "typeof", "ref"
         };
