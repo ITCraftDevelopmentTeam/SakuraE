@@ -1,3 +1,4 @@
+
 #ifndef SAKURAE_PARSER_HPP
 #define SAKURAE_PARSER_HPP
 #include <memory>
@@ -893,6 +894,7 @@ namespace sakuraE {
         WhileStmtParser,
         ForStmtParser,
         ReturnStmtParser,
+        RepeatStmtParser,
         ContinueStmtParser,
         BreakStmtParser
     >;
@@ -967,6 +969,7 @@ namespace sakuraE {
         WhileStmtParser,
         ForStmtParser,
         ReturnStmtParser,
+        RepeatStmtParser,
         ContinueStmtParser,
         BreakStmtParser
     >;
