@@ -933,6 +933,7 @@ namespace sakuraE {
         ForStmtParser,
         ReturnStmtParser,
         RepeatStmtParser,
+        MatchStmtParser,
         ContinueStmtParser,
         BreakStmtParser
     >;
@@ -1008,6 +1009,7 @@ namespace sakuraE {
         ForStmtParser,
         ReturnStmtParser,
         RepeatStmtParser,
+        MatchStmtParser,
         ContinueStmtParser,
         BreakStmtParser
     >;
