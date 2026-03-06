@@ -763,6 +763,44 @@ namespace sakuraE {
         NodePtr genResource() override;
     };
 
+    using MatchStmtParserRule =
+    ConnectionParser<
+        TokenParser<TokenType::KEYWORD_MATCH>,
+        TokenParser<TokenType::LEFT_PAREN>,
+        IdentifierExprParser,
+        TokenParser<TokenType::RIGHT_PAREN>,
+        TokenParser<TokenType::LEFT_BRACKET>,
+        ClosureParser<
+            ConnectionParser<
+                OptionsParser<
+                    WholeExprParser,
+                    TokenParser<TokenType::KEYWORD_DEFAULT>
+                >,
+                TokenParser<TokenType::BIG_ARROW>,
+                BlockStmtParser
+            >
+        >,
+        TokenParser<TokenType::RIGHT_BRACKET>
+    >;
+    class MatchStmtParser: public ResourceFetcher, public MatchStmtParserRule {
+    public:
+        MatchStmtParser(MatchStmtParserRule&& base) : MatchStmtParserRule(std::move(base)) {}
+
+        static bool check(TokenIter begin, TokenIter end) {
+            return MatchStmtParserRule::check(begin, end);
+        }
+
+        static Result<MatchStmtParser> parse(TokenIter begin, TokenIter end) {
+            auto result = MatchStmtParserRule::parse(begin, end);
+            if (result.status != ParseStatus::SUCCESS) {
+                return {result.status, nullptr, result.end, result.err, result.err_pos};
+            }
+            return {result.status, std::make_shared<MatchStmtParser>(std::move(*result.val)), result.end};
+        }
+
+        NodePtr genResource() override;
+    };
+
     using TraditionalConditionChain =
     ConnectionParser<
         DeclareStmtParser,
