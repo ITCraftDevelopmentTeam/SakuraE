@@ -87,6 +87,12 @@ namespace sakuraE::IR {
         }
 
         IRValue* createBr(IRValue* targetBlock) {
+            if (instructions.empty())
+                return createInstruction(OpKind::br,
+                                        IRType::getVoidTy(),
+                                    {targetBlock},
+                                        "br.(" + targetBlock->getName() + ")");
+
             if (!instructions.back()->isTerminal())
                 return createInstruction(OpKind::br,
                                         IRType::getVoidTy(),
@@ -97,6 +103,12 @@ namespace sakuraE::IR {
         }
 
         IRValue* createCondBr(IRValue* cond, IRValue* thenBlock, IRValue* elseBlock) {
+            if (instructions.empty()) 
+                return createInstruction(OpKind::cond_br,
+                                        IRType::getVoidTy(),
+                                        {cond, thenBlock, elseBlock},
+                                        "cond_br.(" + thenBlock->getName() + ").(" + elseBlock->getName() + ")");
+
             if (!instructions.back()->isTerminal())
                 return createInstruction(OpKind::cond_br,
                                         IRType::getVoidTy(),
@@ -107,6 +119,12 @@ namespace sakuraE::IR {
         }
 
         IRValue* createReturn(IRValue* value) {
+            if (instructions.empty()) 
+                return createInstruction(OpKind::ret,
+                                        IRType::getVoidTy(),
+                                        {value},
+                                        "ret");
+
             if (!instructions.back()->isTerminal())
                 return createInstruction(OpKind::ret,
                                         IRType::getVoidTy(),
