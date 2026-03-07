@@ -1015,6 +1015,7 @@ namespace sakuraE::IR {
         IRValue* mergeBlock = curFunc()->buildBlock("match.merge");
         int mergeBlockExitIndex = curFunc()->cur();
 
+        bool hasDefault = false;
         for (std::size_t i = 0; i < cases.size(); i ++) {
             static int matchCaseIndex = 0;
             
@@ -1027,6 +1028,7 @@ namespace sakuraE::IR {
                         cs->getPosInfo()
                     );
                 }
+                hasDefault = true;
                 defaultThenBlock = visitBlockStmtNode((*cs)[ASTTag::Block], "match.default");
                 curFunc()
                     ->curBlock()
@@ -1058,6 +1060,13 @@ namespace sakuraE::IR {
             matchCaseIndex ++;
         }
 
+        if (!hasDefault)
+            throw SakuraError(
+                OccurredTerm::IR_GENERATING,
+                "Match Statement must have 'default' case.",
+                node->getPosInfo()
+            );
+
         for (std::size_t i = 0; i < caseBlockPairs.size(); i ++) {
             int caseBlockExitIndex = std::get<0>(caseBlockPairs[i]);
             IRValue* condResult = std::get<1>(caseBlockPairs[i]);
@@ -1073,9 +1082,16 @@ namespace sakuraE::IR {
                     ->createCondBr(condResult, thenBlock, defaultThenBlock);
         }
 
-        curFunc()
-            ->block(beforeBlockIndex)
-            ->createBr(caseBlocks[0]);
+        if (caseBlockPairs.empty()) {
+            curFunc()
+                ->block(beforeBlockIndex)
+                ->createBr(defaultThenBlock);
+        }
+        else {
+            curFunc()
+                ->block(beforeBlockIndex)
+                ->createBr(caseBlocks[0]);
+        }
 
         curFunc()->moveCursor(mergeBlockExitIndex);
         
