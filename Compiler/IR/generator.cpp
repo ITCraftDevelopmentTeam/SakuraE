@@ -1134,6 +1134,14 @@ namespace sakuraE::IR {
 
         retType = typeInfo->toIRType();
 
+        if (fnName == "main" && !retType->isEqual(IRType::getInt32Ty())) {
+            throw SakuraError(
+                OccurredTerm::IR_GENERATING,
+                "'main' function must return 'i32' value.",
+                (*node)[ASTTag::Type]->getPosInfo()
+            );
+        }
+
         curFunc()->setFuncDefineInfo(params, retType);
 
         visitBlockStmtNode((*node)[ASTTag::Block], "fn." + fnName, initBlockIndex);
@@ -1143,6 +1151,14 @@ namespace sakuraE::IR {
 
     IRValue* IRGenerator::visitReturnStmtNode(NodePtr node) {
         IRValue* retValue = visitWholeExprNode((*node)[ASTTag::HeadExpr]);
+
+        if (!retValue->getType()->isEqual(curFunc()->getReturnType())) {
+            throw SakuraError(
+                OccurredTerm::IR_GENERATING,
+                "The type of the value in a return statement must match the function's return type.",
+                (*node)[ASTTag::HeadExpr]->getPosInfo()
+            );
+        }
 
         return curFunc()
                     ->curBlock()
