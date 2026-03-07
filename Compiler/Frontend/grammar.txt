@@ -32,8 +32,13 @@ IfStmt -> 'if' '(' BinaryExpr ')' Stmt | BlockStmt
 ElseStmt -> 'else' Stmt | BlockStmt
 WhileStmt -> 'while' '(' BinaryExpr ')' Stmt | BlockStmt
 ForStmt -> 'for' '(' LetStmt BinaryExpr ';' WholeExpr ';' ')' Stmt | BlockStmt
+RepeatStmt -> 'repeat' '(' WholeExpr ')' BlockStmt
+MatchStmt -> 'match' '(' IdentifierExpr ')' '{' (WholeExpr '=>' BlockStmt)* 'default' '=>' BlockStmt '}'
 FuncDefineStmt -> 'func' <field> '(' (<field> ':' TypeModifier) (',' <field> ':' TypeModifier) ')' '->' TypeModifier BlockStmt
 ReturnStmt -> 'return' WholeExpr ';'
 BreakStmt -> 'break' ';'
 ContinueStmt -> 'continue' ';'
-Stmt -> DeclareStmt | ExprStmt | BlockStmt | IfStmt | ElseStmt | WhileStmt | ForStmt | ReturnStmt | BreakStmt | ContinueStmt
+Stmt -> DeclareStmt | ExprStmt | BlockStmt | 
+        IfStmt | ElseStmt | WhileStmt | 
+        ForStmt | ReturnStmt | BreakStmt | 
+        ContinueStmt | MatchStmt | RepeatStmt
