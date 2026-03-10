@@ -82,6 +82,27 @@ namespace sakuraE::runtime {
     static std::vector<ObjectHeader*> global_heap;
     static std::mutex gc_mutex;
 
+    const GCTypeInfo GC_ATOMIC_TYPE = {
+        "atomic",
+        GCObjectKind::Atomic,
+        false,
+        nullptr,
+        nullptr
+    };
+
+    const GCTypeInfo GC_STRING_TYPE = {
+        "string",
+        GCObjectKind::Atomic,
+        false,
+        nullptr,
+        nullptr
+    };
+
+    static ObjectHeader* __gc_get_unlocked(void* payload);
+    static void __gc_wklist_push(void* obj, void* context);
+    static void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void* contest);
+    static void __gc_scan_array(void* obj, GCArrayLayout* a_layout, void* context);
+
     extern "C" void   __gc_create_thread();
     extern "C" void   __gc_safe_point();
     extern "C" void*  __gc_alloc(size_t size, GCTypeInfo* ty, uint64_t member_count = 0);
