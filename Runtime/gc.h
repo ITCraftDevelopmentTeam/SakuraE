@@ -34,8 +34,7 @@ namespace sakuraE::runtime {
     enum class GCObjectKind: uint8_t {
         Atomic,
         Struct,
-        Array,
-        Object
+        Array
     };
     
     struct ObjectHeader;
@@ -43,25 +42,25 @@ namespace sakuraE::runtime {
 
     struct GCStructLayout {
         uint32_t ptr_count;
-        const uint32_t* ptr_offsets;
+        uint32_t* ptr_offsets;
     };
 
     struct GCArrayLayout {
         uint32_t member_size;
         bool is_ptr;
-        const GCTypeInfo* member_type;
+        GCTypeInfo* member_type;
     };
 
     struct GCTypeInfo {
         const char* name;
         GCObjectKind kind;
         bool contains_refs;
-        const GCStructLayout* struct_layout;
-        const GCArrayLayout* array_layout;
+        GCStructLayout* struct_layout;
+        GCArrayLayout* array_layout;
     };
 
     struct ObjectHeader {
-        const GCTypeInfo* type_info;
+        GCTypeInfo* type_info;
         std::atomic<GCMark> obj_status;
         uint64_t obj_size;
         uint64_t elem_count;
@@ -78,11 +77,12 @@ namespace sakuraE::runtime {
     static std::atomic<size_t> allocated_bytes {0};
     inline size_t limit = 1024 * 1024;
     static thread_local std::vector<void**> own_stack;
+    static thread_local bool is_registered = false;
     static std::vector<std::vector<void**>*> global_stacks;
     static std::vector<ObjectHeader*> global_heap;
     static std::mutex gc_mutex;
 
-    const GCTypeInfo GC_ATOMIC_TYPE = {
+    static inline GCTypeInfo GC_ATOMIC_TYPE = {
         "atomic",
         GCObjectKind::Atomic,
         false,
@@ -90,7 +90,7 @@ namespace sakuraE::runtime {
         nullptr
     };
 
-    const GCTypeInfo GC_STRING_TYPE = {
+    static inline GCTypeInfo GC_STRING_TYPE = {
         "string",
         GCObjectKind::Atomic,
         false,
@@ -100,8 +100,11 @@ namespace sakuraE::runtime {
 
     static ObjectHeader* __gc_get_unlocked(void* payload);
     static void __gc_wklist_push(void* obj, void* context);
-    static void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void* contest);
-    static void __gc_scan_array(void* obj, GCArrayLayout* a_layout, void* context);
+    static void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void (*visit)(void*, void*), void* context);
+    static void __gc_scan_embedded(void* mem, GCTypeInfo* ty, void (*visit)(void*, void*), void* ctx);
+    static void __gc_scan_array(void* obj, ObjectHeader* header, GCArrayLayout* a_layout, void (*visit)(void*, void*), void* context);
+    static void __gc_scan_object(void* obj, ObjectHeader* header, void (*visit)(void*, void*), void* ctx);
+    static void __gc_scan_unlocked(void* root);
 
     extern "C" void   __gc_create_thread();
     extern "C" void   __gc_safe_point();
