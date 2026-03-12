@@ -108,18 +108,35 @@ namespace sakuraE::Codegen {
                 codegenContext.builder->CreateCall(fn->content, {});
             }
 
-            llvm::Value* gcAlloc(llvm::Value* size, runtime::ObjectType ty) {
+            llvm::Value* gcAlloc(llvm::Value* size, runtime::GCObjectKind kind) {
                 auto fn = parent->lookup("__gc_alloc");
                 return codegenContext.builder->CreateCall(fn->content,  {
-                    size, codegenContext.builder->getInt32(ty)
+                    size, codegenContext.builder->getInt32((uint8_t)kind)
                 });
             }
 
-            llvm::Value* gcAlloc(int size, runtime::ObjectType ty) {
+            llvm::Value* gcAlloc(llvm::Value* size, llvm::Value* gcTy, llvm::Value* elemCount = nullptr) {
+                auto fn = parent->lookup("__gc_alloc");
+
+                if (!elemCount) {
+                    elemCount = codegenContext.builder->getInt64(0);
+                }
+            
+                return codegenContext.builder->CreateCall(fn->content, {
+                    size,
+                    gcTy,
+                    elemCount
+                });
+            }
+
+            llvm::Value* gcAlloc(int size, llvm::Value* gcTy, uint64_t elemCount = 0) {
                 auto fn = parent->lookup("__gc_alloc");
                 auto sTy = parent->content->getDataLayout().getIntPtrType(*codegenContext.context);
-                return codegenContext.builder->CreateCall(fn->content,  {
-                    llvm::ConstantInt::get(sTy, size), codegenContext.builder->getInt32(ty)
+
+                return codegenContext.builder->CreateCall(fn->content, {
+                    llvm::ConstantInt::get(sTy, size),
+                    gcTy,
+                    codegenContext.builder->getInt64(elemCount)
                 });
             }
 
@@ -167,14 +184,12 @@ namespace sakuraE::Codegen {
                 return alloca;
             }
 
-            llvm::Value* createHeapAlloc(llvm::Type* t, runtime::ObjectType objTy, fzlib::String n) {
-                if (t->isPointerTy()) std::cout << "YES" << std::endl;
+            llvm::Value* createHeapAlloc(llvm::Type* t, llvm::Value* gcTy, fzlib::String n) {
                 size_t size = parent->content->getDataLayout().getTypeAllocSize(t);
                 llvm::Type* sizeTy = parent->content->getDataLayout().getIntPtrType(*codegenContext.context);
-
                 llvm::Value* sizeVal = llvm::ConstantInt::get(sizeTy, size);
-
-                return gcAlloc(sizeVal, objTy);
+                        
+                return gcAlloc(sizeVal, gcTy, codegenContext.builder->getInt64(0));
             }
 
             llvm::Value* getParamAddress(fzlib::String n) {
@@ -191,7 +206,7 @@ namespace sakuraE::Codegen {
             // Start LLVM IR Code generation
             void codegen();
         };
-        // Represent LLVM Module Instantce
+        // Represent LLVM Module Instance
         struct LLVMModule {
             fzlib::String ID;
             llvm::Module* content = nullptr;
