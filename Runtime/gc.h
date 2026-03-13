@@ -67,44 +67,34 @@ namespace sakuraE::runtime {
     };
 
     // status
-    static std::atomic<bool> need_gc {false};
-    static std::atomic<int>  total_active {0};
-    static std::atomic<int>  safepoints {0};
-    static std::condition_variable gc_cv;
-    static std::condition_variable resume_cv;
+    extern std::atomic<bool> need_gc;
+    extern std::atomic<int>  total_active;
+    extern std::atomic<int>  safepoints;
+    extern std::condition_variable gc_cv;
+    extern std::condition_variable resume_cv;
 
     // alloc
-    static std::atomic<size_t> allocated_bytes {0};
-    inline size_t limit = 1024 * 1024;
-    static thread_local std::vector<void**> own_stack;
-    static thread_local bool is_registered = false;
-    static std::vector<std::vector<void**>*> global_stacks;
-    static std::vector<ObjectHeader*> global_heap;
-    static std::mutex gc_mutex;
+    extern std::atomic<size_t> allocated_bytes;
+    extern size_t limit;
+    extern thread_local std::vector<void**> own_stack;
+    extern thread_local bool is_registered;
+    extern std::vector<std::vector<void**>*> global_stacks;
+    extern std::vector<ObjectHeader*> global_heap;
+    extern std::mutex gc_mutex;
 
-    static inline GCTypeInfo GC_ATOMIC_TYPE = {
-        "atomic",
-        GCObjectKind::Atomic,
-        false,
-        nullptr,
-        nullptr
-    };
+    [[maybe_unused]] extern inline GCTypeInfo GC_ATOMIC_TYPE;
+    [[maybe_unused]] extern inline GCTypeInfo GC_STRING_TYPE;
 
-    static inline GCTypeInfo GC_STRING_TYPE = {
-        "string",
-        GCObjectKind::Atomic,
-        false,
-        nullptr,
-        nullptr
-    };
+    extern "C" GCTypeInfo* __gc_get_atomic_type();
+    extern "C" GCTypeInfo* __gc_get_string_type();
 
-    static ObjectHeader* __gc_get_unlocked(void* payload);
-    static void __gc_wklist_push(void* obj, void* context);
-    static void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void (*visit)(void*, void*), void* context);
-    static void __gc_scan_embedded(void* mem, GCTypeInfo* ty, void (*visit)(void*, void*), void* ctx);
-    static void __gc_scan_array(void* obj, ObjectHeader* header, GCArrayLayout* a_layout, void (*visit)(void*, void*), void* context);
-    static void __gc_scan_object(void* obj, ObjectHeader* header, void (*visit)(void*, void*), void* ctx);
-    static void __gc_scan_unlocked(void* root);
+    extern "C" ObjectHeader* __gc_get_unlocked(void* payload);
+    extern "C" void __gc_wklist_push(void* obj, void* context);
+    extern "C" void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void (*visit)(void*, void*), void* context);
+    extern "C" void __gc_scan_embedded(void* mem, GCTypeInfo* ty, void (*visit)(void*, void*), void* ctx);
+    extern "C" void __gc_scan_array(void* obj, ObjectHeader* header, GCArrayLayout* a_layout, void (*visit)(void*, void*), void* context);
+    extern "C" void __gc_scan_object(void* obj, ObjectHeader* header, void (*visit)(void*, void*), void* ctx);
+    extern "C" void __gc_scan_unlocked(void* root);
 
     extern "C" void   __gc_create_thread();
     extern "C" void   __gc_safe_point();

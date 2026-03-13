@@ -2,7 +2,47 @@
 #include <atomic>
 
 namespace sakuraE::runtime {
-    static ObjectHeader* __gc_get_unlocked(void* payload) {
+    // status
+    std::atomic<bool> need_gc {false};
+    std::atomic<int>  total_active {0};
+    std::atomic<int>  safepoints {0};
+    std::condition_variable gc_cv;
+    std::condition_variable resume_cv;
+
+    // alloc
+    std::atomic<size_t> allocated_bytes {0};
+    size_t limit = 1024 * 1024;
+    thread_local std::vector<void**> own_stack;
+    thread_local bool is_registered = false;
+    std::vector<std::vector<void**>*> global_stacks;
+    std::vector<ObjectHeader*> global_heap;
+    std::mutex gc_mutex;
+
+    [[maybe_unused]] GCTypeInfo GC_ATOMIC_TYPE = {
+        "atomic",
+        GCObjectKind::Atomic,
+        false,
+        nullptr,
+        nullptr
+    };
+
+    [[maybe_unused]] GCTypeInfo GC_STRING_TYPE = {
+        "string",
+        GCObjectKind::Atomic,
+        false,
+        nullptr,
+        nullptr
+    };
+
+    extern "C" GCTypeInfo* __gc_get_atomic_type() {
+        return &GC_ATOMIC_TYPE;
+    }
+
+    extern "C" GCTypeInfo* __gc_get_string_type() {
+        return &GC_STRING_TYPE;
+    }
+
+    extern "C" ObjectHeader* __gc_get_unlocked(void* payload) {
         for (auto* header : global_heap) {
             if (static_cast<void*>(header + 1) == payload) {
                 return header;
@@ -11,7 +51,7 @@ namespace sakuraE::runtime {
         return nullptr;
     }
 
-    static void __gc_wklist_push(void* obj, void* context) {
+    extern "C" void __gc_wklist_push(void* obj, void* context) {
         if (!obj) {
             return;
         }
@@ -19,7 +59,7 @@ namespace sakuraE::runtime {
         work->push(obj);
     }
 
-    static void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void (*visit)(void*, void*), void* context) {
+    extern "C" void __gc_scan_struct(void* obj, GCStructLayout* s_layout, void (*visit)(void*, void*), void* context) {
         if (!obj || !s_layout) {
             return;
         }
@@ -33,7 +73,7 @@ namespace sakuraE::runtime {
         }
     }
 
-    static void __gc_scan_embedded(void* mem, GCTypeInfo* ty, void (*visit)(void*, void*), void* ctx) {
+    extern "C" void __gc_scan_embedded(void* mem, GCTypeInfo* ty, void (*visit)(void*, void*), void* ctx) {
         if (!mem || !ty || !ty->contains_refs) {
             return;
         }
@@ -48,7 +88,7 @@ namespace sakuraE::runtime {
         }
     }
 
-    static void __gc_scan_array(void* obj, ObjectHeader* header, GCArrayLayout* a_layout, void (*visit)(void*, void*), void* context) {
+    extern "C" void __gc_scan_array(void* obj, ObjectHeader* header, GCArrayLayout* a_layout, void (*visit)(void*, void*), void* context) {
         if (!obj || !header || !a_layout) {
             return;
         }
@@ -68,7 +108,7 @@ namespace sakuraE::runtime {
         }
     }
 
-    static void __gc_scan_object(void* obj, ObjectHeader* header, void (*visit)(void*, void*), void* ctx) {
+    extern "C" void __gc_scan_object(void* obj, ObjectHeader* header, void (*visit)(void*, void*), void* ctx) {
         if (!obj || !header) {
             return;
         }
@@ -88,7 +128,7 @@ namespace sakuraE::runtime {
         }
     }
 
-    static void __gc_scan_unlocked(void* root) {
+    extern "C" void __gc_scan_unlocked(void* root) {
         if (!root) {
             return;
         }
