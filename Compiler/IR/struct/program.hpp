@@ -84,7 +84,8 @@ namespace sakuraE::IR {
                 IRType::getPointerTo(IRType::getVoidTy()), 
                 {
                     { "size", IRType::getUIntNTy(targetSize) },
-                    { "ty", IRType::getUInt32Ty() }
+                    { "ty", IRType::getPointerTo(IRType::getVoidTy()) },
+                    { "member_count", IRType::getUInt64Ty() }
                 }, 
                 info
             );
