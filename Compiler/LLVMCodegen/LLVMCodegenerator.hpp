@@ -108,13 +108,6 @@ namespace sakuraE::Codegen {
                 codegenContext.builder->CreateCall(fn->content, {});
             }
 
-            llvm::Value* gcAlloc(llvm::Value* size, runtime::GCObjectKind kind) {
-                auto fn = parent->lookup("__gc_alloc");
-                return codegenContext.builder->CreateCall(fn->content,  {
-                    size, codegenContext.builder->getInt32((uint8_t)kind)
-                });
-            }
-
             llvm::Value* gcAlloc(llvm::Value* size, llvm::Value* gcTy, llvm::Value* elemCount = nullptr) {
                 auto fn = parent->lookup("__gc_alloc");
 
@@ -225,6 +218,22 @@ namespace sakuraE::Codegen {
                 for (auto& pair : fnMap) {
                     if (pair.second) delete pair.second;
                 }
+            }
+
+            llvm::Value* getAtomicGCType() {
+                auto callee = content->getOrInsertFunction(
+                    "__gc_get_atomic_type",
+                    llvm::FunctionType::get(codegenContext.builder->getPtrTy(), false)
+                );
+                return codegenContext.builder->CreateCall(callee, {});
+            }
+        
+            llvm::Value* getStringGCType() {
+                auto callee = content->getOrInsertFunction(
+                    "__gc_get_string_type",
+                    llvm::FunctionType::get(codegenContext.builder->getPtrTy(), false)
+                );
+                return codegenContext.builder->CreateCall(callee, {});
             }
 
             void declareFunction(FunctionType ty, fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
