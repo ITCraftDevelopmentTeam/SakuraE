@@ -266,7 +266,7 @@ namespace sakuraE::Codegen {
                 auto arrayType = ins->getType()->toLLVMType(*context);
                 auto elementType = arrayType->getArrayElementType();
 
-                llvm::Value* arrayPtr = curFn->createHeapAlloc(arrayType, runtime::ObjectType::Array, "tmparr");
+                llvm::Value* arrayPtr = curFn->createHeapAlloc(arrayType, curFn->parent->getAtomicGCType(), "tmparr");
 
                 for (std::size_t i = 0; i < arrayContent.size(); i ++) {
                     auto ptr = builder->CreateGEP(elementType,
