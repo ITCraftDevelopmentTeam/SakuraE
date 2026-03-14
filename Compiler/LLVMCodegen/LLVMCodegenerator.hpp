@@ -274,12 +274,12 @@ namespace sakuraE::Codegen {
 
         // Instruction Referring ==============================================
         std::map<IR::IRValue*, llvm::Value*> instructionMap;
-        // Get IRValue to llvm Value referrence
+        // Get IRValue to llvm Value reference
         inline llvm::Value* getRef(IR::IRValue* sakIRVal) {
             return instructionMap[sakIRVal];
         }
 
-        // Create a new IRValue to llvm Value referrence
+        // Create a new IRValue to llvm Value reference
         inline void bind(IR::IRValue* sakIRVal, llvm::Value* llvmIRVal) {
             instructionMap[sakIRVal] = llvmIRVal;
         }
@@ -368,9 +368,9 @@ namespace sakuraE::Codegen {
 
                         auto strVar = builder->CreateGlobalString(strVal.c_str(), "tmpstr");
 
-                        auto string_creater = curFn->parent->lookup("create_string");
+                        auto string_creator = curFn->parent->lookup("create_string");
 
-                        llvm::Value* heapStr = builder->CreateCall(string_creater->content, {strVar}, "heap_str");
+                        llvm::Value* heapStr = builder->CreateCall(string_creator->content, {strVar}, "heap_str");
                         stringPool[strVal] = heapStr;
 
                         return heapStr;
