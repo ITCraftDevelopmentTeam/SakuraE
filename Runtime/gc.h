@@ -17,12 +17,17 @@
 #include <stdint.h>
 #include <cstdlib>
 #include <atomic>
+#include <string>
+#include <atomic>
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <cstdlib>
+#include <map>
 #include <mutex>
 #include <stack>
+
+#include "includes/String.hpp"
 
 namespace sakuraE::runtime {
     enum GCMark: uint32_t {
@@ -42,21 +47,21 @@ namespace sakuraE::runtime {
 
     struct GCStructLayout {
         uint32_t ptr_count;
-        uint32_t* ptr_offsets;
+        uint32_t* ptr_offsets = nullptr;
     };
 
     struct GCArrayLayout {
         uint32_t member_size;
         bool is_ptr;
-        GCTypeInfo* member_type;
+        GCTypeInfo* member_type = nullptr;
     };
 
     struct GCTypeInfo {
         const char* name;
         GCObjectKind kind;
         bool contains_refs;
-        GCStructLayout* struct_layout;
-        GCArrayLayout* array_layout;
+        GCStructLayout* struct_layout = nullptr;
+        GCArrayLayout* array_layout = nullptr;
     };
 
     struct ObjectHeader {
@@ -83,10 +88,10 @@ namespace sakuraE::runtime {
     extern std::mutex gc_mutex;
 
     [[maybe_unused]] extern inline GCTypeInfo GC_ATOMIC_TYPE;
-    [[maybe_unused]] extern inline GCTypeInfo GC_STRING_TYPE;
 
     extern "C" GCTypeInfo* __gc_get_atomic_type();
     extern "C" GCTypeInfo* __gc_get_string_type();
+    extern "C" GCTypeInfo* __gc_get_array_type(bool is_ptr, uint32_t size, GCTypeInfo* mem_ty);
 
     extern "C" ObjectHeader* __gc_get_unlocked(void* payload);
     extern "C" void __gc_wklist_push(void* obj, void* context);
