@@ -6,6 +6,7 @@
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Use.h>
+#include <llvm/IR/Value.h>
 #include <llvm/Support/Casting.h>
 #include <map>
 #include <memory>
@@ -234,6 +235,29 @@ namespace sakuraE::Codegen {
                     llvm::FunctionType::get(codegenContext.builder->getPtrTy(), false)
                 );
                 return codegenContext.builder->CreateCall(callee, {});
+            }
+
+            llvm::Value* getArrayGCType(bool isPtr, uint32_t length, llvm::Value* memTy) {
+                auto callee = content->getOrInsertFunction(
+                    "__gc_get_array_type",
+                    llvm::FunctionType::get(
+                        codegenContext.builder->getPtrTy(), 
+                        {
+                            llvm::Type::getInt1Ty(*codegenContext.context),
+                            llvm::Type::getInt32Ty(*codegenContext.context),
+                            codegenContext.builder->getPtrTy()
+                        }, 
+                        false
+                    )
+                );
+                return codegenContext.builder->CreateCall(
+                    callee, 
+                    {
+                        codegenContext.builder->getInt1(isPtr), 
+                        codegenContext.builder->getInt32(length), 
+                        memTy
+                    }
+                );
             }
 
             void declareFunction(FunctionType ty, fzlib::String n, llvm::Type* retT, std::vector<std::pair<fzlib::String, llvm::Type*>> formalP, PositionInfo info) {
