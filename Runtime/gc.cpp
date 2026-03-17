@@ -62,10 +62,6 @@ namespace sakuraE::runtime {
         return &GC_ATOMIC_TYPE;
     }
 
-    extern "C" GCTypeInfo* __gc_get_array_type(bool is_ptr, uint32_t size, GCTypeInfo* mem_ty) {
-        
-    }
-
     extern "C" ObjectHeader* __gc_get_unlocked(void* payload) {
         for (auto* header : global_heap) {
             if (static_cast<void*>(header + 1) == payload) {
