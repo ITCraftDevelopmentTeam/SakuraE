@@ -25,14 +25,6 @@ namespace sakuraE::runtime {
         nullptr
     };
 
-    [[maybe_unused]] GCTypeInfo GC_STRING_TYPE = {
-        "string",
-        GCObjectKind::Atomic,
-        false,
-        nullptr,
-        nullptr
-    };
-
     std::map<fzlib::String, GCTypeInfo*> complexGCTypePool;
 
     extern "C" GCTypeInfo* __gc_get_array_type(bool is_ptr, uint32_t size, GCTypeInfo* mem_ty) {
@@ -55,10 +47,6 @@ namespace sakuraE::runtime {
     }
 
     extern "C" GCTypeInfo* __gc_get_atomic_type() {
-        return &GC_ATOMIC_TYPE;
-    }
-
-    extern "C" GCTypeInfo* __gc_get_string_type() {
         return &GC_ATOMIC_TYPE;
     }
 

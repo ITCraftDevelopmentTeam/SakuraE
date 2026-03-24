@@ -138,8 +138,6 @@ namespace atri::cmds {
         runtimeSymbols[JIT->mangleAndIntern("__gc_pop")] = { llvm::orc::ExecutorAddr::fromPtr(&sakuraE::runtime::__gc_pop), llvm::JITSymbolFlags::Exported };
         runtimeSymbols[JIT->mangleAndIntern("__gc_register")] = { llvm::orc::ExecutorAddr::fromPtr(&sakuraE::runtime::__gc_register), llvm::JITSymbolFlags::Exported };
         runtimeSymbols[JIT->mangleAndIntern("__gc_get_atomic_type")] = { llvm::orc::ExecutorAddr::fromPtr(&sakuraE::runtime::__gc_get_atomic_type), llvm::JITSymbolFlags::Exported };
-        runtimeSymbols[JIT->mangleAndIntern("__gc_get_string_type")] = { llvm::orc::ExecutorAddr::fromPtr(&sakuraE::runtime::__gc_get_string_type), llvm::JITSymbolFlags::Exported };
-
 
         llvm::cantFail(JD.define(llvm::orc::absoluteSymbols(runtimeSymbols)));
 
